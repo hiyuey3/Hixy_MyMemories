@@ -266,6 +266,7 @@ struct Index {
         .align(Alignment.Bottom)
       }
     }
+
     .height('100%')
     .width('100%')
   }
