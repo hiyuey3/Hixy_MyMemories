@@ -37,8 +37,13 @@ struct Index {
     return diff;
   }
 
-  private sorted(): MemoryItem[] {
+  private getEventsSortedByDaysUntil(): MemoryItem[] {
     return [...this.events].sort((a, b) => this.daysDiff(a.date) - this.daysDiff(b.date));
+  }
+
+  // Compatibility wrapper: some code calls this.sorted(), keep that API
+  private sorted(): MemoryItem[] {
+    return this.getEventsSortedByDaysUntil();
   }
 
   // Added small helpers so @Builder methods contain only UI syntax
@@ -183,6 +188,19 @@ struct Index {
   build() {
     Stack() {
       Column({ space: 12 }) {
+        // Top center group photo
+        Column() {
+          Image($r('app.media.background'))
+            .width('120px')
+            .height('120px')
+            .objectFit(ImageFit.Cover)
+            .borderRadius(60)
+            .align(Alignment.Center);
+        }
+        .height('160px')
+        .width('100%')
+        .padding({ top: 18 });
+
         this.SummaryCard();
         List({ space: 10 }) {
           ForEach(this.sorted(), (item: MemoryItem) => {
@@ -210,6 +228,34 @@ struct Index {
       .height('100%')
       .width('100%')
       .backgroundColor('#F7F8FA');
+
+      // Bottom navigation bar
+      Column() {
+        Blank().height('100%').width('100%').backgroundColor('#0000').onClick(() => {});
+        Row({ space: 10 }) {
+          Column() {
+            Image($r('app.media.foreground')).width('24px').height('24px').align(Alignment.Center);
+            Text('首页').fontSize(12).fontColor('#333').align(Alignment.Center);
+          }
+          .onClick(() => { /* navigate Home */ })
+          Column() {
+            Image($r('app.media.foreground')).width('24px').height('24px').align(Alignment.Center);
+            Text('记忆').fontSize(12).fontColor('#333').align(Alignment.Center);
+          }
+          .onClick(() => { /* navigate Memories */ })
+          Column() {
+            Image($r('app.media.foreground')).width('24px').height('24px').align(Alignment.Center);
+            Text('设置').fontSize(12).fontColor('#333').align(Alignment.Center);
+          }
+          .onClick(() => { /* navigate Settings */ })
+        }
+        .height(64)
+        .width('100%')
+        .backgroundColor('#FFFFFF')
+        .borderRadius({ topLeft: 12, topRight: 12, bottomLeft: 0, bottomRight: 0 })
+        .padding({ left: 30, right: 30 })
+        .justifyContent(FlexAlign.SpaceBetween);
+      }
 
       if (this.showForm) {
         Column() {
