@@ -17,6 +17,7 @@ struct Index {
           this.message = 'Welcome';
         })
     }
+
     .height('100%')
     .width('100%')
   }
