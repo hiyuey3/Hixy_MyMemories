@@ -1,5 +1,6 @@
 import { Settings } from './Settings';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
+import MemoryStore from '../store/MemoryStore';
 import router from '@system.router';
 import { About } from './About';
 import { MemoryItem, MemoryType } from '../types/MemoryTypes';
@@ -16,16 +17,41 @@ struct Index {
   // Persisted header image uri
   @State headerImagePath: string = '';
   private tabsController: TabsController = new TabsController();
+  private unsub: (() => void) | null = null;
 
   onInit(): void {
     // Initialize DB and load events
     this.loadHeaderImage();
     this.loadEvents();
+    // subscribe to store changes to update UI immediately
+    try {
+      this.unsub = MemoryStore.subscribe(() => {
+        // Immediately reflect in-memory store changes
+        try {
+          this.events = MemoryStore.getEvents();
+        } catch (e) {
+          // no-op
+        }
+        // Then refresh from DB shortly to align with persisted data
+        try {
+          setTimeout(() => { this.loadEvents(); }, 300);
+        } catch (e) {}
+      });
+    } catch (e) {
+      console.error('Index: subscribe failed', e);
+    }
   }
 
   onShow(): void {
     // Reload events in case other pages changed the DB
     this.loadEvents();
+  }
+
+  onDestroy(): void {
+    if (this.unsub) {
+      try { this.unsub(); } catch (e) {}
+      this.unsub = null;
+    }
   }
 
   // Image picking feature removed: header image may still be set via resources or persistent path.
@@ -215,8 +241,12 @@ struct Index {
           return { id, title, date, type } as MemoryItem;
         });
       } else {
-        // leave defaults or empty
-        this.events = [];
+        // If DB is empty or not ready, fall back to in-memory store so UI shows recent additions
+        try {
+          this.events = MemoryStore.getEvents();
+        } catch (e) {
+          this.events = [];
+        }
       }
     } catch (err) {
       console.log(`加载记忆列表失败: ${err}`);
@@ -363,7 +393,7 @@ struct Index {
     } catch (err) {
       console.error('router.push failed for pages/AddMemory:', err);
       this.addFeedback = '跳转失败';
-      try { promptAction.showToast({ message: '跳转失败' }); } catch (e) {}
+      try { promptAction.showToast({ message: '跳转失败' }); } catch (e) { console.error(e); }
     }
-  }
-}
+   }
+ }

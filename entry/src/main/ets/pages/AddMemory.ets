@@ -1,6 +1,9 @@
 import MemoryStore from '../store/MemoryStore';
 import router from '@system.router';
 import { MemoryType, MemoryItem } from '../types/MemoryTypes';
+import promptAction from '@ohos.promptAction';
+import { MemoryDBUtil } from '../utils/MemDBUtils';
+import { relationalStore } from '@kit.ArkData';
 
 @Entry
 @Component
@@ -10,24 +13,44 @@ export struct AddMemory {
   @State type: MemoryType = 'countdown';
 
   private async saveAndBack(): Promise<void> {
-    if (!this.title.trim()) return; // require title
+    if (!this.title.trim()) {
+      try { promptAction.showToast({ message: '标题不能为空' }); } catch (e) {}
+      return; // require title
+    }
     const item: MemoryItem = {
       id: Date.now(),
       title: this.title.trim(),
       date: new Date(this.date),
       type: this.type
     };
+    let savedToDb: boolean = false;
+    // Try inserting into DB first to provide accurate feedback
     try {
-      // MemoryStore.addEvent may be sync or async depending on compiled module; support both
-      const res = (MemoryStore.addEvent as any)(item);
-      if (res && typeof res.then === 'function') {
-        await res
+      const vb: relationalStore.ValuesBucket = { task_name: item.title, finished: item.type === 'anniversary' ? 1 : 0 } as relationalStore.ValuesBucket;
+      const rowId = await MemoryDBUtil.insertMemory('memories', vb);
+      if (rowId && rowId > 0) {
+        item.id = rowId;
+        savedToDb = true;
       }
-      try { promptAction.showToast({ message: '已保存' }); } catch (e) {}
+    } catch (dbErr) {
+      console.log('AddMemory: DB 插入失败', dbErr);
+    }
+
+    // Add to in-memory store (synchronous UI update + internal fallback handled there as well)
+    try {
+      const addFn = (MemoryStore.addEvent as (it: MemoryItem) => Promise<void> | void);
+      const possiblePromise = addFn(item);
+      if (possiblePromise && (possiblePromise as Promise<void>).then) {
+        await (possiblePromise as Promise<void>);
+      }
     } catch (err) {
       console.log(`保存事件时出错: ${err}`);
-      try { promptAction.showToast({ message: '保存失败' }); } catch (e) {}
     }
+
+    // Feedback: distinguish DB success vs local fallback
+    try {
+      promptAction.showToast({ message: savedToDb ? '已保存到数据库' : '已保存（本地备份）' });
+    } catch (e) {}
     try {
       router.back();
     } catch (e) {

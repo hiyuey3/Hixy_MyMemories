@@ -76,21 +76,30 @@ class MemoryDBUtils {
 
   // 将数据插入到数据库，返回 Promise<rowId>
   async insertMemory(tableName: string, value: relationalStore.ValuesBucket): Promise<number> {
+    console.log('insertMemory: waiting for DB ready...')
     await this.readyPromise
+    console.log('insertMemory: readyPromise resolved, rdbStore is', this.rdbStore ? 'present' : 'null')
+    console.log('insertMemory: inserting into', tableName, 'value=', JSON.stringify(value))
     return new Promise<number>((resolve, reject) => {
       if (!this.rdbStore) {
+        console.log('insertMemory: rdbStore is null, rejecting')
         reject(new Error('rdbStore is null'))
         return
       }
-      this.rdbStore.insert(tableName, value, (err: BusinessError, rowId: number) => {
-        if (err) {
-          console.log(`${tableName}数据库表数据添加失败: ${err.message}`)
-          reject(err)
-          return
-        }
-        console.log(`${tableName}表数据添加成功, rowId: ${rowId}`)
-        resolve(rowId)
-      })
+      try {
+        this.rdbStore.insert(tableName, value, (err: BusinessError, rowId: number) => {
+          if (err) {
+            console.log(`${tableName}数据库表数据添加失败: ${err.message}`)
+            reject(err)
+            return
+          }
+          console.log(`${tableName}表数据添加成功, rowId: ${rowId}`)
+          resolve(rowId)
+        })
+      } catch (callErr) {
+        console.log('insertMemory: insert call threw', callErr)
+        reject(callErr)
+      }
     })
   }
 
@@ -158,46 +167,62 @@ class MemoryDBUtils {
   }
 
   async deleteMemoryById(tableName: string, memoryId: number): Promise<number> {
+    console.log('deleteMemoryById: waiting for DB ready...')
     await this.readyPromise
+    console.log('deleteMemoryById: ready, rdbStore is', this.rdbStore ? 'present' : 'null', 'id=', memoryId)
     return new Promise<number>((resolve, reject) => {
       const p1 = new relationalStore.RdbPredicates(tableName)
       // 使用表中真实列名 'id'
       p1.equalTo('id', memoryId)
       if (!this.rdbStore) {
+        console.log('deleteMemoryById: rdbStore is null')
         reject(new Error('rdbStore is null'))
         return
       }
-      this.rdbStore.delete(p1, (err: BusinessError, rows: number) => {
-        if (err) {
-          console.log(`删除记忆失败${err.message}`)
-          reject(err)
-          return
-        }
-        console.log(`删除记忆成功,影响行数${rows}`)
-        resolve(rows)
-      })
+      try {
+        this.rdbStore.delete(p1, (err: BusinessError, rows: number) => {
+          if (err) {
+            console.log(`删除记忆失败${err.message}`)
+            reject(err)
+            return
+          }
+          console.log(`删除记忆成功,影响行数${rows}`)
+          resolve(rows)
+        })
+      } catch (callErr) {
+        console.log('deleteMemoryById: delete call threw', callErr)
+        reject(callErr)
+      }
     })
   }
 
   async updateMemoryById(tableName: string, memoryId: number, value: relationalStore.ValuesBucket): Promise<number> {
+    console.log('updateMemoryById: waiting for DB ready...')
     await this.readyPromise
+    console.log('updateMemoryById: ready, rdbStore is', this.rdbStore ? 'present' : 'null', 'id=', memoryId, 'value=', JSON.stringify(value))
     return new Promise<number>((resolve, reject) => {
       const p1 = new relationalStore.RdbPredicates(tableName)
       // 使用表中真实列名 'id'
       p1.equalTo('id', memoryId)
       if (!this.rdbStore) {
+        console.log('updateMemoryById: rdbStore is null')
         reject(new Error('rdbStore is null'))
         return
       }
-      this.rdbStore.update(value, p1, (err: BusinessError, rows: number) => {
-        if (err) {
-          console.log(`更新记忆失败${err.message}`)
-          reject(err)
-          return
-        }
-        console.log(`更新记忆成功,影响行数${rows}`)
-        resolve(rows)
-      })
+      try {
+        this.rdbStore.update(value, p1, (err: BusinessError, rows: number) => {
+          if (err) {
+            console.log(`更新记忆失败${err.message}`)
+            reject(err)
+            return
+          }
+          console.log(`更新记忆成功,影响行数${rows}`)
+          resolve(rows)
+        })
+      } catch (callErr) {
+        console.log('updateMemoryById: update call threw', callErr)
+        reject(callErr)
+      }
     })
   }
 

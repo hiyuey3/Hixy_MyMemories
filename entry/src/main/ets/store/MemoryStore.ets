@@ -1,50 +1,69 @@
 import { MemoryType, MemoryItem } from '../types/MemoryTypes';
-import { relationalStore } from '@kit.ArkData'
+import { relationalStore } from '@kit.ArkData';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 export type { MemoryType, MemoryItem };
 
-const TABLE_NAME = 'memories'
+interface MemoryStoreAPI {
+  init?(context?: Context): Promise<void>;
+  getEvents(): MemoryItem[];
+  getEventById(id: number): MemoryItem | undefined;
+  addEvent(item: MemoryItem): Promise<void> | void;
+  updateEvent(item: MemoryItem): Promise<void> | void;
+  deleteEvent(id: number): Promise<void> | void;
+  setSelected(id?: number): void;
+  getSelected(): number | undefined;
+  subscribe(cb: () => void): () => void;
+}
 
-class MemoryStoreClass {
+class MemoryStoreClass implements MemoryStoreAPI {
+  private readonly TABLE_NAME: string = 'memories';
   private listeners: Array<() => void> = [];
   private events: MemoryItem[] = [
-    // 默认数据会在 DB 为空时使用
     { id: 1, title: '生日', date: new Date('2025-06-18'), type: 'anniversary' },
     { id: 2, title: '假期出发', date: new Date('2025-10-01'), type: 'countdown' },
     { id: 3, title: '相识纪念', date: new Date('2024-12-12'), type: 'anniversary' }
   ];
   private selectedId: number | undefined = undefined;
 
-  private notify() {
+  private notify(): void {
     for (const cb of this.listeners) {
-      try { cb() } catch (err) { console.log(`listener 调用出错: ${err}`) }
+      try { cb(); } catch (err) { console.log(`listener 调用出错: ${err}`); }
     }
   }
 
-  public async init(_context?: Context) {
-    // 初始化数据库并加载数据
+  public async init(context?: Context): Promise<void> {
     try {
-      if (_context) {
-        MemoryDBUtil.initMemoryDB(_context, TABLE_NAME)
+      if (context) {
+        MemoryDBUtil.initMemoryDB(context, this.TABLE_NAME);
       } else {
-        console.log('MemoryStore.init: no context provided, skipping DB init')
+        console.log('MemoryStore.init: no context provided, skipping DB init');
       }
-       // 查询 DB，若有数据则覆盖内存数据
-      const cols = ['id', 'task_name', 'finished']
-      const rows: Memory[] = await MemoryDBUtil.queryMemories(TABLE_NAME, cols)
+
+      const cols: string[] = ['id', 'task_name', 'finished'];
+      const rows: Memory[] = await MemoryDBUtil.queryMemories(this.TABLE_NAME, cols);
       if (rows && rows.length > 0) {
-        this.events = rows.map(r => {
-          // 将 DB 的 Memory (id, title, finished) 映射为 MemoryItem
-          const id: number = r.id ?? 0
-          const title: string = r.title ?? ''
-          // 无法从 DB 恢复 date/type，这里使用占位：date 为当前时间，type 根据 finished 推断
-          const date = new Date()
-          const type: MemoryType = r.finished ? 'anniversary' : 'countdown'
-          return { id, title, date, type } as MemoryItem
-        })
+        this.events = rows.map((r: Memory) => {
+          const id: number = r.id ?? 0;
+          const title: string = r.title ?? '';
+          const date: Date = new Date();
+          const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
+          return { id, title, date, type } as MemoryItem;
+        });
+      } else {
+        try {
+          const backupJson = AppStorage.Get<string>('mem_backup');
+          if (backupJson) {
+            const backups = JSON.parse(backupJson as string) as MemoryItem[];
+            if (backups && backups.length > 0) {
+              this.events = [...backups, ...this.events];
+            }
+          }
+        } catch (e) {
+          console.log('MemoryStore.init: 合并本地备份失败', e);
+        }
       }
     } catch (err) {
-      console.log(`初始化 MemoryStore 时发生错误: ${err}`)
+      console.log(`初始化 MemoryStore 时发生错误: ${err}`);
     }
   }
 
@@ -53,54 +72,61 @@ class MemoryStoreClass {
   }
 
   public getEventById(id: number): MemoryItem | undefined {
-    return this.events.find(e => e.id === id);
+    return this.events.find((e: MemoryItem) => e.id === id);
   }
 
   public async addEvent(item: MemoryItem): Promise<void> {
-    // 插入到 DB：把 title -> task_name，finished 用 type 进行简单映射
-    const finishedVal: number = item.type === 'anniversary' ? 1 : 0
-    const vb: relationalStore.ValuesBucket = { task_name: item.title, finished: finishedVal }
+    const finishedVal: number = item.type === 'anniversary' ? 1 : 0;
+    const vb: relationalStore.ValuesBucket = { task_name: item.title, finished: finishedVal } as relationalStore.ValuesBucket;
+
     try {
-      const rowId: number = await MemoryDBUtil.insertMemory(TABLE_NAME, vb)
+      const rowId: number = await MemoryDBUtil.insertMemory(this.TABLE_NAME, vb);
       if (rowId && rowId > 0) {
-        item.id = rowId
+        item.id = rowId;
       }
     } catch (err) {
-      console.log(`向 DB 插入记忆失败: ${err}`)
-      // 仍然继续，将项放入内存以便 UI 立即可见
+      console.log(`向 DB 插入记忆失败: ${err}`);
+      try {
+        const existing = AppStorage.Get<string>('mem_backup');
+        const arr: MemoryItem[] = existing ? JSON.parse(existing as string) : [];
+        arr.unshift(item);
+        AppStorage.Set<string>('mem_backup', JSON.stringify(arr));
+        console.log('已保存到本地备份 mem_backup');
+      } catch (e) {
+        console.log('保存到本地备份失败', e);
+      }
     }
 
-    // 同步内存并通知
-    this.events = [item, ...this.events]
-    this.notify()
+    this.events = [item, ...this.events];
+    this.notify();
   }
 
   public async updateEvent(item: MemoryItem): Promise<void> {
-    const finishedVal: number = item.type === 'anniversary' ? 1 : 0
-    const vb: relationalStore.ValuesBucket = { task_name: item.title, finished: finishedVal }
+    const finishedVal: number = item.type === 'anniversary' ? 1 : 0;
+    const vb: relationalStore.ValuesBucket = { task_name: item.title, finished: finishedVal } as relationalStore.ValuesBucket;
     try {
-      await MemoryDBUtil.updateMemoryById(TABLE_NAME, item.id, vb)
+      await MemoryDBUtil.updateMemoryById(this.TABLE_NAME, item.id, vb);
     } catch (err) {
-      console.log(`更新 DB 中记忆失败: ${err}`)
+      console.log(`更新 DB 中记忆失败: ${err}`);
     }
 
-    this.events = this.events.map(e => e.id === item.id ? item : e)
-    this.notify()
+    this.events = this.events.map((e: MemoryItem) => (e.id === item.id ? item : e));
+    this.notify();
   }
 
   public async deleteEvent(id: number): Promise<void> {
     try {
-      await MemoryDBUtil.deleteMemoryById(TABLE_NAME, id)
+      await MemoryDBUtil.deleteMemoryById(this.TABLE_NAME, id);
     } catch (err) {
-      console.log(`从 DB 删除记忆失败: ${err}`)
+      console.log(`从 DB 删除记忆失败: ${err}`);
     }
 
-    this.events = this.events.filter(e => e.id !== id)
-    if (this.selectedId === id) this.selectedId = undefined
-    this.notify()
+    this.events = this.events.filter((e: MemoryItem) => e.id !== id);
+    if (this.selectedId === id) this.selectedId = undefined;
+    this.notify();
   }
 
-  public setSelected(id?: number) {
+  public setSelected(id?: number): void {
     this.selectedId = id;
   }
 
@@ -110,7 +136,7 @@ class MemoryStoreClass {
 
   public subscribe(cb: () => void): () => void {
     this.listeners.push(cb);
-    return () => {
+    return (): void => {
       const idx = this.listeners.indexOf(cb);
       if (idx >= 0) this.listeners.splice(idx, 1);
     };
