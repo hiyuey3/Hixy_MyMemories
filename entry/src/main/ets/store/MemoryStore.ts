@@ -1,11 +1,5 @@
-type MemoryType = 'countdown' | 'anniversary';
-export interface MemoryItem {
-  id: number;
-  title: string;
-  date: Date;
-  type: MemoryType;
-  note?: string;
-}
+import { MemoryType, MemoryItem } from '../types/MemoryTypes';
+export type { MemoryType, MemoryItem };
 
 const listeners: Array<() => void> = [];
 let events: MemoryItem[] = [

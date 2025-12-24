@@ -1,4 +1,5 @@
 import MemoryStore from '../store/MemoryStore';
+import { MemoryType, MemoryItem } from '../types/MemoryTypes';
 import router from '@system.router';
 
 @Component

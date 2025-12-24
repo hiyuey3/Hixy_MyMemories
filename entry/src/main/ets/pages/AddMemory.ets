@@ -1,8 +1,7 @@
 import MemoryStore from '../store/MemoryStore';
 import router from '@system.router';
+import { MemoryType, MemoryItem } from '../types/MemoryTypes';
 
-type MemoryType = 'countdown' | 'anniversary';
-interface MemoryItem { id: number; title: string; date: Date; type: MemoryType; note?: string }
 @Entry
 @Component
 export struct AddMemory {
