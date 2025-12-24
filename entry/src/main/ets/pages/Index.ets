@@ -3,11 +3,6 @@ import MemoryStore from '../store/MemoryStore';
 import router from '@system.router';
 import { About } from './About';
 import { MemoryItem } from '../types/MemoryTypes';
-import photoAccessHelper from '@ohos.file.photoAccessHelper';
-import preferences from '@ohos.data.preferences';
-import image from '@ohos.multimedia.image';
-import util from '@ohos.util';
-import common from '@ohos.app.ability.common';
 
 
 @Entry
@@ -18,7 +13,6 @@ struct Index {
   @State currentIndex: number = 0;
   // Persisted header image uri
   @State headerImagePath: string = '';
-  @State headerImageBase64: string = '';
   private tabsController: TabsController = new TabsController();
 
   onInit(): void {
@@ -28,10 +22,9 @@ struct Index {
     });
     // Load persisted header image
     this.loadHeaderImage();
-    this.loadHeaderImageBase64();
   }
 
-  // Removed saveHeaderImage because we now persist the base64 thumbnail instead
+  // Image picking feature removed: header image may still be set via resources or persistent path.
 
   build() {
     Column() {
@@ -44,13 +37,10 @@ struct Index {
               Image(this.imageSource())
                 .id('headerImage')
                 .width(320)
-                .height(190)
+                .height(170)
                 .objectFit(ImageFit.Cover)
                 .borderRadius(15)
-                .align(Alignment.Center)
-                .onClick(() => {
-                  this.pickHeaderImage();
-                });
+                .align(Alignment.Center);
             }
             .height('160px')
             .width('100%')
@@ -177,83 +167,21 @@ struct Index {
     .height('100%');
   }
 
+  // Load header path from persistent storage (if present)
   private loadHeaderImage(): void {
     const stored = AppStorage.Get<string>('headerImagePath');
     this.headerImagePath = stored ?? '';
   }
 
-  private async saveHeaderImageBase64(base64: string): Promise<void> {
-    this.headerImageBase64 = base64;
-    try {
-      const context = getContext(this) as common.UIAbilityContext;
-      const pref = await preferences.getPreferences(context, 'user_prefs');
-      await pref.put('headerImageBase64', base64);
-      await pref.flush();
-    } catch (e) {
-      console.error('saveHeaderImageBase64 error', e);
-    }
-  }
-
-  private async loadHeaderImageBase64(): Promise<void> {
-    try {
-      const context = getContext(this) as common.UIAbilityContext;
-      const pref = await preferences.getPreferences(context, 'user_prefs');
-      const val = await pref.get('headerImageBase64', '');
-      this.headerImageBase64 = typeof val === 'string' ? val : '';
-    } catch (e) {
-      console.error('loadHeaderImageBase64 error', e);
-    }
-  }
-
-  private async toBase64FromPixelMap(data: image.PixelMap): Promise<string> {
-    let imagePackerApi: image.ImagePacker = image.createImagePacker();
-    let packOpts: image.PackingOption = { format: 'image/png', quality: 100 };
-    try {
-      const readBuffer: ArrayBuffer = await imagePackerApi.packToData(data, packOpts);
-      const bufferArr = new Uint8Array(readBuffer);
-      const help = new util.Base64Helper();
-      return help.encodeToStringSync(bufferArr);
-    } catch (err) {
-      console.error('packToData error', err);
-      return '';
-    }
-  }
-
-  private async pickHeaderImage(): Promise<void> {
-    try {
-      const photoSelectOptions: photoAccessHelper.PhotoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
-      photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
-      photoSelectOptions.maxSelectNumber = 1;
-      const photoViewPicker: photoAccessHelper.PhotoViewPicker = new photoAccessHelper.PhotoViewPicker();
-      const uris: photoAccessHelper.PhotoSelectResult = await photoViewPicker.select(photoSelectOptions);
-      if (!uris || !uris.photoUris || uris.photoUris.length === 0) {
-        return;
-      }
-      const srcUri: string = uris.photoUris[0];
-
-      // Load PixelMap from selected uri
-      const imgSource = image.createImageSource(srcUri);
-      const pixelMap: image.PixelMap = await imgSource.createPixelMap();
-      // Convert to base64 and persist
-      const base64 = await this.toBase64FromPixelMap(pixelMap);
-      if (base64 && base64.length > 0) {
-        await this.saveHeaderImageBase64(base64);
-      }
-    } catch (e) {
-      console.error('pickHeaderImage error', e);
-    }
-  }
-
+  // Provide image source: persisted path wins, otherwise bundled resource
   private imageSource(): string | Resource {
-    if (this.headerImageBase64 && this.headerImageBase64.length > 0) {
-      return 'data:image/png;base64,' + this.headerImageBase64;
-    }
     if (this.headerImagePath && this.headerImagePath.length > 0) {
       return this.headerImagePath;
     }
     return $r('app.media.background');
   }
 
+  // Format a Date to yyyy-mm-dd for display
   private formatDate(d: Date): string {
     const y = d.getFullYear();
     const m = `${d.getMonth() + 1}`.padStart(2, '0');
@@ -261,6 +189,7 @@ struct Index {
     return `${y}-${m}-${day}`;
   }
 
+  // Days difference between today (midnight) and target date (midnight)
   private daysDiff(target: Date): number {
     const today = new Date();
     const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
@@ -268,32 +197,37 @@ struct Index {
     return Math.round((dest - start) / (24 * 3600 * 1000));
   }
 
+  // Return events sorted by days until (ascending)
   private getEventsSortedByDaysUntil(): MemoryItem[] {
     return [...this.events].sort((a, b) => this.daysDiff(a.date) - this.daysDiff(b.date));
   }
 
+  // Public alias for sorted events (keeps call sites stable)
   private sorted(): MemoryItem[] {
     return this.getEventsSortedByDaysUntil();
   }
 
+  // Count of upcoming (daysDiff >= 0)
   private getUpcoming(): number {
     return this.events.filter(i => this.daysDiff(i.date) >= 0).length;
   }
 
+  // Count of past memories (daysDiff < 0)
   private getMemories(): number {
     return this.events.filter(i => this.daysDiff(i.date) < 0).length;
   }
 
   @Builder
   private EventCard(item: MemoryItem): void {
+    Blank()
+    // Use helper methods for calculations so Builder only contains UI syntax
     Row({ space: 8 }) {
       Column({ space: 6 }) {
         Text(item.title).fontSize(18).fontWeight(FontWeight.Medium).fontColor('#111');
         Text(this.formatDate(item.date)).fontSize(13).fontColor('#666');
-        Text(this.daysDiff(item.date) >= 0 ? `还有 ${this.daysDiff(item.date)} 天` :
-          `已过 ${Math.abs(this.daysDiff(item.date))} 天`)
+        Text(this.daysTextFor(item))
           .fontSize(14)
-          .fontColor(this.daysDiff(item.date) >= 0 ? '#1677FF' : '#FF7A45');
+          .fontColor(this.daysColorFor(item));
       }
 
       Text(item.type === 'countdown' ? '倒数' : '纪念')
@@ -321,17 +255,28 @@ struct Index {
     });
   }
 
+  // Helper: formatted days text for an item
+  private daysTextFor(item: MemoryItem): string {
+    const diff = this.daysDiff(item.date);
+    return diff >= 0 ? `还有 ${diff} 天` : `已过 ${Math.abs(diff)} 天`;
+  }
+
+  // Helper: color for the days text (upcoming vs past)
+  private daysColorFor(item: MemoryItem): string {
+    return this.daysDiff(item.date) >= 0 ? '#1677FF' : '#FF7A45';
+  }
+
   @Builder
   private TabBuilder(title: string, targetIndex: number, normalImg?: Resource, selectedImg?: Resource) {
     Column() {
-      Image(normalImg ? (this.currentIndex == targetIndex ? selectedImg ?? normalImg : normalImg) :
+      Image(normalImg ? (this.currentIndex === targetIndex ? selectedImg ?? normalImg : normalImg) :
         $r('app.media.startIcon'))
         .width(24)
         .height(24)
         .align(Alignment.Center);
       Text(title)
         .fontSize(12)
-        .fontColor(this.currentIndex == targetIndex ? '#ff4116ff' : '#333')
+        .fontColor(this.currentIndex === targetIndex ? '#ff4116ff' : '#333')
         .align(Alignment.Center)
         .margin({ top: 6 });
     }

@@ -17,7 +17,7 @@ export struct EventDetail {
   private goEdit(): void {
     if (this.itemId) {
       const p: EditMemoryParams = { id: this.itemId };
-      const param: GenericRouterPushParam = { uri: 'pages/EditMemory', params: p };
+      const param: GenericRouterPushParam = { uri: 'pages/EditMemory' };
       try { router.push(param); } catch (e) { console.warn(e); }
     }
   }
