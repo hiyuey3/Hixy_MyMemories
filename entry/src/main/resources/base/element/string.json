@@ -11,6 +11,10 @@
     {
       "name": "EntryAbility_label",
       "value": "$string:app_name"
+    },
+    {
+      "name": "perm_read_media",
+      "value": "用于选择并显示相册图片的权限说明"
     }
   ]
 }
