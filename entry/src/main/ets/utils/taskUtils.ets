@@ -1,7 +1,7 @@
 import { relationalStore } from '@kit.ArkData'
 import { BusinessError } from '@kit.BasicServicesKit'
 
-
+// 草泥马，煞笔开发者文档，尼玛的版本混乱的跟屎一样
 /**
  * Memory 模型：表示一条记忆 / 任务记录
  * - 保持与现有数据库表字段兼容（id, task_name, finished）
