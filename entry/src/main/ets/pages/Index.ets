@@ -16,6 +16,7 @@ struct Index {
   // Persisted header image uri
   @State headerImagePath: string = '';
   private tabsController: TabsController = new TabsController();
+  private unsub: (() => void) | null = null;
 
   onInit(): void {
     // Initialize DB and load events
@@ -25,9 +26,7 @@ struct Index {
     try { if (AppStorage.Get<boolean>('needsReload')) { AppStorage.Set<boolean>('needsReload', false); setTimeout(() => this.loadEvents(), 300); } } catch (e) {}
     // DB change subscription to refresh immediately on write
     try {
-      const off = MemoryDBUtil.subscribe(() => { this.loadEvents(); });
-      // store unsubscribe via AppStorage (no fields on struct)
-      AppStorage.Set<() => void>('__idx_unsub__', off);
+      this.unsub = MemoryDBUtil.subscribe(() => { this.loadEvents(); });
     } catch (e) {}
   }
 
@@ -46,11 +45,7 @@ struct Index {
   }
 
   onDestroy(): void {
-    try {
-      const off = AppStorage.Get<() => void>('__idx_unsub__');
-      if (off) off();
-      AppStorage.Delete('__idx_unsub__');
-    } catch (e) {}
+    try { if (this.unsub) { this.unsub(); this.unsub = null; } } catch (e) {}
   }
 
   // Image picking feature removed: header image may still be set via resources or persistent path.

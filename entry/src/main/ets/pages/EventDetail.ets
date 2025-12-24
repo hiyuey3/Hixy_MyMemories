@@ -1,4 +1,4 @@
- import { MemoryItem, MemoryType } from '../types/MemoryTypes';
+import { MemoryItem, MemoryType } from '../types/MemoryTypes';
 import router from '@system.router';
 import { GenericRouterPushParam } from '../types/NavigationTypes';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
@@ -9,12 +9,30 @@ export struct EventDetail {
   @State itemId: number | undefined = undefined;
   // 当前显示的事件对象
   @State item: MemoryItem | undefined = undefined;
+  // 订阅句柄
+  private unsub: (() => void) | null = null;
 
   // 生命周期：初始化时从 store 取出被选中的事件
   onInit(): void {
     const id = AppStorage.Get<number>('selectedId');
     this.itemId = id;
     if (id) this.loadFromDb(id);
+    // 订阅数据库变化：任一写入后自动刷新当前条目
+    try {
+      this.unsub = MemoryDBUtil.subscribe(() => {
+        if (this.itemId) this.loadFromDb(this.itemId);
+      });
+    } catch (e) {}
+  }
+
+  // 页面出现时强制重查（并做一次短延迟兜底）
+  aboutToAppear(): void {
+    if (this.itemId) this.loadFromDb(this.itemId);
+    try { setTimeout(() => { if (this.itemId) this.loadFromDb(this.itemId); }, 300); } catch (e) {}
+  }
+
+  onDestroy(): void {
+    try { if (this.unsub) { this.unsub(); this.unsub = null; } } catch (e) {}
   }
 
   private async loadFromDb(id: number): Promise<void> {
