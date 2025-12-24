@@ -21,6 +21,9 @@ struct Index {
   @State newTitle: string = '';
   @State newDate: Date = new Date();
   @State newType: MemoryType = 'countdown';
+  @State currentIndex: number = 0;
+
+  private tabsController: TabsController = new TabsController();
 
   private formatDate(d: Date): string {
     const y = d.getFullYear();
@@ -57,7 +60,11 @@ struct Index {
 
   private addItem(): void {
     if (!this.newTitle.trim()) {
-      promptAction.showToast({ message: '请输入标题' });
+      try {
+        promptAction.showToast({ message: '请输入标题' });
+      } catch (e) {
+        console.error(e);
+      }
       return;
     }
     const next: MemoryItem = {
@@ -71,7 +78,11 @@ struct Index {
     this.newDate = new Date();
     this.newType = 'countdown';
     this.showForm = false;
-    promptAction.showToast({ message: '已添加' });
+    try {
+      promptAction.showToast({ message: '已添加' });
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   @Builder
@@ -136,7 +147,7 @@ struct Index {
     }
     .justifyContent(FlexAlign.SpaceBetween)
     .padding(14)
-    .backgroundColor('#FFFFFF')
+    .backgroundColor($r('app.color.start_window_background'))
     .borderRadius(14)
     .shadow({ radius: 8, color: '#1A000000', offsetX: 0, offsetY: 4 })
   }
@@ -181,85 +192,119 @@ struct Index {
       }
     }
     .padding(18)
-    .backgroundColor('#FFFFFF')
+    .backgroundColor($r('app.color.start_window_background'))
     .borderRadius({ topLeft: 20, topRight: 20, bottomLeft: 12, bottomRight: 12 })
+  }
+
+  @Builder
+  private TabBuilder(title: string, targetIndex: number, normalImg?: Resource, selectedImg?: Resource){
+    Column() {
+      Image(normalImg ? (this.currentIndex == targetIndex ? selectedImg ?? normalImg : normalImg) : $r('app.media.foreground'))
+        .width(24)
+        .height(24)
+        .align(Alignment.Center);
+      Text(title)
+        .fontSize(12)
+        .fontColor(this.currentIndex == targetIndex ? '#1677FF' : '#333')
+        .align(Alignment.Center)
+        .margin({ top: 6 });
+    }
+    .width('100%')
+    .height(64)
+    .justifyContent(FlexAlign.Center)
+    .onClick(() => {
+      this.currentIndex = targetIndex;
+      try {
+        this.tabsController.changeIndex(this.currentIndex);
+      } catch (e) {
+        console.error(e);
+      }
+    })
   }
 
   build() {
     Stack() {
-      Column({ space: 12 }) {
-        // Top center group photo
-        Column() {
-          Image($r('app.media.background'))
-            .width('120px')
-            .height('120px')
-            .objectFit(ImageFit.Cover)
-            .borderRadius(60)
-            .align(Alignment.Center);
-        }
-        .height('160px')
-        .width('100%')
-        .padding({ top: 18 });
-
-        this.SummaryCard();
-        List({ space: 10 }) {
-          ForEach(this.sorted(), (item: MemoryItem) => {
-            ListItem() {
-              this.EventCard(item);
+      // Tabs 容器：底部 TabBar（barPosition: End）
+      Tabs({ barPosition: BarPosition.End, controller: this.tabsController, index: this.currentIndex }) {
+        // 首页 TabContent：保留原有主页布局
+        TabContent() {
+          Column({ space: 12 }) {
+            // Top center group photo
+            Column() {
+              Image($r('app.media.background'))
+                .width(310)
+                .height(150)
+                .objectFit(ImageFit.Cover)
+                .borderRadius(20)
+                .align(Alignment.Center);
             }
-          })
-        }
-        .edgeEffect(EdgeEffect.None)
-        .layoutWeight(1)
-        .padding({ left: 18, right: 18, bottom: 80 });
+            .height('160px')
+            .width('100%')
+            .padding({ top: 18 });
 
-        Row() {
-          Button('+ 新增事件')
-            .type(ButtonType.Capsule)
-            .backgroundColor('#1677FF')
-            .fontColor('#fff')
-            .width('70%')
-            .height(44)
-            .onClick(() => this.showForm = true);
+            this.SummaryCard();
+            List({ space: 10 }) {
+              ForEach(this.sorted(), (item: MemoryItem) => {
+                ListItem() {
+                  this.EventCard(item);
+                }
+              })
+            }
+            .edgeEffect(EdgeEffect.None)
+            .width('100%')
+            .height('100%')
+            .layoutWeight(1)
+            .padding({ left: 18, right: 18, bottom: 80 });
+
+            Row() {
+              Button('+ 新增事件')
+                .type(ButtonType.Capsule)
+                .backgroundColor('#1677FF')
+                .fontColor('#fff')
+                .width('70%')
+                .height(44)
+                .onClick(() => this.showForm = true);
+            }
+            .justifyContent(FlexAlign.Center)
+            .padding({ bottom: 16 });
+          }
+          .height('100%')
+          .width('100%')
+          .backgroundColor('#F7F8FA');
         }
-        .justifyContent(FlexAlign.Center)
-        .padding({ bottom: 16 });
+        .tabBar(this.TabBuilder('首页', 0));
+
+        // 记忆 TabContent（占位，可按需替换为真实页面组件）
+        TabContent() {
+          Column({ space: 12 }) {
+            Text('记忆页占位').fontSize(20).fontColor('#111').align(Alignment.Center).margin({ top: 40 });
+          }
+          .width('100%')
+          .height('100%')
+          .backgroundColor('#F7F8FA');
+        }
+        .tabBar(this.TabBuilder('记忆', 1));
+
+        // 设置 TabContent（占位）
+        TabContent() {
+          Column({ space: 12 }) {
+            Text('设置页占位').fontSize(20).fontColor('#111').align(Alignment.Center).margin({ top: 40 });
+          }
+          .width('100%')
+          .height('100%')
+          .backgroundColor('#F7F8FA');
+        }
+        .tabBar(this.TabBuilder('设置', 2));
       }
-      .height('100%')
       .width('100%')
-      .backgroundColor('#F7F8FA');
+      .height('100%')
+      .scrollable(false)
+      .animationDuration(0);
 
-      // Bottom navigation bar
-      Column() {
-        Blank().height('100%').width('100%').backgroundColor('#0000').onClick(() => {});
-        Row({ space: 10 }) {
-          Column() {
-            Image($r('app.media.foreground')).width('24px').height('24px').align(Alignment.Center);
-            Text('首页').fontSize(12).fontColor('#333').align(Alignment.Center);
-          }
-          .onClick(() => { /* navigate Home */ })
-          Column() {
-            Image($r('app.media.foreground')).width('24px').height('24px').align(Alignment.Center);
-            Text('记忆').fontSize(12).fontColor('#333').align(Alignment.Center);
-          }
-          .onClick(() => { /* navigate Memories */ })
-          Column() {
-            Image($r('app.media.foreground')).width('24px').height('24px').align(Alignment.Center);
-            Text('设置').fontSize(12).fontColor('#333').align(Alignment.Center);
-          }
-          .onClick(() => { /* navigate Settings */ })
-        }
-        .height(64)
-        .width('100%')
-        .backgroundColor('#FFFFFF')
-        .borderRadius({ topLeft: 12, topRight: 12, bottomLeft: 0, bottomRight: 0 })
-        .padding({ left: 30, right: 30 })
-        .justifyContent(FlexAlign.SpaceBetween);
-      }
-
+      // 弹窗：遮罩高度保留底部 TabBar（64px）
       if (this.showForm) {
         Column() {
-          Blank().height('100%').width('100%').backgroundColor('#80000000')
+          Blank().height('calc(100% - 64px)').width('100%').backgroundColor('#80000000')
             .onClick(() => this.showForm = false);
           this.AddForm();
         }
