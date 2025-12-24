@@ -1,6 +1,6 @@
 import promptAction from '@ohos.promptAction';
-import { Memories } from './pages/Memories';
-import { Settings } from './pages/Settings';
+import { Memories } from './Memories';
+import { Settings } from './Settings';
 
 type MemoryType = 'countdown' | 'anniversary';
 interface MemoryItem {
@@ -61,6 +61,12 @@ struct Index {
 
   private getMemories(): number {
     return this.events.filter(i => this.daysDiff(i.date) < 0).length;
+  }
+
+  // Compute overlay height for modal so it doesn't cover the bottom tab bar
+  private getOverlayHeight(): string {
+    const totalBarHeight = this.tabBarBaseHeight + this.bottomInset;
+    return `calc(100% - ${totalBarHeight}px)`;
   }
 
   private addItem(): void {
@@ -204,9 +210,9 @@ struct Index {
   @Builder
   private TabBuilder(title: string, targetIndex: number, normalImg?: Resource, selectedImg?: Resource){
     Column() {
-      // 选中态上方高亮条
+      // 选中态上方高亮条（使用 Blank 替代不可用的 Box）
       Column() {
-        Box().height(3).width('36px').borderRadius(2).backgroundColor(this.currentIndex == targetIndex ? '#1677FF' : 'transparent').align(Alignment.Center);
+        Blank().height(3).width('36px').borderRadius(2).backgroundColor(this.currentIndex == targetIndex ? '#1677FF' : 'transparent').align(Alignment.Center);
       }
       .height(6)
       .width('100%')
@@ -309,8 +315,7 @@ struct Index {
       // 弹窗：遮罩高度保留底部 TabBar（64px）
       if (this.showForm) {
         Column() {
-          const totalBarHeight = this.tabBarBaseHeight + this.bottomInset;
-          Blank().height(`calc(100% - ${totalBarHeight}px)`).width('100%').backgroundColor('#80000000')
+          Blank().height(this.getOverlayHeight()).width('100%').backgroundColor('#80000000')
             .onClick(() => this.showForm = false);
           this.AddForm();
         }
