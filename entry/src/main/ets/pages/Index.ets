@@ -43,10 +43,10 @@ struct Index {
               // Single Image with dynamic source (shown as circle via borderRadius)
               Image(this.imageSource())
                 .id('headerImage')
-                .width(150)
-                .height(150)
+                .width(320)
+                .height(190)
                 .objectFit(ImageFit.Cover)
-                .borderRadius(75)
+                .borderRadius(15)
                 .align(Alignment.Center)
                 .onClick(() => {
                   this.pickHeaderImage();
