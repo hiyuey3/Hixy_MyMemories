@@ -1,0 +1,176 @@
+import { relationalStore } from '@kit.ArkData'
+import { BusinessError } from '@kit.BasicServicesKit'
+
+
+/**
+ * Memory 模型：表示一条记忆 / 任务记录
+ * - 保持与现有数据库表字段兼容（id, task_name, finished）
+ * - 可以在对象级别携带额外可选字段（content, createdAt）以便扩展
+ */
+export class Memory {
+  id: number
+  title: string
+  finished: boolean
+  content?: string
+  createdAt?: number
+
+  constructor(id: number, title: string, finished: boolean, content?: string, createdAt?: number) {
+    this.id = id
+    this.title = title
+    this.finished = finished
+    this.content = content
+    this.createdAt = createdAt
+  }
+
+}
+
+class MemoryDBUtils {
+  // 定义数据库变量
+  private rdbStore: relationalStore.RdbStore | null = null
+
+  // 初始化数据库
+  // 包括两个参数:
+  //   context: 上下文对象
+  //   tabelName: 数据库名称
+  initMemoryDB(context: Context, tableName: string) {
+    // (1) 初始化数据库配置
+    const STORE_CONFIG: relationalStore.StoreConfig = {
+      name: 'hixy.db', // 数据库文件名
+      securityLevel: relationalStore.SecurityLevel.S1 // 数据库安全级别
+    }
+
+    // (2) 定义SQL语句
+    const SQL_CREATE_TABLE = `create table if not exists ${tableName} (
+      id integer primary key autoincrement,
+      task_name text not null,
+      finished boolean
+    )`
+
+    // (3) 初始化数据库
+    relationalStore.getRdbStore(context, STORE_CONFIG, (err, store) => {
+      if (err) {
+        console.log(`获取taskdb失败, code: ${err.code}, message: ${err.message}`)
+        return
+      }
+
+      console.log('创建按rdbStore成功')
+      this.rdbStore = store
+      this.rdbStore.executeSql(SQL_CREATE_TABLE, (err) => {
+        if (!err) {
+          console.log(`创建${tableName}成功`)
+        } else {
+          console.log(`创建${tableName}失败`)
+        }
+      })
+    })
+  }
+
+  // 将数据插入到数据库
+  // 两个参数: tableName: 数据库名称, value:添加至数据库的值
+  insertMemory(tableName: string, value: relationalStore.ValuesBucket) {
+    if (this.rdbStore !== null) {
+      this.rdbStore.insert(tableName, value, (err: BusinessError, _rowId: number) => {
+        if (err) {
+          console.log(`${tableName}数据库表数据添加失败`)
+          return
+        }
+        console.log(`${tableName}表数据添加成功`)
+      })
+    }
+  }
+
+  // 查询数据并返回 Memory[]
+  async queryMemories(tableName: string, column: Array<string>): Promise<Memory[]> {
+    if (this.rdbStore === null) {
+      return []
+    }
+
+    try {
+      let p1 = new relationalStore.RdbPredicates(tableName)
+      const resultSet = await (this.rdbStore as relationalStore.RdbStore).query(p1, column)
+      let memories: Memory[] = []
+
+      try {
+        // 使用与创建表时一致的列名: id, task_name, finished
+        for (;;) {
+          // 把可能抛异常的调用放在 try/catch 中，避免在循环条件中直接调用
+          let hasNext: boolean
+          try {
+            hasNext = resultSet.goToNextRow()
+          } catch (rowErr) {
+            console.log(`遍历resultSet时出错: ${rowErr}`)
+            break
+          }
+
+          if (!hasNext) {
+            break
+          }
+
+          try {
+            // 注意数据库中的列名为小写 'id' / 'task_name' / 'finished'
+            const idIndex = resultSet.getColumnIndex('id')
+            const nameIndex = resultSet.getColumnIndex('task_name')
+            const finishedIndex = resultSet.getColumnIndex('finished')
+
+            const memoryId = idIndex >= 0 ? resultSet.getLong(idIndex) : 0
+            const title = nameIndex >= 0 ? resultSet.getString(nameIndex) : ''
+            const finishedVal = finishedIndex >= 0 ? resultSet.getLong(finishedIndex) : 0
+
+            // 将数据库列映射到 Memory 对象：task_name -> title
+            memories.push(new Memory(memoryId, title, !!finishedVal))
+          } catch (parseErr) {
+            // 读取当前行时出现异常，记录并继续下一行
+            console.log(`读取resultSet行数据失败: ${parseErr}`)
+            continue
+          }
+        }
+
+        console.log(`数据库查询结果${JSON.stringify(memories)}`)
+        return memories
+      } finally {
+        // 确保 resultSet 始终关闭，任何异常都在外层捕获
+        try {
+          resultSet.close()
+        } catch (closeErr) {
+          console.log(`关闭resultSet失败: ${closeErr}`)
+        }
+      }
+    } catch (err) {
+      console.log(`查询数据库失败: ${err}`)
+      return []
+    }
+  }
+
+  deleteMemoryById(tableName: string, memoryId: number) {
+    let p1 = new relationalStore.RdbPredicates(tableName)
+    // 使用表中真实列名 'id'
+    p1.equalTo('id', memoryId)
+    if (this.rdbStore) {
+      this.rdbStore.delete(p1, (err: BusinessError, rows: number) => {
+        if (err) {
+          console.log(`删除记忆失败${err.message}`)
+          return
+        }
+        console.log(`删除记忆成功,影响行数${rows}`)
+      })
+    }
+
+  }
+
+  updateMemoryById(tableName: string, memoryId: number, value: relationalStore.ValuesBucket) {
+    let p1 = new relationalStore.RdbPredicates(tableName)
+    // 使用表中真实列名 'id'
+    p1.equalTo('id', memoryId)
+    if (this.rdbStore) {
+      this.rdbStore.update(value, p1, (err: BusinessError, rows: number) => {
+        if (err) {
+          console.log(`更新记忆失败${err.message}`)
+          return
+        }
+        console.log(`更新记忆成功,影响行数${rows}`)
+      })
+    }
+  }
+}
+// 导出数据库工具实例（Memory 相关）
+export const MemoryDBUtil = new MemoryDBUtils()

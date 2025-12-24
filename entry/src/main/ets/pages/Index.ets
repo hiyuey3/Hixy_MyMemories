@@ -89,6 +89,16 @@ struct Index {
             Row() {
               Button('+ 新增事件')
                 .type(ButtonType.Capsule)
+                // 添加阴影
+                .shadow({
+                  radius: 6,
+                  color: '#1A000000',
+                  offsetX: -4,
+                  offsetY: 10
+                })
+                .borderColor(Color.White)
+                .borderStyle(BorderStyle.Solid)
+                .borderWidth(2)
                 .backgroundColor(Color.Pink)
                 .fontColor('#fff')
                 .width('70%')
@@ -107,7 +117,8 @@ struct Index {
           }
           .width('100%')
           .height('100%')
-          .backgroundColor('#F7F8FA');
+          // .backgroundColor('#F7F8FA');
+          .backgroundColor(Color.Pink);
         }
         .tabBar(this.TabBuilder('首页', 0));
 
