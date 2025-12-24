@@ -1,36 +1,26 @@
-import MemoryStore from '../store/MemoryStore';
 import router from '@system.router';
-import { MemoryItem } from '../types/MemoryTypes';
+import { MemoryItem, MemoryType } from '../types/MemoryTypes';
 import promptAction from '@ohos.promptAction';
-import { MemoryDBUtil } from '../utils/MemDBUtils';
+import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
+import { relationalStore } from '@kit.ArkData';
 
 @Entry
 @Component
 export struct ManageMemories {
   @State events: MemoryItem[] = [];
-  private unsub: (() => void) | null = null;
+  // no MemoryStore subscription; refresh from DB on lifecycle hooks
 
   onInit(): void {
-    // MemoryStore may be initialized elsewhere (EntryAbility); just load current events
+    // Load from DB at start
     this.loadEvents();
-
-    // subscribe to store updates
-    try {
-      this.unsub = MemoryStore.subscribe(() => {
-        this.loadEvents();
-      });
-    } catch (e) {
-    }
   }
 
   onDestroy(): void {
-    if (this.unsub) {
-      try {
-        this.unsub();
-      } catch (e) {
-      }
-      this.unsub = null;
-    }
+    // no-op
+  }
+
+  onShow(): void {
+    this.loadEvents();
   }
 
   build() {
@@ -88,9 +78,17 @@ export struct ManageMemories {
     .backgroundColor('#F7F8FA');
   }
 
-  private loadEvents(): void {
+  private async loadEvents(): Promise<void> {
     try {
-      this.events = MemoryStore.getEvents();
+      const cols: string[] = ['id', 'task_name', 'finished'];
+      const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
+      this.events = (rows || []).map((r: Memory) => {
+        const id: number = r.id ?? 0;
+        const title: string = r.title ?? '';
+        const date: Date = new Date();
+        const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
+        return { id, title, date, type } as MemoryItem;
+      });
     } catch (err) {
       console.log(`加载记忆失败: ${err}`);
       this.events = [];
@@ -101,10 +99,7 @@ export struct ManageMemories {
     try {
       router.push({ uri: 'pages/AddMemory' });
     } catch (e) {
-      try {
-        promptAction.showToast({ message: '无法跳转到新增页面' });
-      } catch (e) {
-      }
+      try { promptAction.showToast({ message: '无法跳转到新增页面' }); } catch (e) {}
       console.error('跳转 AddMemory 失败', e);
     }
   }
@@ -114,34 +109,19 @@ export struct ManageMemories {
       AppStorage.Set<number>('selectedId', item.id);
       router.push({ uri: 'pages/EditMemory' });
     } catch (e) {
-      try {
-        promptAction.showToast({ message: '无法跳转到编辑页面' });
-      } catch (e) {
-      }
+      try { promptAction.showToast({ message: '无法跳转到编辑页面' }); } catch (e) {}
       console.error('跳转 EditMemory 失败', e);
     }
   }
 
   private async onDelete(id: number): Promise<void> {
     try {
-      // call delete without awaiting (MemoryStore type may be non-Promise in ambient typings)
-      try {
-        MemoryStore.deleteEvent(id);
-      } catch (e) {
-        console.error('调用 deleteEvent 失败', e);
-      }
-      // refresh local view immediately
-      this.loadEvents();
-      try {
-        promptAction.showToast({ message: '已删除' });
-      } catch (e) {
-      }
+      try { await MemoryDBUtil.deleteMemoryById('memories', id); } catch (e) { console.error('DB delete failed', e); }
+      await this.loadEvents();
+      try { promptAction.showToast({ message: '已删除' }); } catch (e) {}
     } catch (err) {
       console.error('删除失败', err);
-      try {
-        promptAction.showToast({ message: '删除失败' });
-      } catch (e) {
-      }
+      try { promptAction.showToast({ message: '删除失败' }); } catch (e) {}
     }
   }
 
@@ -151,53 +131,43 @@ export struct ManageMemories {
       const m = `${d.getMonth() + 1}`.padStart(2, '0');
       const day = `${d.getDate()}`.padStart(2, '0');
       return `${y}-${m}-${day}`;
-    } catch (e) {
-      return ''
-    }
+    } catch (e) { return '' }
   }
 
-  // Debug helper: write a test row and query DB
+  // Debug helper: write a test row and query DB using MemDBUtils directly
   private async testWrite(): Promise<void> {
-    const sample: MemoryItem = {
-      id: Date.now(),
-      title: `Test ${Date.now()}`,
-      date: new Date(),
-      type: 'countdown'
-    };
+    const title = `Test ${Date.now()}`;
     try {
-      const addFn = (MemoryStore.addEvent as (it: MemoryItem) => Promise<void> | void);
-      const possible = addFn(sample);
-      if (possible && (possible as Promise<void>).then) {
-        await (possible as Promise<void>);
+      const vb: relationalStore.ValuesBucket = { task_name: title, finished: 0 } as relationalStore.ValuesBucket;
+      const rowId: number = await MemoryDBUtil.insertMemory('memories', vb);
+      if (rowId && rowId > 0) {
+        try { promptAction.showToast({ message: `写入成功 id=${rowId}` }); } catch (e) {}
       }
     } catch (e) {
-      console.error('testWrite: addEvent failed', e);
-      try {
-        promptAction.showToast({ message: '写入失败 (addEvent)' });
-      } catch (e) {
-      }
+      console.error('testWrite: DB insert failed', e);
+      try { promptAction.showToast({ message: '写入失败 (DB insert)' }); } catch (e2) {}
       return;
     }
 
     try {
       // small delay to let DB operation complete
       await new Promise<void>((resolve) => setTimeout(resolve, 500));
-      const cols = ['id', 'task_name', 'finished'];
-      const rows = await MemoryDBUtil.queryMemories('memories', cols);
+      const cols: string[] = ['id', 'task_name', 'finished'];
+      const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
       const cnt = rows ? rows.length : 0;
-      try {
-        promptAction.showToast({ message: `测试写入完成，DB 行数: ${cnt}` });
-      } catch (e) {
-      }
+      try { promptAction.showToast({ message: `测试写入完成，DB 行数: ${cnt}` }); } catch (e) {}
       console.log('testWrite: query rows:', rows);
-      // refresh UI
-      this.loadEvents();
+      // refresh UI from DB rows
+      this.events = (rows || []).map((r: Memory) => {
+        const id: number = r.id ?? 0;
+        const t: string = r.title ?? '';
+        const date: Date = new Date();
+        const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
+        return { id, title: t, date, type } as MemoryItem;
+      });
     } catch (e) {
       console.error('testWrite: query failed', e);
-      try {
-        promptAction.showToast({ message: '查询失败' });
-      } catch (e) {
-      }
+      try { promptAction.showToast({ message: '查询失败' }); } catch (e2) {}
     }
   }
 }

@@ -1,6 +1,5 @@
 import { Settings } from './Settings';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
-import MemoryStore from '../store/MemoryStore';
 import router from '@system.router';
 import { About } from './About';
 import { MemoryItem, MemoryType } from '../types/MemoryTypes';
@@ -17,42 +16,23 @@ struct Index {
   // Persisted header image uri
   @State headerImagePath: string = '';
   private tabsController: TabsController = new TabsController();
-  private unsub: (() => void) | null = null;
 
   onInit(): void {
     // Initialize DB and load events
     this.loadHeaderImage();
     this.loadEvents();
-    // subscribe to store changes to update UI immediately
-    try {
-      this.unsub = MemoryStore.subscribe(() => {
-        // Immediately reflect in-memory store changes
-        try {
-          this.events = MemoryStore.getEvents();
-        } catch (e) {
-          // no-op
-        }
-        // Then refresh from DB shortly to align with persisted data
-        try {
-          setTimeout(() => { this.loadEvents(); }, 300);
-        } catch (e) {}
-      });
-    } catch (e) {
-      console.error('Index: subscribe failed', e);
-    }
+    // If Add page set needsReload flag, refresh again shortly after init
+    try { if (AppStorage.Get<boolean>('needsReload')) { AppStorage.Set<boolean>('needsReload', false); setTimeout(() => this.loadEvents(), 300); } } catch (e) {}
   }
 
   onShow(): void {
-    // Reload events in case other pages changed the DB
+    // Reload events whenever page is shown
     this.loadEvents();
+    // needsReload hint
+    try { if (AppStorage.Get<boolean>('needsReload')) { AppStorage.Set<boolean>('needsReload', false); setTimeout(() => this.loadEvents(), 300); } } catch (e) {}
   }
 
-  onDestroy(): void {
-    if (this.unsub) {
-      try { this.unsub(); } catch (e) {}
-      this.unsub = null;
-    }
-  }
+  onDestroy(): void {}
 
   // Image picking feature removed: header image may still be set via resources or persistent path.
 
@@ -241,12 +221,8 @@ struct Index {
           return { id, title, date, type } as MemoryItem;
         });
       } else {
-        // If DB is empty or not ready, fall back to in-memory store so UI shows recent additions
-        try {
-          this.events = MemoryStore.getEvents();
-        } catch (e) {
-          this.events = [];
-        }
+        // DB returned empty; show empty list (no MemoryStore fallback per requirement)
+        this.events = [];
       }
     } catch (err) {
       console.log(`加载记忆列表失败: ${err}`);

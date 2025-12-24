@@ -1,7 +1,7 @@
-import MemoryStore from '../store/MemoryStore';
-import { MemoryItem } from '../types/MemoryTypes';
+ import { MemoryItem, MemoryType } from '../types/MemoryTypes';
 import router from '@system.router';
 import { GenericRouterPushParam } from '../types/NavigationTypes';
+import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 
 @Component
 export struct EventDetail {
@@ -12,32 +12,35 @@ export struct EventDetail {
 
   // 生命周期：初始化时从 store 取出被选中的事件
   onInit(): void {
-    const id = MemoryStore.getSelected();
+    const id = AppStorage.Get<number>('selectedId');
     this.itemId = id;
-    if (id) this.item = MemoryStore.getEventById(id);
+    if (id) this.loadFromDb(id);
+  }
+
+  private async loadFromDb(id: number): Promise<void> {
+    try {
+      const cols: string[] = ['id', 'task_name', 'finished'];
+      const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
+      const row = (rows || []).find(r => (r.id ?? 0) === id);
+      if (!row) return;
+      const date = new Date();
+      const type: MemoryType = row.finished ? 'anniversary' : 'countdown';
+      this.item = { id: row.id ?? id, title: row.title ?? '', date, type } as MemoryItem;
+    } catch (e) { console.error('EventDetail.loadFromDb failed', e); }
   }
 
   // 跳转到编辑页面（保持简单：仅传入 uri）
   private goEdit(): void {
     if (!this.itemId) return;
     const param: GenericRouterPushParam = { uri: 'pages/EditMemory' };
-    try {
-      router.push(param);
-    } catch (e) {
-      // 仅打印，不阻塞 UI
-      console.warn(e);
-    }
+    try { router.push(param); } catch (e) { console.warn(e); }
   }
 
   // 删除当前事件并返回上一级
-  private doDelete(): void {
+  private async doDelete(): Promise<void> {
     if (!this.itemId) return;
-    MemoryStore.deleteEvent(this.itemId);
-    try {
-      router.back();
-    } catch (e) {
-      console.warn(e);
-    }
+    try { await MemoryDBUtil.deleteMemoryById('memories', this.itemId); } catch (e) { console.error(e); }
+    try { router.back(); } catch (e) { console.warn(e); }
   }
 
   // 渲染函数：展示事件详情或未找到提示

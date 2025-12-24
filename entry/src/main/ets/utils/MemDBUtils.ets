@@ -30,6 +30,21 @@ class MemoryDBUtils {
   // Promise resolved when rdbStore becomes available
   private readyPromise: Promise<void> = Promise.resolve()
   private readyResolve?: () => void
+  private lastInitTable?: string
+  // Lightweight change listeners so pages can react to DB changes
+  private listeners: Array<() => void> = []
+  private notifyChange(): void {
+    for (const cb of this.listeners) {
+      try { cb() } catch (e) { console.log('MemDBUtils listener error', e) }
+    }
+  }
+  subscribe(cb: () => void): () => void {
+    this.listeners.push(cb)
+    return () => {
+      const i = this.listeners.indexOf(cb)
+      if (i >= 0) this.listeners.splice(i, 1)
+    }
+  }
 
   // 初始化数据库
   // 包括两个参数:
@@ -38,6 +53,7 @@ class MemoryDBUtils {
   initMemoryDB(context: Context, tableName: string) {
     // create a readiness promise that callers can await
     this.readyPromise = new Promise<void>((resolve) => { this.readyResolve = resolve })
+    this.lastInitTable = tableName
     // (1) 初始化数据库配置
     const STORE_CONFIG: relationalStore.StoreConfig = {
       name: 'hixy.db', // 数据库文件名
@@ -62,13 +78,16 @@ class MemoryDBUtils {
 
       console.log('创建按rdbStore成功')
       this.rdbStore = store
-      // signal ready
-      if (this.readyResolve) { this.readyResolve() }
+      // create table then resolve readiness (avoid racing before table exists)
       this.rdbStore.executeSql(SQL_CREATE_TABLE, (err) => {
         if (!err) {
           console.log(`创建${tableName}成功`)
+          // signal ready only after table creation
+          if (this.readyResolve) { this.readyResolve() }
         } else {
           console.log(`创建${tableName}失败`)
+          // still resolve to avoid deadlock; subsequent ops will log rdbStore present but table errors
+          if (this.readyResolve) { this.readyResolve() }
         }
       })
     })
@@ -94,6 +113,8 @@ class MemoryDBUtils {
             return
           }
           console.log(`${tableName}表数据添加成功, rowId: ${rowId}`)
+          // notify listeners that DB content changed
+          try { this.notifyChange() } catch (_) {}
           resolve(rowId)
         })
       } catch (callErr) {
@@ -112,6 +133,8 @@ class MemoryDBUtils {
 
     try {
       let p1 = new relationalStore.RdbPredicates(tableName)
+      // Return newest first so UI shows recent additions on top
+      try { p1.orderByDesc('id') } catch (e) { /* some SDKs may not support orderByDesc */ }
       const resultSet = await (this.rdbStore as relationalStore.RdbStore).query(p1, column)
       let memories: Memory[] = []
 
@@ -150,7 +173,7 @@ class MemoryDBUtils {
           }
         }
 
-        console.log(`数据库查询结果${JSON.stringify(memories)}`)
+        console.log(`数据库查询结果(${memories.length}条) ${JSON.stringify(memories)}`)
         return memories
       } finally {
         // 确保 resultSet 始终关闭，任何异常都在外层捕获
@@ -187,6 +210,7 @@ class MemoryDBUtils {
             return
           }
           console.log(`删除记忆成功,影响行数${rows}`)
+          if (rows > 0) { try { this.notifyChange() } catch (_) {} }
           resolve(rows)
         })
       } catch (callErr) {
@@ -217,6 +241,7 @@ class MemoryDBUtils {
             return
           }
           console.log(`更新记忆成功,影响行数${rows}`)
+          if (rows > 0) { try { this.notifyChange() } catch (_) {} }
           resolve(rows)
         })
       } catch (callErr) {
