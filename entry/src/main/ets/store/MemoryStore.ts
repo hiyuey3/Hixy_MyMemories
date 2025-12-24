@@ -1,5 +1,5 @@
 type MemoryType = 'countdown' | 'anniversary';
-interface MemoryItem {
+export interface MemoryItem {
   id: number;
   title: string;
   date: Date;
@@ -11,20 +11,39 @@ const listeners: Array<() => void> = [];
 let events: MemoryItem[] = [
   { id: 1, title: '生日', date: new Date('2025-06-18'), type: 'anniversary' },
   { id: 2, title: '假期出发', date: new Date('2025-10-01'), type: 'countdown' },
-  { id: 3, title: '相识纪念', date: new Date('2024-12-12'), type: 'anniversary' },
-  { id: 4, title: '相识纪念', date: new Date('2024-12-12'), type: 'countdown' },
-  { id: 5, title: '毕业纪念', date: new Date('2026-06-30'), type: 'anniversary' },
-  { id: 6, title: '新年倒计时', date: new Date('2025-01-01'), type: 'countdown' },
-  { id: 7, title: '结婚纪念日', date: new Date('2025-09-15'), type: 'anniversary' },
+  { id: 3, title: '相识纪念', date: new Date('2024-12-12'), type: 'anniversary' }
 ];
+let selectedId: number | undefined = undefined;
+
+function notify() {
+  for (const cb of listeners) cb();
+}
 
 export default {
   getEvents(): MemoryItem[] {
     return [...events];
   },
+  getEventById(id: number): MemoryItem | undefined {
+    return events.find(e => e.id === id);
+  },
   addEvent(item: MemoryItem) {
     events = [item, ...events];
-    for (const cb of listeners) cb();
+    notify();
+  },
+  updateEvent(item: MemoryItem) {
+    events = events.map(e => e.id === item.id ? item : e);
+    notify();
+  },
+  deleteEvent(id: number) {
+    events = events.filter(e => e.id !== id);
+    if (selectedId === id) selectedId = undefined;
+    notify();
+  },
+  setSelected(id?: number) {
+    selectedId = id;
+  },
+  getSelected(): number | undefined {
+    return selectedId;
   },
   subscribe(cb: () => void) {
     listeners.push(cb);
@@ -34,4 +53,3 @@ export default {
     };
   }
 };
-

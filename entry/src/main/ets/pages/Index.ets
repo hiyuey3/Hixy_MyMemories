@@ -193,7 +193,19 @@ struct Index {
           Column({ space: 12 }) {
             List({ space: 10 }) {
               ForEach(this.sorted(), (item: MemoryItem) => {
-                ListItem() { this.EventCard(item); }
+                ListItem() {
+                  Column() {
+                    this.EventCard(item);
+                  }
+                  .onClick(() => {
+                    MemoryStore.setSelected(item.id);
+                    try {
+                      router.push({ uri: 'pages/EventDetail' });
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  });
+                }
               })
             }
             .edgeEffect(EdgeEffect.None)
