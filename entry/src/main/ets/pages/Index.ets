@@ -11,7 +11,6 @@ struct Index {
   // Use store as the single source of truth for events
   @State events: MemoryItem[] = MemoryStore.getEvents();
   @State currentIndex: number = 0;
-
   private tabsController: TabsController = new TabsController();
 
   private formatDate(d: Date): string {
@@ -57,14 +56,21 @@ struct Index {
       Column({ space: 6 }) {
         Text(item.title).fontSize(18).fontWeight(FontWeight.Medium).fontColor('#111');
         Text(this.formatDate(item.date)).fontSize(13).fontColor('#666');
-        Text(this.daysDiff(item.date) >= 0 ? `还有 ${this.daysDiff(item.date)} 天` : `已过 ${Math.abs(this.daysDiff(item.date))} 天`)
+        Text(this.daysDiff(item.date) >= 0 ? `还有 ${this.daysDiff(item.date)} 天` :
+          `已过 ${Math.abs(this.daysDiff(item.date))} 天`)
           .fontSize(14)
           .fontColor(this.daysDiff(item.date) >= 0 ? '#1677FF' : '#FF7A45');
       }
+
       Text(item.type === 'countdown' ? '倒数' : '纪念')
         .fontSize(12)
         .fontColor('#fff')
-        .padding({ left: 10, right: 10, top: 4, bottom: 4 })
+        .padding({
+          left: 10,
+          right: 10,
+          top: 4,
+          bottom: 4
+        })
         .backgroundColor(item.type === 'countdown' ? '#1677FF' : '#FF7A45')
         .borderRadius(12);
     }
@@ -73,13 +79,19 @@ struct Index {
     .backgroundColor($r('app.color.start_window_background'))
     .borderRadius(14)
     .width('100%')
-    .shadow({ radius: 8, color: '#1A000000', offsetX: 0, offsetY: 4 });
+    .shadow({
+      radius: 8,
+      color: '#1A000000',
+      offsetX: 0,
+      offsetY: 4
+    });
   }
 
   @Builder
   private TabBuilder(title: string, targetIndex: number, normalImg?: Resource, selectedImg?: Resource) {
     Column() {
-      Image(normalImg ? (this.currentIndex == targetIndex ? selectedImg ?? normalImg : normalImg) : $r('app.media.startIcon'))
+      Image(normalImg ? (this.currentIndex == targetIndex ? selectedImg ?? normalImg : normalImg) :
+        $r('app.media.startIcon'))
         .width(24)
         .height(24)
         .align(Alignment.Center);
@@ -140,7 +152,12 @@ struct Index {
                 .borderRadius(12);
               }
             }
-            .padding({ left: 18, right: 18, top: 20, bottom: 12 });
+            .padding({
+              left: 18,
+              right: 18,
+              top: 20,
+              bottom: 12
+            });
 
             List({ space: 10 }) {
               ForEach(this.sorted(), (item: MemoryItem) => {
@@ -213,11 +230,15 @@ struct Index {
         .tabBar(this.TabBuilder('记忆', 1, $r('app.media.foreground')));
 
         // Settings tab
-        TabContent() { Settings() }
+        TabContent() {
+          Settings()
+        }
         .tabBar(this.TabBuilder('设置', 2, $r('app.media.foreground')));
 
         // About tab
-        TabContent() { About() }
+        TabContent() {
+          About()
+        }
         .tabBar(this.TabBuilder('关于', 3, $r('app.media.foreground')));
 
       }
