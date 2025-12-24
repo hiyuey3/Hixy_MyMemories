@@ -27,12 +27,17 @@ export class Memory {
 class MemoryDBUtils {
   // 定义数据库变量
   private rdbStore: relationalStore.RdbStore | null = null
+  // Promise resolved when rdbStore becomes available
+  private readyPromise: Promise<void> = Promise.resolve()
+  private readyResolve?: () => void
 
   // 初始化数据库
   // 包括两个参数:
   //   context: 上下文对象
   //   tabelName: 数据库名称
   initMemoryDB(context: Context, tableName: string) {
+    // create a readiness promise that callers can await
+    this.readyPromise = new Promise<void>((resolve) => { this.readyResolve = resolve })
     // (1) 初始化数据库配置
     const STORE_CONFIG: relationalStore.StoreConfig = {
       name: 'hixy.db', // 数据库文件名
@@ -50,11 +55,15 @@ class MemoryDBUtils {
     relationalStore.getRdbStore(context, STORE_CONFIG, (err, store) => {
       if (err) {
         console.log(`获取taskdb失败, code: ${err.code}, message: ${err.message}`)
+        // resolve readiness to avoid deadlocks; operations will still fail due to null rdbStore
+        if (this.readyResolve) { this.readyResolve() }
         return
       }
 
       console.log('创建按rdbStore成功')
       this.rdbStore = store
+      // signal ready
+      if (this.readyResolve) { this.readyResolve() }
       this.rdbStore.executeSql(SQL_CREATE_TABLE, (err) => {
         if (!err) {
           console.log(`创建${tableName}成功`)
@@ -65,22 +74,29 @@ class MemoryDBUtils {
     })
   }
 
-  // 将数据插入到数据库
-  // 两个参数: tableName: 数据库名称, value:添加至数据库的值
-  insertMemory(tableName: string, value: relationalStore.ValuesBucket) {
-    if (this.rdbStore !== null) {
-      this.rdbStore.insert(tableName, value, (err: BusinessError, _rowId: number) => {
+  // 将数据插入到数据库，返回 Promise<rowId>
+  async insertMemory(tableName: string, value: relationalStore.ValuesBucket): Promise<number> {
+    await this.readyPromise
+    return new Promise<number>((resolve, reject) => {
+      if (!this.rdbStore) {
+        reject(new Error('rdbStore is null'))
+        return
+      }
+      this.rdbStore.insert(tableName, value, (err: BusinessError, rowId: number) => {
         if (err) {
-          console.log(`${tableName}数据库表数据添加失败`)
+          console.log(`${tableName}数据库表数据添加失败: ${err.message}`)
+          reject(err)
           return
         }
-        console.log(`${tableName}表数据添加成功`)
+        console.log(`${tableName}表数据添加成功, rowId: ${rowId}`)
+        resolve(rowId)
       })
-    }
+    })
   }
 
   // 查询数据并返回 Memory[]
   async queryMemories(tableName: string, column: Array<string>): Promise<Memory[]> {
+    await this.readyPromise
     if (this.rdbStore === null) {
       return []
     }
@@ -141,36 +157,51 @@ class MemoryDBUtils {
     }
   }
 
-  deleteMemoryById(tableName: string, memoryId: number) {
-    let p1 = new relationalStore.RdbPredicates(tableName)
-    // 使用表中真实列名 'id'
-    p1.equalTo('id', memoryId)
-    if (this.rdbStore) {
+  async deleteMemoryById(tableName: string, memoryId: number): Promise<number> {
+    await this.readyPromise
+    return new Promise<number>((resolve, reject) => {
+      const p1 = new relationalStore.RdbPredicates(tableName)
+      // 使用表中真实列名 'id'
+      p1.equalTo('id', memoryId)
+      if (!this.rdbStore) {
+        reject(new Error('rdbStore is null'))
+        return
+      }
       this.rdbStore.delete(p1, (err: BusinessError, rows: number) => {
         if (err) {
           console.log(`删除记忆失败${err.message}`)
+          reject(err)
           return
         }
         console.log(`删除记忆成功,影响行数${rows}`)
+        resolve(rows)
       })
-    }
-
+    })
   }
 
-  updateMemoryById(tableName: string, memoryId: number, value: relationalStore.ValuesBucket) {
-    let p1 = new relationalStore.RdbPredicates(tableName)
-    // 使用表中真实列名 'id'
-    p1.equalTo('id', memoryId)
-    if (this.rdbStore) {
+  async updateMemoryById(tableName: string, memoryId: number, value: relationalStore.ValuesBucket): Promise<number> {
+    await this.readyPromise
+    return new Promise<number>((resolve, reject) => {
+      const p1 = new relationalStore.RdbPredicates(tableName)
+      // 使用表中真实列名 'id'
+      p1.equalTo('id', memoryId)
+      if (!this.rdbStore) {
+        reject(new Error('rdbStore is null'))
+        return
+      }
       this.rdbStore.update(value, p1, (err: BusinessError, rows: number) => {
         if (err) {
           console.log(`更新记忆失败${err.message}`)
+          reject(err)
           return
         }
         console.log(`更新记忆成功,影响行数${rows}`)
+        resolve(rows)
       })
-    }
+    })
   }
+
 }
-// 导出数据库工具实例（Memory 相关）
+
+// 导出单例供其他模块使用
 export const MemoryDBUtil = new MemoryDBUtils()

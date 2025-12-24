@@ -2,13 +2,14 @@ import MemoryStore from '../store/MemoryStore';
 import router from '@system.router';
 import { MemoryType, MemoryItem } from '../types/MemoryTypes';
 
+@Entry
 @Component
 export struct AddMemory {
   @State title: string = '';
   @State date: Date = new Date();
   @State type: MemoryType = 'countdown';
 
-  private saveAndBack(): void {
+  private async saveAndBack(): Promise<void> {
     if (!this.title.trim()) return; // require title
     const item: MemoryItem = {
       id: Date.now(),
@@ -16,7 +17,17 @@ export struct AddMemory {
       date: new Date(this.date),
       type: this.type
     };
-    MemoryStore.addEvent(item);
+    try {
+      // MemoryStore.addEvent may be sync or async depending on compiled module; support both
+      const res = (MemoryStore.addEvent as any)(item);
+      if (res && typeof res.then === 'function') {
+        await res
+      }
+      try { promptAction.showToast({ message: '已保存' }); } catch (e) {}
+    } catch (err) {
+      console.log(`保存事件时出错: ${err}`);
+      try { promptAction.showToast({ message: '保存失败' }); } catch (e) {}
+    }
     try {
       router.back();
     } catch (e) {

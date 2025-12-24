@@ -1,67 +1,50 @@
 import { MemoryType, MemoryItem } from '../types/MemoryTypes';
-import { RDBUtils, UserInfo } from '../utils/taskUtils';
-import common from '@ohos.app.ability.common';
+import { relationalStore } from '@kit.ArkData'
+import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 export type { MemoryType, MemoryItem };
 
-interface MemoryStoreAPI {
-  init(context?: common.Context): Promise<void>;
-  getEvents(): MemoryItem[];
-  getEventById(id: number): MemoryItem | undefined;
-  addEvent(item: MemoryItem): Promise<void>;
-  updateEvent(item: MemoryItem): Promise<void>;
-  deleteEvent(id: number): Promise<void>;
-  setSelected(id?: number): void;
-  getSelected(): number | undefined;
-  subscribe(cb: () => void): () => void;
-}
+const TABLE_NAME = 'memories'
 
-class MemoryStoreClass implements MemoryStoreAPI {
+class MemoryStoreClass {
   private listeners: Array<() => void> = [];
   private events: MemoryItem[] = [
+    // 默认数据会在 DB 为空时使用
     { id: 1, title: '生日', date: new Date('2025-06-18'), type: 'anniversary' },
     { id: 2, title: '假期出发', date: new Date('2025-10-01'), type: 'countdown' },
     { id: 3, title: '相识纪念', date: new Date('2024-12-12'), type: 'anniversary' }
   ];
   private selectedId: number | undefined = undefined;
-  private dbReady = false;
-  private dbUtils: RDBUtils | null = null;
 
   private notify() {
-    for (const cb of this.listeners) cb();
+    for (const cb of this.listeners) {
+      try { cb() } catch (err) { console.log(`listener 调用出错: ${err}`) }
+    }
   }
 
-  private memoryToUserInfo(m: MemoryItem): UserInfo {
-    const u: UserInfo = {
-      id: m.id,
-      nickName: m.title,
-      createTime: m.date ? m.date.getTime() : Date.now(),
-      memo: m.note || '',
-      isSynced: true
-    };
-    return u;
-  }
-
-  private userInfoToMemory(u: UserInfo): MemoryItem {
-    return {
-      id: u.id || Date.now(),
-      title: u.nickName || '',
-      date: u.createTime ? new Date(u.createTime) : new Date(),
-      type: 'anniversary'
-    } as MemoryItem;
-  }
-
-  public async init(context?: common.Context) {
+  public async init(_context?: Context) {
+    // 初始化数据库并加载数据
     try {
-      this.dbUtils = RDBUtils.getInstance(context);
-      await this.dbUtils.initRDB();
-      this.dbReady = true;
-      const users = await this.dbUtils.listUsers();
-      if (users && users.length > 0) {
-        this.events = users.map(u => this.userInfoToMemory(u));
-        this.notify();
+      if (_context) {
+        MemoryDBUtil.initMemoryDB(_context, TABLE_NAME)
+      } else {
+        console.log('MemoryStore.init: no context provided, skipping DB init')
       }
-    } catch (e) {
-      console.warn('初始化 RDB 失败，继续使用内存存储:', e);
+       // 查询 DB，若有数据则覆盖内存数据
+      const cols = ['id', 'task_name', 'finished']
+      const rows: Memory[] = await MemoryDBUtil.queryMemories(TABLE_NAME, cols)
+      if (rows && rows.length > 0) {
+        this.events = rows.map(r => {
+          // 将 DB 的 Memory (id, title, finished) 映射为 MemoryItem
+          const id: number = r.id ?? 0
+          const title: string = r.title ?? ''
+          // 无法从 DB 恢复 date/type，这里使用占位：date 为当前时间，type 根据 finished 推断
+          const date = new Date()
+          const type: MemoryType = r.finished ? 'anniversary' : 'countdown'
+          return { id, title, date, type } as MemoryItem
+        })
+      }
+    } catch (err) {
+      console.log(`初始化 MemoryStore 时发生错误: ${err}`)
     }
   }
 
@@ -73,44 +56,48 @@ class MemoryStoreClass implements MemoryStoreAPI {
     return this.events.find(e => e.id === id);
   }
 
-  public async addEvent(item: MemoryItem) {
-    if (this.dbReady && this.dbUtils) {
-      const user: UserInfo = this.memoryToUserInfo(item);
-      try {
-        const newId = await this.dbUtils.insertUser(user);
-        item.id = newId;
-      } catch (e) {
-        console.warn('写入数据库失败，继续使用内存缓存:', e);
+  public async addEvent(item: MemoryItem): Promise<void> {
+    // 插入到 DB：把 title -> task_name，finished 用 type 进行简单映射
+    const finishedVal: number = item.type === 'anniversary' ? 1 : 0
+    const vb: relationalStore.ValuesBucket = { task_name: item.title, finished: finishedVal }
+    try {
+      const rowId: number = await MemoryDBUtil.insertMemory(TABLE_NAME, vb)
+      if (rowId && rowId > 0) {
+        item.id = rowId
       }
+    } catch (err) {
+      console.log(`向 DB 插入记忆失败: ${err}`)
+      // 仍然继续，将项放入内存以便 UI 立即可见
     }
-    this.events = [item, ...this.events];
-    this.notify();
+
+    // 同步内存并通知
+    this.events = [item, ...this.events]
+    this.notify()
   }
 
-  public async updateEvent(item: MemoryItem) {
-    if (this.dbReady && this.dbUtils) {
-      const user: UserInfo = this.memoryToUserInfo(item);
-      try {
-        await this.dbUtils.updateUser(user);
-      } catch (e) {
-        console.warn('更新数据库失败:', e);
-      }
+  public async updateEvent(item: MemoryItem): Promise<void> {
+    const finishedVal: number = item.type === 'anniversary' ? 1 : 0
+    const vb: relationalStore.ValuesBucket = { task_name: item.title, finished: finishedVal }
+    try {
+      await MemoryDBUtil.updateMemoryById(TABLE_NAME, item.id, vb)
+    } catch (err) {
+      console.log(`更新 DB 中记忆失败: ${err}`)
     }
-    this.events = this.events.map(e => e.id === item.id ? item : e);
-    this.notify();
+
+    this.events = this.events.map(e => e.id === item.id ? item : e)
+    this.notify()
   }
 
-  public async deleteEvent(id: number) {
-    if (this.dbReady && this.dbUtils) {
-      try {
-        await this.dbUtils.deleteUser(id);
-      } catch (e) {
-        console.warn('删除数据库记录失败:', e);
-      }
+  public async deleteEvent(id: number): Promise<void> {
+    try {
+      await MemoryDBUtil.deleteMemoryById(TABLE_NAME, id)
+    } catch (err) {
+      console.log(`从 DB 删除记忆失败: ${err}`)
     }
-    this.events = this.events.filter(e => e.id !== id);
-    if (this.selectedId === id) this.selectedId = undefined;
-    this.notify();
+
+    this.events = this.events.filter(e => e.id !== id)
+    if (this.selectedId === id) this.selectedId = undefined
+    this.notify()
   }
 
   public setSelected(id?: number) {

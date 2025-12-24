@@ -1,27 +1,31 @@
 import { Settings } from './Settings';
-import MemoryStore from '../store/MemoryStore';
+import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import router from '@system.router';
 import { About } from './About';
-import { MemoryItem } from '../types/MemoryTypes';
+import { MemoryItem, MemoryType } from '../types/MemoryTypes';
+import promptAction from '@ohos.promptAction';
 
 
 @Entry
 @Component
 struct Index {
-  // Use store as the single source of truth for events
-  @State events: MemoryItem[] = MemoryStore.getEvents();
+  // events loaded from DB via MemoryDBUtil
+  @State events: MemoryItem[] = [];
   @State currentIndex: number = 0;
+  @State addFeedback: string = '';
   // Persisted header image uri
   @State headerImagePath: string = '';
   private tabsController: TabsController = new TabsController();
 
   onInit(): void {
-    // Keep the list in sync when other pages update the store
-    MemoryStore.subscribe(() => {
-      this.events = MemoryStore.getEvents();
-    });
-    // Load persisted header image
+    // Initialize DB and load events
     this.loadHeaderImage();
+    this.loadEvents();
+  }
+
+  onShow(): void {
+    // Reload events in case other pages changed the DB
+    this.loadEvents();
   }
 
   // Image picking feature removed: header image may still be set via resources or persistent path.
@@ -103,16 +107,28 @@ struct Index {
                 .fontColor('#fff')
                 .width('70%')
                 .height(39)
+                .onClick(() => this.openAddMemory());
+              // visible feedback for debugging
+              if (this.addFeedback.length > 0) {
+                Text(this.addFeedback).fontSize(12).fontColor('#fff').margin({ left: 8 });
+              }
+              // 管理按钮（打开管理页面）
+              Button('管理')
+                .type(ButtonType.Capsule)
+                .backgroundColor('#ffffff')
+                .fontColor('#1677FF')
+                .width('20%')
+                .height(39)
+                .margin({ left: 8 })
                 .onClick(() => {
                   try {
-                    router.push({ uri: 'pages/AddMemory' });
-                  } catch (e) {
-                    console.error(e);
-                  }
+                    promptAction.showToast({ message: '打开管理页面...' });
+                  } catch (e) {}
+                  try { router.push({ uri: 'pages/ManageMemories' }); } catch (err) { try { promptAction.showToast({ message: '无法打开管理页面' }); } catch (e) {} }
                 });
-            }
-            .justifyContent(FlexAlign.Center)
-            .padding({ bottom: 10 });
+             }
+             .justifyContent(FlexAlign.Center)
+             .padding({ bottom: 10 });
 
           }
           .width('100%')
@@ -132,7 +148,8 @@ struct Index {
                     this.EventCard(item);
                   }
                   .onClick(() => {
-                    MemoryStore.setSelected(item.id);
+                    // persist selected id so detail page can read it
+                    AppStorage.Set<number>('selectedId', item.id);
                     try {
                       router.push({ uri: 'pages/EventDetail' });
                     } catch (e) {
@@ -182,6 +199,29 @@ struct Index {
   private loadHeaderImage(): void {
     const stored = AppStorage.Get<string>('headerImagePath');
     this.headerImagePath = stored ?? '';
+  }
+
+  // Load events from DB and map to MemoryItem[]
+  private async loadEvents(): Promise<void> {
+    try {
+      const cols = ['id', 'task_name', 'finished'];
+      const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
+      if (rows && rows.length > 0) {
+        this.events = rows.map(r => {
+          const id: number = r.id ?? 0;
+          const title: string = r.title ?? '';
+          const date = new Date();
+          const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
+          return { id, title, date, type } as MemoryItem;
+        });
+      } else {
+        // leave defaults or empty
+        this.events = [];
+      }
+    } catch (err) {
+      console.log(`加载记忆列表失败: ${err}`);
+      this.events = [];
+    }
   }
 
   // Provide image source: persisted path wins, otherwise bundled resource
@@ -302,5 +342,28 @@ struct Index {
         console.error(e);
       }
     });
+  }
+
+  // Open AddMemory page with logging and error handling
+  private openAddMemory(): void {
+    try {
+      this.addFeedback = '点击：正在尝试跳转...';
+      console.log('Add button clicked: attempting to navigate to AddMemory');
+      try { promptAction.showToast({ message: '跳转到新增事件...' }); } catch (e) {}
+      try {
+        router.push({ uri: 'pages/AddMemory' });
+        console.log('router.push called for pages/AddMemory');
+        this.addFeedback = '跳转请求已发送';
+        try { promptAction.showToast({ message: '已请求跳转' }); } catch (e) {}
+      } catch (pushErr) {
+        console.error('router.push threw for pages/AddMemory:', pushErr);
+        this.addFeedback = '跳转失败';
+        try { promptAction.showToast({ message: '跳转失败' }); } catch (e) {}
+      }
+    } catch (err) {
+      console.error('router.push failed for pages/AddMemory:', err);
+      this.addFeedback = '跳转失败';
+      try { promptAction.showToast({ message: '跳转失败' }); } catch (e) {}
+    }
   }
 }
