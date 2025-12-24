@@ -80,6 +80,7 @@ struct Index {
     .padding(14)
     .backgroundColor($r('app.color.start_window_background'))
     .borderRadius(14)
+    .width('100%')
     .shadow({ radius: 8, color: '#1A000000', offsetX: 0, offsetY: 4 });
   }
 
@@ -92,7 +93,7 @@ struct Index {
         .align(Alignment.Center);
       Text(title)
         .fontSize(12)
-        .fontColor(this.currentIndex == targetIndex ? '#1677FF' : '#333')
+        .fontColor(this.currentIndex == targetIndex ? '#ff4116ff' : '#333')
         .align(Alignment.Center)
         .margin({ top: 6 });
     }
@@ -160,15 +161,15 @@ struct Index {
             .width('100%')
             .height('100%')
             .layoutWeight(1)
-            .padding({ left: 18, right: 18, bottom: 80 });
+            .padding({ left: 18, right: 18, bottom: 10 });
 
             Row() {
               Button('+ 新增事件')
                 .type(ButtonType.Capsule)
-                .backgroundColor('#1677FF')
+                .backgroundColor(Color.Pink)
                 .fontColor('#fff')
                 .width('70%')
-                .height(44)
+                .height(39)
                 .onClick(() => {
                   try {
                     router.push({ uri: 'pages/AddMemory' });
@@ -178,7 +179,7 @@ struct Index {
                 });
             }
             .justifyContent(FlexAlign.Center)
-            .padding({ bottom: 16 });
+            .padding({ bottom: 10 });
 
           }
           .width('100%')
@@ -199,7 +200,7 @@ struct Index {
             .width('100%')
             .height('100%')
             .layoutWeight(1)
-            .padding({ left: 18, right: 18, bottom: 80 });
+            .padding({ left: 18, right: 18, bottom: 18 });
           }
           .width('100%')
           .height('100%')
@@ -219,6 +220,7 @@ struct Index {
       .width('100%')
       .height('100%')
       .scrollable(false)
+      .backgroundColor(Color.Pink)
       .animationDuration(0);
 
     }
