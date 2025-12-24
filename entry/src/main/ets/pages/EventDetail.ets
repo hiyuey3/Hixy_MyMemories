@@ -1,6 +1,7 @@
 import MemoryStore from '../store/MemoryStore';
 import { MemoryItem } from '../types/MemoryTypes';
 import router from '@system.router';
+import { EditMemoryParams, GenericRouterPushParam } from '../types/NavigationTypes';
 
 @Component
 export struct EventDetail {
@@ -15,7 +16,9 @@ export struct EventDetail {
 
   private goEdit(): void {
     if (this.itemId) {
-      try { router.push({ uri: 'pages/EditMemory', params: { id: this.itemId } }); } catch (e) { console.warn(e); }
+      const p: EditMemoryParams = { id: this.itemId };
+      const param: GenericRouterPushParam = { uri: 'pages/EditMemory', params: p };
+      try { router.push(param); } catch (e) { console.warn(e); }
     }
   }
 

@@ -2,7 +2,6 @@ import MemoryStore from '../store/MemoryStore';
 import router from '@system.router';
 import { MemoryType, MemoryItem } from '../types/MemoryTypes';
 
-@Entry
 @Component
 export struct AddMemory {
   @State title: string = '';

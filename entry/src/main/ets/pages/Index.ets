@@ -2,7 +2,7 @@ import { Settings } from './Settings';
 import MemoryStore from '../store/MemoryStore';
 import router from '@system.router';
 import { About } from './About';
-import { MemoryType, MemoryItem } from '../types/MemoryTypes';
+import { MemoryItem } from '../types/MemoryTypes';
 
 
 @Entry

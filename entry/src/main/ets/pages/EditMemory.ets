@@ -1,5 +1,5 @@
 import MemoryStore from '../store/MemoryStore';
-import { MemoryType, MemoryItem } from '../types/MemoryTypes';
+import { MemoryType } from '../types/MemoryTypes';
 import router from '@system.router';
 
 @Component
@@ -7,7 +7,7 @@ export struct EditMemory {
   @State memoryId: number | undefined = undefined;
   @State title: string = '';
   @State date: Date = new Date();
-  @State type: 'countdown' | 'anniversary' = 'countdown';
+  @State type: MemoryType = 'countdown';
 
   onInit(): void {
     const id = MemoryStore.getSelected();
