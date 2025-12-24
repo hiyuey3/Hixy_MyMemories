@@ -1,6 +1,7 @@
-import promptAction from '@ohos.promptAction';
-import { Memories } from './Memories';
 import { Settings } from './Settings';
+import MemoryStore from '../store/MemoryStore';
+import router from '@system.router';
+
 
 type MemoryType = 'countdown' | 'anniversary';
 interface MemoryItem {
@@ -11,24 +12,25 @@ interface MemoryItem {
   note?: string;
 }
 
+interface RouterPushParam { uri: string }
+
 @Entry
 @Component
 struct Index {
-  @State events: MemoryItem[] = [
-    { id: 1, title: '生日', date: new Date('2025-06-18'), type: 'anniversary' },
-    { id: 2, title: '假期出发', date: new Date('2025-10-01'), type: 'countdown' },
-    { id: 3, title: '相识纪念', date: new Date('2024-12-12'), type: 'anniversary' }
-  ];
+  @State events: MemoryItem[] = MemoryStore.getEvents();
   @State showForm: boolean = false;
   @State newTitle: string = '';
   @State newDate: Date = new Date();
   @State newType: MemoryType = 'countdown';
   @State currentIndex: number = 0;
+  @State bannerVisible: boolean = false;
+  @State bannerMessage: string = '';
   // 基础 TabBar 高度，64 为设计高度；bottomInset 用于适配安全区（动态可替换）
   private tabBarBaseHeight: number = 64;
   @State bottomInset: number = 0; // 若要接入设备安全区，请在 onInit() 中读取并设置此值
 
   private tabsController: TabsController = new TabsController();
+  private unsubscribeFromStore?: () => void;
 
   private formatDate(d: Date): string {
     const y = d.getFullYear();
@@ -71,11 +73,7 @@ struct Index {
 
   private addItem(): void {
     if (!this.newTitle.trim()) {
-      try {
-        promptAction.showToast({ message: '请输入标题' });
-      } catch (e) {
-        console.error(e);
-      }
+      // No toast: keep the AddForm open for the user to fill
       return;
     }
     const next: MemoryItem = {
@@ -84,16 +82,27 @@ struct Index {
       date: new Date(this.newDate),
       type: this.newType
     };
-    this.events = [...this.events, next];
+    // Prepend the new item so it's immediately visible at the top of the Memories list
+    this.events = [next, ...this.events];
     this.newTitle = '';
     this.newDate = new Date();
     this.newType = 'countdown';
     this.showForm = false;
+    // After adding, switch to the Memories tab to show the new item
+    this.currentIndex = 1;
     try {
-      promptAction.showToast({ message: '已添加' });
+      this.tabsController.changeIndex(this.currentIndex);
     } catch (e) {
       console.error(e);
     }
+    // Show a transient banner in the Memories tab to confirm the add
+    this.bannerMessage = '已添加';
+    this.bannerVisible = true;
+    // Hide banner after 2 seconds
+    setTimeout(() => {
+      this.bannerVisible = false;
+      this.bannerMessage = '';
+    }, 2000);
   }
 
   @Builder
@@ -284,7 +293,14 @@ struct Index {
                 .fontColor('#fff')
                 .width('70%')
                 .height(44)
-                .onClick(() => this.showForm = true);
+                .onClick(() => {
+                  try {
+                    router.push({ uri: 'pages/AddMemory' });
+                  } catch (e) {
+                    // fallback to modal if router is not available in preview
+                    this.showForm = true;
+                  }
+                })
             }
             .justifyContent(FlexAlign.Center)
             .padding({ bottom: 16 });
@@ -295,9 +311,36 @@ struct Index {
         }
         .tabBar(this.TabBuilder('首页', 0));
 
-        // 记忆 TabContent（拆分到独立组件）
+        // 记忆 TabContent：显示事件列表（与首页列表一致），顶部显示临时横幅
         TabContent() {
-          Memories()
+          Column({ space: 12 }) {
+            if (this.bannerVisible) {
+              Row() {
+                Text(this.bannerMessage).fontSize(14).fontColor('#fff').align(Alignment.Center);
+              }
+              .width('100%')
+              .height(40)
+              .backgroundColor('#1677FF')
+              .align(Alignment.Center);
+            }
+
+            // 可以在这里放置记忆页的不同头部或筛选
+            List({ space: 10 }) {
+              ForEach(this.sorted(), (item: MemoryItem) => {
+                ListItem() {
+                  this.EventCard(item);
+                }
+              })
+            }
+            .edgeEffect(EdgeEffect.None)
+            .width('100%')
+            .height('100%')
+            .layoutWeight(1)
+            .padding({ left: 18, right: 18, bottom: 80 });
+          }
+          .width('100%')
+          .height('100%')
+          .backgroundColor('#F7F8FA');
         }
         .tabBar(this.TabBuilder('记忆', 1, $r('app.media.foreground')));
 
@@ -325,5 +368,22 @@ struct Index {
 
     .height('100%')
     .width('100%')
+  }
+
+  onInit(): void {
+    // Subscribe to MemoryStore so the list refreshes when AddMemory adds events
+    this.unsubscribeFromStore = MemoryStore.subscribe(() => {
+      this.events = MemoryStore.getEvents();
+    });
+  }
+
+  onDestroy(): void {
+    if (this.unsubscribeFromStore) {
+      try {
+        this.unsubscribeFromStore();
+      } catch (e) {
+        /* ignore */
+      }
+    }
   }
 }
