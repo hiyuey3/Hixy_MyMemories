@@ -1,8 +1,5 @@
-import router from '@system.router';
-
-@Entry
 @Component
-struct About {
+export struct About {
   build() {
     Column({ space: 12 }) {
       Text('关于 MyMemories')
@@ -29,7 +26,8 @@ struct About {
           .backgroundColor('#F2F2F2')
           .fontColor('#333')
           .onClick(() => {
-            try { router.back(); } catch (e) { console.warn(e); }
+            // About is presented inside the app Tabs; use bottom navigation to switch pages.
+            console.warn('Use bottom navigation to return.');
           })
           .width('90%')
           .height(48);
@@ -39,7 +37,6 @@ struct About {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#FFFFFF');
+    .backgroundColor($r('app.color.start_window_background'));
   }
 }
-

@@ -1,6 +1,7 @@
 import { Settings } from './Settings';
 import MemoryStore from '../store/MemoryStore';
 import router from '@system.router';
+import { About } from './About';
 
 
 type MemoryType = 'countdown' | 'anniversary';
@@ -209,6 +210,10 @@ struct Index {
         // Settings tab
         TabContent() { Settings() }
         .tabBar(this.TabBuilder('设置', 2, $r('app.media.foreground')));
+
+        // About tab
+        TabContent() { About() }
+        .tabBar(this.TabBuilder('关于', 3, $r('app.media.foreground')));
 
       }
       .width('100%')

@@ -3,10 +3,9 @@ import router from '@system.router';
 
 type MemoryType = 'countdown' | 'anniversary';
 interface MemoryItem { id: number; title: string; date: Date; type: MemoryType; note?: string }
-
 @Entry
 @Component
-struct AddMemory {
+export struct AddMemory {
   @State title: string = '';
   @State date: Date = new Date();
   @State type: MemoryType = 'countdown';
