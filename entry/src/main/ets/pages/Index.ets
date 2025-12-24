@@ -1,6 +1,5 @@
-import promptAction from '@ohos.promptAction';
-import { Memories } from './Memories';
 import { Settings } from './Settings';
+
 
 type MemoryType = 'countdown' | 'anniversary';
 interface MemoryItem {
@@ -71,11 +70,7 @@ struct Index {
 
   private addItem(): void {
     if (!this.newTitle.trim()) {
-      try {
-        promptAction.showToast({ message: '请输入标题' });
-      } catch (e) {
-        console.error(e);
-      }
+      // No toast: keep the AddForm open for the user to fill
       return;
     }
     const next: MemoryItem = {
@@ -89,8 +84,10 @@ struct Index {
     this.newDate = new Date();
     this.newType = 'countdown';
     this.showForm = false;
+    // After adding, switch to the Memories tab to show the new item
+    this.currentIndex = 1;
     try {
-      promptAction.showToast({ message: '已添加' });
+      this.tabsController.changeIndex(this.currentIndex);
     } catch (e) {
       console.error(e);
     }
@@ -295,9 +292,26 @@ struct Index {
         }
         .tabBar(this.TabBuilder('首页', 0));
 
-        // 记忆 TabContent（拆分到独立组件）
+        // 记忆 TabContent：显示事件列表（与首页列表一致）
         TabContent() {
-          Memories()
+          Column({ space: 12 }) {
+            // 可以在这里放置记忆页的不同头部或筛选
+            List({ space: 10 }) {
+              ForEach(this.sorted(), (item: MemoryItem) => {
+                ListItem() {
+                  this.EventCard(item);
+                }
+              })
+            }
+            .edgeEffect(EdgeEffect.None)
+            .width('100%')
+            .height('100%')
+            .layoutWeight(1)
+            .padding({ left: 18, right: 18, bottom: 80 });
+          }
+          .width('100%')
+          .height('100%')
+          .backgroundColor('#F7F8FA');
         }
         .tabBar(this.TabBuilder('记忆', 1, $r('app.media.foreground')));
 
