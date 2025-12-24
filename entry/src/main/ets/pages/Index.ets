@@ -1,4 +1,6 @@
 import promptAction from '@ohos.promptAction';
+import { Memories } from './pages/Memories';
+import { Settings } from './pages/Settings';
 
 type MemoryType = 'countdown' | 'anniversary';
 interface MemoryItem {
@@ -22,6 +24,9 @@ struct Index {
   @State newDate: Date = new Date();
   @State newType: MemoryType = 'countdown';
   @State currentIndex: number = 0;
+  // 基础 TabBar 高度，64 为设计高度；bottomInset 用于适配安全区（动态可替换）
+  private tabBarBaseHeight: number = 64;
+  @State bottomInset: number = 0; // 若要接入设备安全区，请在 onInit() 中读取并设置此值
 
   private tabsController: TabsController = new TabsController();
 
@@ -199,10 +204,19 @@ struct Index {
   @Builder
   private TabBuilder(title: string, targetIndex: number, normalImg?: Resource, selectedImg?: Resource){
     Column() {
-      Image(normalImg ? (this.currentIndex == targetIndex ? selectedImg ?? normalImg : normalImg) : $r('app.media.foreground'))
+      // 选中态上方高亮条
+      Column() {
+        Box().height(3).width('36px').borderRadius(2).backgroundColor(this.currentIndex == targetIndex ? '#1677FF' : 'transparent').align(Alignment.Center);
+      }
+      .height(6)
+      .width('100%')
+      .align(Alignment.Center);
+
+      Image(normalImg ? (this.currentIndex == targetIndex ? selectedImg ?? normalImg : normalImg) : $r('app.media.startIcon'))
         .width(24)
         .height(24)
         .align(Alignment.Center);
+
       Text(title)
         .fontSize(12)
         .fontColor(this.currentIndex == targetIndex ? '#1677FF' : '#333')
@@ -210,8 +224,9 @@ struct Index {
         .margin({ top: 6 });
     }
     .width('100%')
-    .height(64)
+    .height(this.tabBarBaseHeight)
     .justifyContent(FlexAlign.Center)
+    .padding({ bottom: this.bottomInset })
     .onClick(() => {
       this.currentIndex = targetIndex;
       try {
@@ -274,27 +289,17 @@ struct Index {
         }
         .tabBar(this.TabBuilder('首页', 0));
 
-        // 记忆 TabContent（占位，可按需替换为真实页面组件）
+        // 记忆 TabContent（拆分到独立组件）
         TabContent() {
-          Column({ space: 12 }) {
-            Text('记忆页占位').fontSize(20).fontColor('#111').align(Alignment.Center).margin({ top: 40 });
-          }
-          .width('100%')
-          .height('100%')
-          .backgroundColor('#F7F8FA');
+          Memories()
         }
-        .tabBar(this.TabBuilder('记忆', 1));
+        .tabBar(this.TabBuilder('记忆', 1, $r('app.media.foreground')));
 
-        // 设置 TabContent（占位）
+        // 设置 TabContent（拆分到独立组件）
         TabContent() {
-          Column({ space: 12 }) {
-            Text('设置页占位').fontSize(20).fontColor('#111').align(Alignment.Center).margin({ top: 40 });
-          }
-          .width('100%')
-          .height('100%')
-          .backgroundColor('#F7F8FA');
+          Settings()
         }
-        .tabBar(this.TabBuilder('设置', 2));
+        .tabBar(this.TabBuilder('设置', 2, $r('app.media.foreground')));
       }
       .width('100%')
       .height('100%')
@@ -304,7 +309,8 @@ struct Index {
       // 弹窗：遮罩高度保留底部 TabBar（64px）
       if (this.showForm) {
         Column() {
-          Blank().height('calc(100% - 64px)').width('100%').backgroundColor('#80000000')
+          const totalBarHeight = this.tabBarBaseHeight + this.bottomInset;
+          Blank().height(`calc(100% - ${totalBarHeight}px)`).width('100%').backgroundColor('#80000000')
             .onClick(() => this.showForm = false);
           this.AddForm();
         }
