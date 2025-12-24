@@ -1,6 +1,7 @@
-import MemoryStore from '../store/MemoryStore';
 import { MemoryType } from '../types/MemoryTypes';
 import router from '@system.router';
+import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
+import { relationalStore } from '@kit.ArkData';
 
 @Component
 export struct EditMemory {
@@ -10,22 +11,33 @@ export struct EditMemory {
   @State type: MemoryType = 'countdown';
 
   onInit(): void {
-    const id = MemoryStore.getSelected();
+    const id = AppStorage.Get<number>('selectedId');
     if (id) this.load(id);
   }
 
-  private load(id: number): void {
-    const ev = MemoryStore.getEventById(id);
-    if (!ev) return;
-    this.memoryId = ev.id;
-    this.title = ev.title;
-    this.date = new Date(ev.date);
-    this.type = ev.type;
+  private async load(id: number): Promise<void> {
+    try {
+      const cols: string[] = ['id', 'task_name', 'finished'];
+      const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
+      const row = (rows || []).find(r => (r.id ?? 0) === id);
+      if (!row) return;
+      this.memoryId = row.id ?? id;
+      this.title = row.title ?? '';
+      this.date = new Date();
+      this.type = row.finished ? 'anniversary' : 'countdown';
+    } catch (e) {
+      console.error('EditMemory.load failed', e);
+    }
   }
 
-  private save(): void {
+  private async save(): Promise<void> {
     if (!this.memoryId) return;
-    MemoryStore.updateEvent({ id: this.memoryId, title: this.title.trim(), date: new Date(this.date), type: this.type });
+    try {
+      const vb: relationalStore.ValuesBucket = { task_name: this.title.trim(), finished: this.type === 'anniversary' ? 1 : 0 } as relationalStore.ValuesBucket;
+      await MemoryDBUtil.updateMemoryById('memories', this.memoryId, vb);
+    } catch (e) {
+      console.error('EditMemory.save update failed', e);
+    }
     try { router.back(); } catch (e) { console.warn(e); }
   }
 

@@ -13,10 +13,18 @@ export struct ManageMemories {
   onInit(): void {
     // Load from DB at start
     this.loadEvents();
+    try {
+      const off = MemoryDBUtil.subscribe(() => { this.loadEvents(); });
+      AppStorage.Set<() => void>('__mgr_unsub__', off);
+    } catch (e) {}
   }
 
   onDestroy(): void {
-    // no-op
+    try {
+      const off = AppStorage.Get<() => void>('__mgr_unsub__');
+      if (off) off();
+      AppStorage.Delete('__mgr_unsub__');
+    } catch (e) {}
   }
 
   onShow(): void {

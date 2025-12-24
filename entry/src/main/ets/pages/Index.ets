@@ -23,6 +23,12 @@ struct Index {
     this.loadEvents();
     // If Add page set needsReload flag, refresh again shortly after init
     try { if (AppStorage.Get<boolean>('needsReload')) { AppStorage.Set<boolean>('needsReload', false); setTimeout(() => this.loadEvents(), 300); } } catch (e) {}
+    // DB change subscription to refresh immediately on write
+    try {
+      const off = MemoryDBUtil.subscribe(() => { this.loadEvents(); });
+      // store unsubscribe via AppStorage (no fields on struct)
+      AppStorage.Set<() => void>('__idx_unsub__', off);
+    } catch (e) {}
   }
 
   onShow(): void {
@@ -32,7 +38,20 @@ struct Index {
     try { if (AppStorage.Get<boolean>('needsReload')) { AppStorage.Set<boolean>('needsReload', false); setTimeout(() => this.loadEvents(), 300); } } catch (e) {}
   }
 
-  onDestroy(): void {}
+  aboutToAppear(): void {
+    // Force re-query DB when page appears
+    this.loadEvents();
+    // Small delayed refresh to ensure DB commit is visible on slower devices
+    try { setTimeout(() => this.loadEvents(), 300); } catch (e) {}
+  }
+
+  onDestroy(): void {
+    try {
+      const off = AppStorage.Get<() => void>('__idx_unsub__');
+      if (off) off();
+      AppStorage.Delete('__idx_unsub__');
+    } catch (e) {}
+  }
 
   // Image picking feature removed: header image may still be set via resources or persistent path.
 

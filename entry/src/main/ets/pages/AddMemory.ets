@@ -1,4 +1,3 @@
-import MemoryStore from '../store/MemoryStore';
 import router from '@system.router';
 import { MemoryType, MemoryItem } from '../types/MemoryTypes';
 import promptAction from '@ohos.promptAction';
@@ -36,21 +35,13 @@ export struct AddMemory {
       console.log('AddMemory: DB 插入失败', dbErr);
     }
 
-    // Add to in-memory store (synchronous UI update + internal fallback handled there as well)
+    // Feedback: only DB success acknowledged; otherwise user stays informed they need retry
     try {
-      const addFn = (MemoryStore.addEvent as (it: MemoryItem) => Promise<void> | void);
-      const possiblePromise = addFn(item);
-      if (possiblePromise && (possiblePromise as Promise<void>).then) {
-        await (possiblePromise as Promise<void>);
-      }
-    } catch (err) {
-      console.log(`保存事件时出错: ${err}`);
-    }
-
-    // Feedback: distinguish DB success vs local fallback
-    try {
-      promptAction.showToast({ message: savedToDb ? '已保存到数据库' : '已保存（本地备份）' });
+      promptAction.showToast({ message: savedToDb ? '已保存到数据库' : '保存失败，请重试' });
     } catch (e) {}
+    // Hint Index to refresh once when coming back
+    try { AppStorage.Set<boolean>('needsReload', true); } catch (e) {}
+
     try {
       router.back();
     } catch (e) {
@@ -65,9 +56,19 @@ export struct AddMemory {
       TextInput({ placeholder: '标题', text: this.title }).onChange((v: string) => this.title = v);
       Row({ space: 10 }) {
         Text('类型').fontSize(14).fontColor('#666');
-        Toggle({ type: ToggleType.Button, isOn: this.type === 'countdown' })
-          .onChange((v: boolean) => this.type = v ? 'countdown' : 'anniversary');
-        Text(this.type === 'countdown' ? '倒数日' : '纪念日').fontSize(14).fontColor('#666');
+        // Use two explicit buttons for better UX and compatibility
+        Row({ space: 8 }) {
+          Button('倒数日')
+            .type(ButtonType.Capsule)
+            .backgroundColor(this.type === 'countdown' ? '#1677FF' : '#F2F2F2')
+            .fontColor(this.type === 'countdown' ? '#fff' : '#333')
+            .onClick(() => this.type = 'countdown');
+          Button('纪念日')
+            .type(ButtonType.Capsule)
+            .backgroundColor(this.type === 'anniversary' ? '#1677FF' : '#F2F2F2')
+            .fontColor(this.type === 'anniversary' ? '#fff' : '#333')
+            .onClick(() => this.type = 'anniversary');
+        }
       }
       Column({ space: 6 }) {
         Text('日期').fontSize(14).fontColor('#666');
