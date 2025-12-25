@@ -16,6 +16,23 @@ export struct EditMemory {
     if (id) this.load(id);
   }
 
+  onShow(): void {
+    // ensure we reload when page becomes visible
+    const id = AppStorage.Get<number>('selectedId');
+    if (id) {
+      this.load(id);
+    }
+  }
+
+  aboutToAppear(): void {
+    // attempt immediate load and a short delayed retry to cover propagation delays
+    const id = AppStorage.Get<number>('selectedId');
+    if (id) {
+      this.load(id);
+      try { setTimeout(() => { const id2 = AppStorage.Get<number>('selectedId'); if (id2) this.load(id2); }, 300); } catch (e) {}
+    }
+  }
+
   private async load(id: number): Promise<void> {
     try {
       const cols: string[] = ['id', 'task_name', 'finished'];
@@ -36,8 +53,10 @@ export struct EditMemory {
     try {
       const vb: relationalStore.ValuesBucket = { task_name: this.title.trim(), finished: this.type === 'anniversary' ? 1 : 0 } as relationalStore.ValuesBucket;
       await MemoryDBUtil.updateMemoryById('memories', this.memoryId, vb);
+      try { promptAction.showToast({ message: '保存成功' }); } catch (e) {}
     } catch (e) {
       console.error('EditMemory.save update failed', e);
+      try { promptAction.showToast({ message: '保存失败' }); } catch (ee) {}
     }
     try { router.back(); } catch (e) { console.warn(e); }
   }
