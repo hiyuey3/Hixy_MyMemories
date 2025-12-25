@@ -89,70 +89,14 @@ export struct ManageMemories {
       List({ space: 8 }) {
         ForEach(this.events, (item: MemoryItem) => {
           ListItem() {
-            Row({ space: 12 }) {
-              Column() {
-                // Title turns red when this item is pending deletion
-                Text(item.title)
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor(this.deleteTargetId === item.id ? '#FF4D4F' : '#111');
-                Text(this.formatDate(item.date)).fontSize(12).fontColor('#666');
-              }
-              .layoutWeight(1)
-
-              // If this item is pending deletion, show inline confirm/cancel
-              if (this.deleteTargetId === item.id) {
-                // this.triggerVibration()
-                Row({ space: 8 }) {
-                  Button('❌')
-                    .backgroundColor('#F2F2F2')
-                    .onClick(
-                      () => {
-                        this.cancelDelete();
-
-                        promptAction.showToast({ message: '已取消删除' });
-                        this.triggerVibration();
-                        promptAction.showToast({ message: '取消删除触发震动提示' });
-                      }
-                    )
-                    .width(50)
-                    .borderRadius(50);
-                  Button('✅')
-                    .backgroundColor('#FF4D4F')
-                    .fontColor('#fff')
-                    .onClick(() => this.performDelete())
-                    .width(50)
-                    .borderRadius(50)
-                }
-                .justifyContent(FlexAlign.Center)
-
-              } else {
-                Row() {
-                  Button('✍️').onClick(() =>
-                  this.onEdit(item)
-                  )
-                    .backgroundColor('#F2F2F2')
-                    .width(50)
-                    .borderRadius(50);
-                  Button('🗑️')
-                    .onClick(() => {
-                      this.onDelete(item.id);
-                      this.triggerVibration();
-                    }
-                    )
-                    .backgroundColor('#FF7A45')
-                    .fontColor('#fff')
-                    .width(50)
-                    .borderRadius(50)
-
-                }
-                .justifyContent(FlexAlign.Center)
-              }
-            }
-            .padding(12)
-            // highlight pending-delete item with a soft red background
-            .backgroundColor(this.deleteTargetId === item.id ? '#FFF2F0' : Color.White)
-            .borderRadius(10)
+            EventCard({
+              item: item,
+              deleteTargetId: $deleteTargetId,
+              onEdit: (item: MemoryItem) => this.onEdit(item),
+              onDelete: (id: number) => this.onDelete(id),
+              onCancelDelete: () => this.cancelDelete(),
+              onPerformDelete: () => this.performDelete()
+            })
           }
         })
       }
@@ -218,37 +162,19 @@ export struct ManageMemories {
 
   private async onEdit(item: MemoryItem): Promise<void> {
     try {
-      // set AppStorage first (reliable read) then navigate to EditMemory
-      try {
-        AppStorage.Set<number>('selectedId', item.id);
-      } catch (e) {
-      }
-      try {
-        promptAction.showToast({ message: `跳转编辑页面 id=${item.id}` });
-      } catch (e) {
-      }
-      try {
-        // small delay to allow AppStorage propagation on some runtimes
-        setTimeout(() => {
-          try {
-            router.push({ uri: 'pages/EditMemory' });
-          } catch (pushErr) {
-            console.error('router.push failed', pushErr);
-          }
-        }, 120);
-      } catch (e) {
-        try {
-          router.push({ uri: 'pages/EditMemory' });
-        } catch (pushErr) {
-          console.error('router.push failed', pushErr);
+      AppStorage.setOrCreate('selectedId', item.id);
+      router.push({
+        uri: 'pages/EditMemory',
+        params: {
+          editId: item.id
         }
-      }
+      });
     } catch (e) {
+      console.error('跳转 EditMemory 失败', e);
       try {
         promptAction.showToast({ message: '无法跳转到编辑页面' });
       } catch (e) {
       }
-      console.error('跳转 EditMemory 失败', e);
     }
   }
 
@@ -345,5 +271,93 @@ export struct ManageMemories {
       } catch (e2) {
       }
     }
+  }
+}
+
+@Component
+struct EventCard {
+  @Prop item: MemoryItem;
+  @Link deleteTargetId: number | undefined;
+  onEdit: (item: MemoryItem) => void = () => {};
+  onDelete: (id: number) => void = () => {};
+  onCancelDelete: () => void = () => {};
+  onPerformDelete: () => void = () => {};
+
+  private formatDate(d: Date): string {
+    try {
+      const y = d.getFullYear();
+      const m = `${d.getMonth() + 1}`.padStart(2, '0');
+      const day = `${d.getDate()}`.padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    } catch (e) {
+      return ''
+    }
+  }
+
+  private triggerVibration() {
+    try {
+      vibrator.vibrate(50);
+    } catch (err) {
+      console.error(`震动失败: ${JSON.stringify(err)}`);
+    }
+  }
+
+  build() {
+    Row({ space: 12 }) {
+      Column() {
+        // Title turns red when this item is pending deletion
+        Text(this.item.title)
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.deleteTargetId === this.item.id ? '#FF4D4F' : '#111');
+        Text(this.formatDate(this.item.date)).fontSize(12).fontColor('#666');
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      // If this item is pending deletion, show inline confirm/cancel
+      if (this.deleteTargetId === this.item.id) {
+        Row({ space: 8 }) {
+          Button('❌')
+            .backgroundColor('#F2F2F2')
+            .onClick(() => {
+              this.onCancelDelete();
+              try { promptAction.showToast({ message: '已取消删除' }); } catch (e) {}
+              this.triggerVibration();
+              try { promptAction.showToast({ message: '取消删除触发震动提示' }); } catch (e) {}
+            })
+            .width(50)
+            .borderRadius(50);
+          Button('✅')
+            .backgroundColor('#FF4D4F')
+            .fontColor('#fff')
+            .onClick(() => this.onPerformDelete())
+            .width(50)
+            .borderRadius(50)
+        }
+        .justifyContent(FlexAlign.Center)
+
+      } else {
+        Row() {
+          Button('✍️').onClick(() => this.onEdit(this.item))
+            .backgroundColor('#F2F2F2')
+            .width(50)
+            .borderRadius(50);
+          Button('🗑️')
+            .onClick(() => {
+              this.onDelete(this.item.id);
+              this.triggerVibration();
+            })
+            .backgroundColor('#FF7A45')
+            .fontColor('#fff')
+            .width(50)
+            .borderRadius(50)
+        }
+        .justifyContent(FlexAlign.Center)
+      }
+    }
+    .padding(12)
+    .backgroundColor(this.deleteTargetId === this.item.id ? '#FFF2F0' : Color.White)
+    .borderRadius(10)
   }
 }

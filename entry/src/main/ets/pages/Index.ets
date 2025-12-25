@@ -201,16 +201,16 @@ struct Index {
         .tabBar(this.TabBuilder('记忆', 1, $r('app.media.foreground')));
 
         // Settings tab
-        TabContent() {
-          Settings()
-        }
-        .tabBar(this.TabBuilder('设置', 2, $r('app.media.foreground')));
+        // TabContent() {
+          // Settings()
+        // }
+        // .tabBar(this.TabBuilder('设置', 2, $r('app.media.foreground')));
 
         // About tab
         TabContent() {
           About()
         }
-        .tabBar(this.TabBuilder('关于', 3, $r('app.media.foreground')));
+        .tabBar(this.TabBuilder('关于', 2, $r('app.media.foreground')));
 
       }
       .width('100%')

@@ -9,44 +9,26 @@ import promptAction from '@ohos.promptAction';
 @Entry
 @Component
 export default struct EditMemory {
+  @StorageProp('selectedId') selectedId: number = 0;
   @State memoryId: number | undefined = undefined;
   @State title: string = '';
   @State date: Date = new Date();
   @State type: MemoryType = 'countdown';
 
-  onInit(): void {
-    // Read selected id from AppStorage (preferred). Retry shortly if not present yet.
-    let id: number | undefined = undefined;
-    try { id = AppStorage.Get<number>('selectedId'); } catch (e) { id = undefined; }
-
-    if (id) {
-      this.load(id);
-    } else {
-      try {
-        setTimeout(() => {
-          try {
-            const id2 = AppStorage.Get<number>('selectedId');
-            if (id2) this.load(id2);
-          } catch (e) { /* ignore delayed read errors */ }
-        }, 200);
-      } catch (e) { /* ignore */ }
-    }
-  }
-
-  onShow(): void {
-    // ensure we reload when page becomes visible
-    const id = AppStorage.Get<number>('selectedId');
-    if (id) {
-      this.load(id);
-    }
-  }
-
   aboutToAppear(): void {
-    // attempt immediate load and a short delayed retry to cover propagation delays
-    const id = AppStorage.Get<number>('selectedId');
+    // Priority: router params > AppStorage
+    let id = this.selectedId;
+    try {
+      const params = router.getParams() as Record<string, Object>;
+      if (params && params['editId']) {
+        id = params['editId'] as number;
+      }
+    } catch (e) {
+      console.error('EditMemory: failed to get params', e);
+    }
+
     if (id) {
       this.load(id);
-      try { setTimeout(() => { const id2 = AppStorage.Get<number>('selectedId'); if (id2) this.load(id2); }, 300); } catch (e) {}
     }
   }
 
@@ -86,11 +68,7 @@ export default struct EditMemory {
       }
     }
 
-    // Ensure we have a valid id; try AppStorage as fallback
-    if (!this.memoryId) {
-      try { const sid = AppStorage.Get<number>('selectedId'); if (sid) this.memoryId = sid; } catch (e) { /* ignore */ }
-    }
-
+    // Ensure we have a valid id
     if (!this.memoryId) { try { promptAction.showToast({ message: '无法保存：未指定记录' }); } catch (_) {}; console.warn('EditMemory.save: no memoryId'); return; }
 
     // Validate input
@@ -124,7 +102,8 @@ export default struct EditMemory {
           this.title = newTitle;
           await this.load(numericId);
           try { promptAction.showToast({ message: '保存成功' }); } catch (e) {}
-          navigateBack();
+          // navigateBack();
+          router.push({ uri: 'pages/ManageMemories' });;
           return;
         }
         // fallback insert
