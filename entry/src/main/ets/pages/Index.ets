@@ -47,6 +47,7 @@ struct Index {
 
   build() {
     Column() {
+
       Tabs({ barPosition: BarPosition.End, controller: this.tabsController, index: this.currentIndex }) {
         // Home tab
         TabContent() {
@@ -56,39 +57,52 @@ struct Index {
               Image(this.imageSource())
                 .id('headerImage')
                 .width(340)
-                .height(170)
+                .height(120)
                 .objectFit(ImageFit.Cover)
                 .borderRadius(15)
                 .align(Alignment.Center);
             }
-            .height('160px')
+            .height('120')
             .width('100%')
             .padding({ top: 18 });
 
             Column({ space: 8 }) {
-              Text('倒数日 & 纪念日').fontSize(24).fontWeight(FontWeight.Bold).fontColor('#1F1F1F');
+              Text('倒数日 | 纪念日').fontSize(24).fontWeight(FontWeight.Bold).fontColor('#1F1F1F');
               Row({ space: 12 }) {
+
                 Column() {
-                  Text(`${this.getUpcoming()}`).fontSize(28).fontWeight(FontWeight.Bold).fontColor('#1677FF');
-                  Text('即将到来').fontSize(13).fontColor('#666');
+                  Text(`${this.getUpcoming()}`).fontSize(28).fontWeight(FontWeight.Bold)
+                    // .fontColor('#1677FF');
+                    .fontColor(Color.Red)
+                  Text('即将到来').fontSize(13).fontColor(Color.Black);
                 }
+                .backgroundColor(Color.Transparent)
+                .borderWidth(2)
+                .borderColor(Color.Gray)
                 .padding(12)
-                .backgroundColor('#F2F6FF')
+                .width('48%')
+                .height(80)
+                // .backgroundColor('#F2F6FF')
                 .borderRadius(12);
 
                 Column() {
                   Text(`${this.getMemories()}`).fontSize(28).fontWeight(FontWeight.Bold).fontColor('#FF7A45');
                   Text('纪念回顾').fontSize(13).fontColor('#666');
                 }
+                .width('48%')
+                .height(80)
                 .padding(12)
-                .backgroundColor('#FFF4EC')
+                .backgroundColor(Color.Transparent)
+                .borderWidth(2)
+                .borderColor(Color.Gray)
+                // .backgroundColor('#FFF4EC')
                 .borderRadius(12);
               }
             }
             .padding({
               left: 18,
               right: 18,
-              top: 50,
+              top: 20,
               bottom: 12
             });
 
