@@ -1,29 +1,33 @@
 import promptAction from '@ohos.promptAction';
-
+import router from '@system.router';
 @Component
 export struct Settings {
   @State notifyEnabled: boolean = true;
   @State reminderDaysStr: string = '7';
 
+  // Small helper to avoid scattered try/catch
+  private toast(msg: string): void {
+    try { promptAction.showToast({ message: msg }); } catch (_) {}
+  }
+
   private saveSettings(): void {
-    // Convert and persist (demo: in-memory). In a full app, persist to storage.
-    const days = parseInt(this.reminderDaysStr, 10);
-    if (isNaN(days) || days < 0) {
-      try { promptAction.showToast({ message: '请输入有效的提前提醒天数' }); } catch (e) {}
+    const days = Number.parseInt(this.reminderDaysStr, 10);
+    if (!Number.isFinite(days) || days < 0) {
+      this.toast('请输入有效的提前提醒天数');
       return;
     }
-    // Feedback to user (simple toast)
-    try {
-      promptAction.showToast({ message: '设置已保存' });
-    } catch (e) {}
+    // Persist demo: AppStorage (can be replaced with real storage later)
+    AppStorage.Set<boolean>('notifyEnabled', this.notifyEnabled);
+    AppStorage.Set<number>('reminderDays', days);
+    this.toast('设置已保存');
   }
 
   private resetDefaults(): void {
     this.notifyEnabled = true;
     this.reminderDaysStr = '7';
-    try {
-      promptAction.showToast({ message: '已恢复默认设置' });
-    } catch (e) {}
+    AppStorage.Delete('notifyEnabled');
+    AppStorage.Delete('reminderDays');
+    this.toast('已恢复默认设置');
   }
 
   build() {
@@ -46,10 +50,7 @@ export struct Settings {
           .align(Alignment.Center);
         Row({ space: 12 }) {
           Button('更换合照')
-            .onClick(() => {
-              // Placeholder: implement image picker in future
-              try { promptAction.showToast({ message: '更换合照功能暂未实现' }); } catch (e) {}
-            });
+            .onClick(() => this.toast('更换合照功能暂未实现'));
         }
         .justifyContent(FlexAlign.Center)
       }
@@ -69,7 +70,7 @@ export struct Settings {
       Column({ space: 6 }) {
         Text('提前提醒天数').fontSize(14).fontColor('#666');
         TextInput({ placeholder: '例如：7', text: this.reminderDaysStr })
-          .onChange((v: string) => this.reminderDaysStr = v);
+          .onChange((v: string) => this.reminderDaysStr = v.trim());
       }
 
       // Action buttons

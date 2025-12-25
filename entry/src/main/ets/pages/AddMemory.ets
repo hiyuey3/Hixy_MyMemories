@@ -42,11 +42,12 @@ export struct AddMemory {
     // Hint Index to refresh once when coming back
     try { AppStorage.Set<boolean>('needsReload', true); } catch (e) {}
 
+    // Navigate explicitly to Home to ensure lifecycle hooks run and data reloads
     try {
-      router.back();
+      router.push({ uri: 'pages/Index' });
     } catch (e) {
-      // fallback: nothing (user can press back)
-      console.warn('router.back failed', e);
+      // fallback: attempt back
+      try { router.back(); } catch (e2) { console.warn('router navigation failed', e2); }
     }
   }
 

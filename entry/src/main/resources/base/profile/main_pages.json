@@ -2,6 +2,7 @@
   "src": [
     "pages/Index",
     "pages/AddMemory",
-    "pages/ManageMemories"
+    "pages/ManageMemories",
+    "pages/EditMemory"
   ]
 }

@@ -1,3 +1,5 @@
+import router from '@system.router';
+import promptAction from '@ohos.promptAction';
 @Component
 export struct About {
   // 基本信息（可根据发布流程从包信息自动注入）
@@ -6,6 +8,9 @@ export struct About {
   @State ICPnumber: string = "闽ICP备2021006383号";
   @State developer: string = "小影团队";
   @State email: string = "hi@xyw.cx";
+  private toast(msg: string): void {
+    try { promptAction.showToast({ message: msg }); } catch (_) {}
+  }
 
   // 主渲染函数：页面结构清晰，顶部为标题与 Logo，中部为信息卡片，底部为版权信息
   build() {

@@ -12,11 +12,14 @@ struct Index {
   // events loaded from DB via MemoryDBUtil
   @State events: MemoryItem[] = [];
   @State currentIndex: number = 0;
-  @State addFeedback: string = '';
+  // @State addFeedback: string = '';
   // Persisted header image uri
   @State headerImagePath: string = '';
   private tabsController: TabsController = new TabsController();
-  private unsub: (() => void) | null = null;
+  // no burst refresh timers; rely on lifecycle + explicit reload on tab click
+  private toast(msg: string): void {
+    try { promptAction.showToast({ message: msg }); } catch (_) {}
+  }
 
   onInit(): void {
     // Initialize DB and load events
@@ -24,10 +27,6 @@ struct Index {
     this.loadEvents();
     // If Add page set needsReload flag, refresh again shortly after init
     try { if (AppStorage.Get<boolean>('needsReload')) { AppStorage.Set<boolean>('needsReload', false); setTimeout(() => this.loadEvents(), 300); } } catch (e) {}
-    // DB change subscription to refresh immediately on write
-    try {
-      this.unsub = MemoryDBUtil.subscribe(() => { this.loadEvents(); });
-    } catch (e) {}
   }
 
   onShow(): void {
@@ -35,6 +34,7 @@ struct Index {
     this.loadEvents();
     // needsReload hint
     try { if (AppStorage.Get<boolean>('needsReload')) { AppStorage.Set<boolean>('needsReload', false); setTimeout(() => this.loadEvents(), 300); } } catch (e) {}
+    // start a short burst refresh to catch recent writes
   }
 
   aboutToAppear(): void {
@@ -42,11 +42,10 @@ struct Index {
     this.loadEvents();
     // Small delayed refresh to ensure DB commit is visible on slower devices
     try { setTimeout(() => this.loadEvents(), 300); } catch (e) {}
+    // also start a short burst refresh
   }
 
-  onDestroy(): void {
-    try { if (this.unsub) { this.unsub(); this.unsub = null; } } catch (e) {}
-  }
+  onDestroy(): void {}
 
   // Image picking feature removed: header image may still be set via resources or persistent path.
 
@@ -111,7 +110,7 @@ struct Index {
             .padding({ left: 18, right: 18, bottom: 10 });
 
             Row() {
-              Button('+ 新增事件')
+              Button('➕ 新增事件')
                 .type(ButtonType.Capsule)
                 // 添加阴影
                 .shadow({
@@ -129,11 +128,11 @@ struct Index {
                 .height(39)
                 .onClick(() => this.openAddMemory());
               // visible feedback for debugging
-              if (this.addFeedback.length > 0) {
-                Text(this.addFeedback).fontSize(12).fontColor('#fff').margin({ left: 8 });
-              }
+              // if (this.addFeedback.length > 0) {
+              //   Text(this.addFeedback).fontSize(12).fontColor('#fff').margin({ left: 8 });
+              // }
               // 管理按钮（打开管理页面）
-              Button('管理')
+              Button('✍️管理')
                 .type(ButtonType.Capsule)
                 .backgroundColor('#ffffff')
                 .fontColor('#1677FF')
@@ -141,11 +140,10 @@ struct Index {
                 .height(39)
                 .margin({ left: 8 })
                 .onClick(() => {
-                  try {
-                    promptAction.showToast({ message: '打开管理页面...' });
-                  } catch (e) {}
-                  try { router.push({ uri: 'pages/ManageMemories' }); } catch (err) { try { promptAction.showToast({ message: '无法打开管理页面' }); } catch (e) {} }
+                  this.toast('打开管理页面...');
+                  try { router.push({ uri: 'pages/ManageMemories' }); } catch (_) { this.toast('无法打开管理页面'); }
                 });
+
              }
              .justifyContent(FlexAlign.Center)
              .padding({ bottom: 10 });
@@ -361,28 +359,33 @@ struct Index {
       } catch (e) {
         console.error(e);
       }
+      // If user clicks back to Home tab, reload data immediately
+      if (targetIndex === 0) {
+        this.loadEvents();
+        try { setTimeout(() => this.loadEvents(), 300); } catch (e) {}
+      }
     });
   }
 
   // Open AddMemory page with logging and error handling
   private openAddMemory(): void {
     try {
-      this.addFeedback = '点击：正在尝试跳转...';
+      // this.addFeedback = '点击：正在尝试跳转...';
       console.log('Add button clicked: attempting to navigate to AddMemory');
       try { promptAction.showToast({ message: '跳转到新增事件...' }); } catch (e) {}
       try {
         router.push({ uri: 'pages/AddMemory' });
         console.log('router.push called for pages/AddMemory');
-        this.addFeedback = '跳转请求已发送';
+        // this.addFeedback = '跳转请求已发送';
         try { promptAction.showToast({ message: '已请求跳转' }); } catch (e) {}
       } catch (pushErr) {
         console.error('router.push threw for pages/AddMemory:', pushErr);
-        this.addFeedback = '跳转失败';
+        // this.addFeedback = '跳转失败';
         try { promptAction.showToast({ message: '跳转失败' }); } catch (e) {}
       }
     } catch (err) {
       console.error('router.push failed for pages/AddMemory:', err);
-      this.addFeedback = '跳转失败';
+      // this.addFeedback = '跳转失败';
       try { promptAction.showToast({ message: '跳转失败' }); } catch (e) { console.error(e); }
     }
    }

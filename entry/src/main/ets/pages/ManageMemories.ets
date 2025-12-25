@@ -8,31 +8,34 @@ import { relationalStore } from '@kit.ArkData';
 @Component
 export struct ManageMemories {
   @State events: MemoryItem[] = [];
+  @State deleteTargetId: number | undefined = undefined;
   // no MemoryStore subscription; refresh from DB on lifecycle hooks
 
   onInit(): void {
     // Load from DB at start
     this.loadEvents();
-    try {
-      const off = MemoryDBUtil.subscribe(() => { this.loadEvents(); });
-      AppStorage.Set<() => void>('__mgr_unsub__', off);
-    } catch (e) {}
   }
 
   onDestroy(): void {
-    try {
-      const off = AppStorage.Get<() => void>('__mgr_unsub__');
-      if (off) off();
-      AppStorage.Delete('__mgr_unsub__');
-    } catch (e) {}
+    // no-op
   }
 
   onShow(): void {
     this.loadEvents();
   }
 
+  // Called when this page is about to appear (safer than relying on back navigation)
+  aboutToAppear(): void {
+    // immediate refresh
+    this.loadEvents();
+    // delayed refresh to catch DB commits that may be slightly delayed
+    try { setTimeout(() => this.loadEvents(), 300); } catch (e) {}
+  }
+
   build() {
     Column({ space: 12 }) {
+      // Inline per-item confirmation: when deleteTargetId === item.id render confirm UI
+
       Row({ space: 12 }) {
         Text('管理记忆').fontSize(20).fontWeight(FontWeight.Bold);
         Button('新增')
@@ -62,11 +65,28 @@ export struct ManageMemories {
               }
               .layoutWeight(1)
 
-              Row() {
-                Button('编辑').onClick(() => this.onEdit(item)).backgroundColor('#F2F2F2');
-                Button('删除').onClick(() => this.onDelete(item.id)).backgroundColor('#FF7A45').fontColor('#fff');
+              // If this item is pending deletion, show inline confirm/cancel
+              if (this.deleteTargetId === item.id) {
+                Row({ space: 8 }) {
+                  Button('取消')
+                    .backgroundColor('#F2F2F2')
+                    .onClick(() => this.cancelDelete())
+                    .width(80).borderRadius(5);
+                  Button('确认')
+                    .backgroundColor('#FF4D4F')
+                    .fontColor('#fff')
+                    .onClick(() => this.performDelete())
+                    .width(80)
+                    .borderRadius(5)
+                }
+                .justifyContent(FlexAlign.Center)
+              } else {
+                Row() {
+                  Button('编辑').onClick(() => this.onEdit(item)).backgroundColor('#F2F2F2').borderRadius(5);
+                  Button('删除').onClick(() => this.onDelete(item.id)).backgroundColor('#FF7A45').fontColor('#fff').borderRadius(5);
+                }
+                .justifyContent(FlexAlign.Center)
               }
-              .justifyContent(FlexAlign.Center)
             }
             .padding(12)
             .backgroundColor(Color.White)
@@ -115,6 +135,7 @@ export struct ManageMemories {
   private async onEdit(item: MemoryItem): Promise<void> {
     try {
       AppStorage.Set<number>('selectedId', item.id);
+      try { promptAction.showToast({ message: `跳转编辑页面 id=${item.id}` }); } catch (e) {}
       router.push({ uri: 'pages/EditMemory' });
     } catch (e) {
       try { promptAction.showToast({ message: '无法跳转到编辑页面' }); } catch (e) {}
@@ -123,14 +144,25 @@ export struct ManageMemories {
   }
 
   private async onDelete(id: number): Promise<void> {
+    // show confirmation UI before deleting
+    this.deleteTargetId = id;
+  }
+
+  private async performDelete(): Promise<void> {
+    if (!this.deleteTargetId) return;
     try {
-      try { await MemoryDBUtil.deleteMemoryById('memories', id); } catch (e) { console.error('DB delete failed', e); }
+      await MemoryDBUtil.deleteMemoryById('memories', this.deleteTargetId);
+      this.deleteTargetId = undefined;
       await this.loadEvents();
       try { promptAction.showToast({ message: '已删除' }); } catch (e) {}
     } catch (err) {
       console.error('删除失败', err);
       try { promptAction.showToast({ message: '删除失败' }); } catch (e) {}
     }
+  }
+
+  private cancelDelete(): void {
+    this.deleteTargetId = undefined;
   }
 
   private formatDate(d: Date): string {

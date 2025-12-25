@@ -3,6 +3,7 @@ import router from '@system.router';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import { relationalStore } from '@kit.ArkData';
 
+@Entry
 @Component
 export struct EditMemory {
   @State memoryId: number | undefined = undefined;
