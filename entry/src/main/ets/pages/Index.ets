@@ -25,15 +25,11 @@ struct Index {
     // Initialize DB and load events
     this.loadHeaderImage();
     this.loadEvents();
-    // If Add page set needsReload flag, refresh again shortly after init
-    try { if (AppStorage.Get<boolean>('needsReload')) { AppStorage.Set<boolean>('needsReload', false); setTimeout(() => this.loadEvents(), 300); } } catch (e) {}
   }
 
   onShow(): void {
     // Reload events whenever page is shown
     this.loadEvents();
-    // needsReload hint
-    try { if (AppStorage.Get<boolean>('needsReload')) { AppStorage.Set<boolean>('needsReload', false); setTimeout(() => this.loadEvents(), 300); } } catch (e) {}
     // start a short burst refresh to catch recent writes
   }
 
@@ -92,7 +88,7 @@ struct Index {
             .padding({
               left: 18,
               right: 18,
-              top: 20,
+              top: 50,
               bottom: 12
             });
 
@@ -166,12 +162,13 @@ struct Index {
                     this.EventCard(item);
                   }
                   .onClick(() => {
-                    // persist selected id so detail page can read it
-                    AppStorage.Set<number>('selectedId', item.id);
+                    // write AppStorage as compatibility fallback, and prefer passing id via router params
+                    try { AppStorage.Set<number>('selectedId', item.id); } catch (e) {}
                     try {
-                      router.push({ uri: 'pages/EventDetail' });
+                      router.push({ uri: 'pages/EventDetail', params: { id: item.id } });
                     } catch (e) {
-                      console.error(e);
+                      // fallback to plain push if params not supported
+                      try { router.push({ uri: 'pages/EventDetail' }); } catch (err) { console.error(err); }
                     }
                   });
                 }
@@ -288,28 +285,51 @@ struct Index {
 
   @Builder
   private EventCard(item: MemoryItem): void {
-    Blank()
+    // Blank()
     // Use helper methods for calculations so Builder only contains UI syntax
-    Row({ space: 8 }) {
-      Column({ space: 6 }) {
-        Text(item.title).fontSize(18).fontWeight(FontWeight.Medium).fontColor('#111');
-        Text(this.formatDate(item.date)).fontSize(13).fontColor('#666');
-        Text(this.daysTextFor(item))
-          .fontSize(14)
-          .fontColor(this.daysColorFor(item));
+    Row({ space: 1}) {
+      Column({ space: 1 }) {
+
+        Row() {
+          Column() {
+            Text(item.title)
+              .fontSize(18)
+              .fontWeight(FontWeight.Medium)
+              .textAlign(TextAlign.Start)
+              .fontColor('#111')
+              .maxLines(1)
+            // .position({left:0,top:0});
+            // .overflow(TextOverflow.Ellipsis);
+            // .position({left:0,bottom:3});
+            Text(this.formatDate(item.date))
+              .fontSize(13)
+              .fontColor('#666')
+              .textAlign(TextAlign.Start)
+            // .alignSelf()
+            // .position({ left: 0, bottom });
+
+          }
+          .alignItems(HorizontalAlign.Start)
+        }
       }
 
-      Text(item.type === 'countdown' ? '倒数' : '纪念')
-        .fontSize(12)
-        .fontColor('#fff')
-        .padding({
-          left: 10,
-          right: 10,
-          top: 4,
-          bottom: 4
-        })
-        .backgroundColor(item.type === 'countdown' ? '#1677FF' : '#FF7A45')
-        .borderRadius(12);
+      Column(){
+        Text(item.type === 'countdown' ? '倒数' : '纪念')
+          .fontSize(12)
+          .fontColor('#fff')
+          .padding({
+            left: 10,
+            right: 10,
+            top: 4,
+            bottom: 4
+          })
+          .backgroundColor(item.type === 'countdown' ? '#1677FF' : '#FF7A45')
+          .borderRadius(12);
+        Text(this.daysTextFor(item))
+          .fontSize(14)
+          .margin({top:6 ,bottom: 6 })
+          .fontColor(this.daysColorFor(item));
+      }
     }
     .justifyContent(FlexAlign.SpaceBetween)
     .padding(14)

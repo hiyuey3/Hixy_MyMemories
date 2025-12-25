@@ -3,6 +3,7 @@ import router from '@system.router';
 import { GenericRouterPushParam } from '../types/NavigationTypes';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 
+@Preview
 @Component
 export struct EventDetail {
   @State itemId: number | undefined = undefined;

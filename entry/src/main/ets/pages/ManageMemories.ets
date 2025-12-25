@@ -3,6 +3,7 @@ import { MemoryItem, MemoryType } from '../types/MemoryTypes';
 import promptAction from '@ohos.promptAction';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import { relationalStore } from '@kit.ArkData';
+import vibrator from '@ohos.vibrator';
 
 @Entry
 @Component
@@ -10,12 +11,12 @@ export struct ManageMemories {
   @State events: MemoryItem[] = [];
   @State deleteTargetId: number | undefined = undefined;
 
-  // no MemoryStore subscription; refresh from DB on lifecycle hooks
-
   onInit(): void {
     // Load from DB at start
     this.loadEvents();
   }
+
+  // no MemoryStore subscription; refresh from DB on lifecycle hooks
 
   onDestroy(): void {
     // no-op
@@ -42,11 +43,11 @@ export struct ManageMemories {
 
       Row({ space: 12 }) {
         Column() {
-          Row(){
-          Text('管理记忆')
-            .fontSize(20)
-            .width('50%')
-            .fontWeight(FontWeight.Bold)
+          Row() {
+            Text('管理记忆')
+              .fontSize(20)
+              .width('50%')
+              .fontWeight(FontWeight.Bold)
             Button('🏠')
               .type(ButtonType.Capsule)
               .onClick(() => {
@@ -60,7 +61,8 @@ export struct ManageMemories {
               .fontColor('#fff')
               .margin({ left: 8 })
           }
-          Blank().margin({bottom: 8});
+
+          Blank().margin({ bottom: 8 });
           Row() {
             Button('➕')
               .type(ButtonType.Capsule)
@@ -89,40 +91,67 @@ export struct ManageMemories {
           ListItem() {
             Row({ space: 12 }) {
               Column() {
-                Text(item.title).fontSize(16).fontWeight(FontWeight.Medium);
+                // Title turns red when this item is pending deletion
+                Text(item.title)
+                  .fontSize(16)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(this.deleteTargetId === item.id ? '#FF4D4F' : '#111');
                 Text(this.formatDate(item.date)).fontSize(12).fontColor('#666');
               }
               .layoutWeight(1)
 
               // If this item is pending deletion, show inline confirm/cancel
               if (this.deleteTargetId === item.id) {
+                // this.triggerVibration()
                 Row({ space: 8 }) {
                   Button('❌')
                     .backgroundColor('#F2F2F2')
-                    .onClick(() => this.cancelDelete())
-                    .width(80).borderRadius(5);
+                    .onClick(
+                      () => {
+                        this.cancelDelete();
+
+                        promptAction.showToast({ message: '已取消删除' });
+                        this.triggerVibration();
+                        promptAction.showToast({ message: '取消删除触发震动提示' });
+                      }
+                    )
+                    .width(50)
+                    .borderRadius(50);
                   Button('✅')
                     .backgroundColor('#FF4D4F')
                     .fontColor('#fff')
                     .onClick(() => this.performDelete())
-                    .width(80)
-                    .borderRadius(5)
+                    .width(50)
+                    .borderRadius(50)
                 }
                 .justifyContent(FlexAlign.Center)
+
               } else {
                 Row() {
-                  Button('✍️').onClick(() => this.onEdit(item)).backgroundColor('#F2F2F2').borderRadius(50);
+                  Button('✍️').onClick(() =>
+                  this.onEdit(item)
+                  )
+                    .backgroundColor('#F2F2F2')
+                    .width(50)
+                    .borderRadius(50);
                   Button('🗑️')
-                    .onClick(() => this.onDelete(item.id))
+                    .onClick(() => {
+                      this.onDelete(item.id);
+                      this.triggerVibration();
+                    }
+                    )
                     .backgroundColor('#FF7A45')
                     .fontColor('#fff')
-                    .borderRadius(50);
+                    .width(50)
+                    .borderRadius(50)
+
                 }
                 .justifyContent(FlexAlign.Center)
               }
             }
             .padding(12)
-            .backgroundColor(Color.White)
+            // highlight pending-delete item with a soft red background
+            .backgroundColor(this.deleteTargetId === item.id ? '#FFF2F0' : Color.White)
             .borderRadius(10)
           }
         })
@@ -136,7 +165,21 @@ export struct ManageMemories {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F7F8FA');
+    .background(Color.Pink)
+
+    // .backgroundColor('#F7F8FA');
+  }
+
+  // private isVibrated: boolean = false;
+  private triggerVibration() {
+    try {
+      // 震动50毫秒
+      vibrator.vibrate(50);
+      promptAction.showToast({ message: '删除触发震动提示' });
+    } catch (err) {
+      console.error(`震动失败: ${JSON.stringify(err)}`);
+      promptAction.showToast({ message: '震动功能调用失败' });
+    }
   }
 
   private async loadEvents(): Promise<void> {
