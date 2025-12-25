@@ -59,7 +59,7 @@ struct Index {
               // Single Image with dynamic source (shown as circle via borderRadius)
               Image(this.imageSource())
                 .id('headerImage')
-                .width(320)
+                .width(340)
                 .height(170)
                 .objectFit(ImageFit.Cover)
                 .borderRadius(15)
@@ -154,7 +154,7 @@ struct Index {
           // .backgroundColor('#F7F8FA');
           .backgroundColor(Color.Pink);
         }
-        .tabBar(this.TabBuilder('首页', 0));
+        .tabBar(this.TabBuilder('首页', 0,$r('app.media.foreground')));
 
         // Memories tab
         TabContent() {

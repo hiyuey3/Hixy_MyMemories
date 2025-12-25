@@ -9,6 +9,7 @@ import { relationalStore } from '@kit.ArkData';
 export struct ManageMemories {
   @State events: MemoryItem[] = [];
   @State deleteTargetId: number | undefined = undefined;
+
   // no MemoryStore subscription; refresh from DB on lifecycle hooks
 
   onInit(): void {
@@ -29,7 +30,10 @@ export struct ManageMemories {
     // immediate refresh
     this.loadEvents();
     // delayed refresh to catch DB commits that may be slightly delayed
-    try { setTimeout(() => this.loadEvents(), 300); } catch (e) {}
+    try {
+      setTimeout(() => this.loadEvents(), 300);
+    } catch (e) {
+    }
   }
 
   build() {
@@ -37,21 +41,46 @@ export struct ManageMemories {
       // Inline per-item confirmation: when deleteTargetId === item.id render confirm UI
 
       Row({ space: 12 }) {
-        Text('管理记忆').fontSize(20).fontWeight(FontWeight.Bold);
-        Button('新增')
-          .type(ButtonType.Capsule)
-          .onClick(() => this.onAdd())
-          .backgroundColor('#1677FF')
-          .fontColor('#fff');
-        // Debug: 测试写入 - 会尝试写入一条示例数据并查询 DB 行数
-        Button('测试写入')
-          .type(ButtonType.Capsule)
-          .margin({ left: 8 })
-          .onClick(() => {
-            this.testWrite();
-          })
-          .backgroundColor('#00AA66')
-          .fontColor('#fff');
+        Column() {
+          Row(){
+          Text('管理记忆')
+            .fontSize(20)
+            .width('50%')
+            .fontWeight(FontWeight.Bold)
+            Button('🏠')
+              .type(ButtonType.Capsule)
+              .onClick(() => {
+                try {
+                  router.push({ uri: 'pages/Index' });
+                } catch (e) {
+                  console.error('跳转首页失败', e);
+                }
+              })
+              .backgroundColor('#FFA940')
+              .fontColor('#fff')
+              .margin({ left: 8 })
+          }
+          Blank().margin({bottom: 8});
+          Row() {
+            Button('➕')
+              .type(ButtonType.Capsule)
+              .onClick(() => this.onAdd())
+              .backgroundColor('#1677FF')
+              .fontColor('#fff')
+              .width("45%")
+            // Debug: 测试写入 - 会尝试写入一条示例数据并查询 DB 行数
+
+            Button('🧪')
+              .type(ButtonType.Capsule)
+              .margin({ left: 8 })
+              .onClick(() => {
+                this.testWrite();
+              })
+              .width("45%")
+              .backgroundColor('#00AA66')
+              .fontColor('#fff')
+          }
+        }
       }
       .padding({ left: 16, right: 16, top: 16 });
 
@@ -68,11 +97,11 @@ export struct ManageMemories {
               // If this item is pending deletion, show inline confirm/cancel
               if (this.deleteTargetId === item.id) {
                 Row({ space: 8 }) {
-                  Button('取消')
+                  Button('❌')
                     .backgroundColor('#F2F2F2')
                     .onClick(() => this.cancelDelete())
                     .width(80).borderRadius(5);
-                  Button('确认')
+                  Button('✅')
                     .backgroundColor('#FF4D4F')
                     .fontColor('#fff')
                     .onClick(() => this.performDelete())
@@ -82,8 +111,12 @@ export struct ManageMemories {
                 .justifyContent(FlexAlign.Center)
               } else {
                 Row() {
-                  Button('编辑').onClick(() => this.onEdit(item)).backgroundColor('#F2F2F2').borderRadius(5);
-                  Button('删除').onClick(() => this.onDelete(item.id)).backgroundColor('#FF7A45').fontColor('#fff').borderRadius(5);
+                  Button('✍️').onClick(() => this.onEdit(item)).backgroundColor('#F2F2F2').borderRadius(50);
+                  Button('🗑️')
+                    .onClick(() => this.onDelete(item.id))
+                    .backgroundColor('#FF7A45')
+                    .fontColor('#fff')
+                    .borderRadius(50);
                 }
                 .justifyContent(FlexAlign.Center)
               }
@@ -115,7 +148,12 @@ export struct ManageMemories {
         const title: string = r.title ?? '';
         const date: Date = new Date();
         const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
-        return { id, title, date, type } as MemoryItem;
+        return {
+          id,
+          title,
+          date,
+          type
+        } as MemoryItem;
       });
     } catch (err) {
       console.log(`加载记忆失败: ${err}`);
@@ -127,18 +165,46 @@ export struct ManageMemories {
     try {
       router.push({ uri: 'pages/AddMemory' });
     } catch (e) {
-      try { promptAction.showToast({ message: '无法跳转到新增页面' }); } catch (e) {}
+      try {
+        promptAction.showToast({ message: '无法跳转到新增页面' });
+      } catch (e) {
+      }
       console.error('跳转 AddMemory 失败', e);
     }
   }
 
   private async onEdit(item: MemoryItem): Promise<void> {
     try {
-      AppStorage.Set<number>('selectedId', item.id);
-      try { promptAction.showToast({ message: `跳转编辑页面 id=${item.id}` }); } catch (e) {}
-      router.push({ uri: 'pages/EditMemory' });
+      // set AppStorage first (reliable read) then navigate to EditMemory
+      try {
+        AppStorage.Set<number>('selectedId', item.id);
+      } catch (e) {
+      }
+      try {
+        promptAction.showToast({ message: `跳转编辑页面 id=${item.id}` });
+      } catch (e) {
+      }
+      try {
+        // small delay to allow AppStorage propagation on some runtimes
+        setTimeout(() => {
+          try {
+            router.push({ uri: 'pages/EditMemory' });
+          } catch (pushErr) {
+            console.error('router.push failed', pushErr);
+          }
+        }, 120);
+      } catch (e) {
+        try {
+          router.push({ uri: 'pages/EditMemory' });
+        } catch (pushErr) {
+          console.error('router.push failed', pushErr);
+        }
+      }
     } catch (e) {
-      try { promptAction.showToast({ message: '无法跳转到编辑页面' }); } catch (e) {}
+      try {
+        promptAction.showToast({ message: '无法跳转到编辑页面' });
+      } catch (e) {
+      }
       console.error('跳转 EditMemory 失败', e);
     }
   }
@@ -149,15 +215,23 @@ export struct ManageMemories {
   }
 
   private async performDelete(): Promise<void> {
-    if (!this.deleteTargetId) return;
+    if (!this.deleteTargetId) {
+      return;
+    }
     try {
       await MemoryDBUtil.deleteMemoryById('memories', this.deleteTargetId);
       this.deleteTargetId = undefined;
       await this.loadEvents();
-      try { promptAction.showToast({ message: '已删除' }); } catch (e) {}
+      try {
+        promptAction.showToast({ message: '已删除' });
+      } catch (e) {
+      }
     } catch (err) {
       console.error('删除失败', err);
-      try { promptAction.showToast({ message: '删除失败' }); } catch (e) {}
+      try {
+        promptAction.showToast({ message: '删除失败' });
+      } catch (e) {
+      }
     }
   }
 
@@ -171,7 +245,9 @@ export struct ManageMemories {
       const m = `${d.getMonth() + 1}`.padStart(2, '0');
       const day = `${d.getDate()}`.padStart(2, '0');
       return `${y}-${m}-${day}`;
-    } catch (e) { return '' }
+    } catch (e) {
+      return ''
+    }
   }
 
   // Debug helper: write a test row and query DB using MemDBUtils directly
@@ -181,11 +257,17 @@ export struct ManageMemories {
       const vb: relationalStore.ValuesBucket = { task_name: title, finished: 0 } as relationalStore.ValuesBucket;
       const rowId: number = await MemoryDBUtil.insertMemory('memories', vb);
       if (rowId && rowId > 0) {
-        try { promptAction.showToast({ message: `写入成功 id=${rowId}` }); } catch (e) {}
+        try {
+          promptAction.showToast({ message: `写入成功 id=${rowId}` });
+        } catch (e) {
+        }
       }
     } catch (e) {
       console.error('testWrite: DB insert failed', e);
-      try { promptAction.showToast({ message: '写入失败 (DB insert)' }); } catch (e2) {}
+      try {
+        promptAction.showToast({ message: '写入失败 (DB insert)' });
+      } catch (e2) {
+      }
       return;
     }
 
@@ -195,7 +277,10 @@ export struct ManageMemories {
       const cols: string[] = ['id', 'task_name', 'finished'];
       const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
       const cnt = rows ? rows.length : 0;
-      try { promptAction.showToast({ message: `测试写入完成，DB 行数: ${cnt}` }); } catch (e) {}
+      try {
+        promptAction.showToast({ message: `测试写入完成，DB 行数: ${cnt}` });
+      } catch (e) {
+      }
       console.log('testWrite: query rows:', rows);
       // refresh UI from DB rows
       this.events = (rows || []).map((r: Memory) => {
@@ -203,11 +288,19 @@ export struct ManageMemories {
         const t: string = r.title ?? '';
         const date: Date = new Date();
         const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
-        return { id, title: t, date, type } as MemoryItem;
+        return {
+          id,
+          title: t,
+          date,
+          type
+        } as MemoryItem;
       });
     } catch (e) {
       console.error('testWrite: query failed', e);
-      try { promptAction.showToast({ message: '查询失败' }); } catch (e2) {}
+      try {
+        promptAction.showToast({ message: '查询失败' });
+      } catch (e2) {
+      }
     }
   }
 }
