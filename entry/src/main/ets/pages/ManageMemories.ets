@@ -46,20 +46,11 @@ export struct ManageMemories {
           Row() {
             Text('管理记忆')
               .fontSize(20)
-              .width('50%')
+              .backgroundColor(Color.Transparent)
+              .textAlign(TextAlign.Center)
+              // .width('45%')
               .fontWeight(FontWeight.Bold)
-            Button('🏠')
-              .type(ButtonType.Capsule)
-              .onClick(() => {
-                try {
-                  router.push({ uri: 'pages/Index' });
-                } catch (e) {
-                  console.error('跳转首页失败', e);
-                }
-              })
-              .backgroundColor('#FFA940')
-              .fontColor('#fff')
-              .margin({ left: 8 })
+
           }
 
           Blank().margin({ bottom: 8 });
@@ -105,11 +96,25 @@ export struct ManageMemories {
       .height('100%')
       .edgeEffect(EdgeEffect.None)
       .layoutWeight(1)
+      Button('🏠')
+        .type(ButtonType.Normal)
+        .align(Alignment.Center)
+        .width("90%")
+        .onClick(() => {
+          try {
+            router.push({ uri: 'pages/Index' });
+          } catch (e) {
+            console.error('跳转首页失败', e);
+          }
+        })
+        .backgroundColor('#FFA940')
+        .fontColor('#fff')
+        .margin({ left: 8 })
 
     }
     .width('100%')
     .height('100%')
-    .background(Color.Pink)
+    .background(Color.White)
 
     // .backgroundColor('#F7F8FA');
   }
@@ -319,6 +324,7 @@ struct EventCard {
       if (this.deleteTargetId === this.item.id) {
         Row({ space: 8 }) {
           Button('❌')
+            .type(ButtonType.Normal)
             .backgroundColor('#F2F2F2')
             .onClick(() => {
               this.onCancelDelete();
@@ -327,23 +333,26 @@ struct EventCard {
               try { promptAction.showToast({ message: '取消删除触发震动提示' }); } catch (e) {}
             })
             .width(50)
-            .borderRadius(50);
+            // .borderRadius(50);
           Button('✅')
             .backgroundColor('#FF4D4F')
             .fontColor('#fff')
             .onClick(() => this.onPerformDelete())
             .width(50)
             .borderRadius(50)
+            .type(ButtonType.Capsule)
         }
         .justifyContent(FlexAlign.Center)
 
       } else {
         Row() {
           Button('✍️').onClick(() => this.onEdit(this.item))
+            .type(ButtonType.Capsule)
             .backgroundColor('#F2F2F2')
             .width(50)
             .borderRadius(50);
           Button('🗑️')
+            .type(ButtonType.Capsule)
             .onClick(() => {
               this.onDelete(this.item.id);
               this.triggerVibration();

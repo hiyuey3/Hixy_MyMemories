@@ -143,8 +143,11 @@ struct Index {
               // }
               // 管理按钮（打开管理页面）
               Button('✍️管理')
-                .type(ButtonType.Capsule)
+                .type(ButtonType.Normal)
                 .backgroundColor('#ffffff')
+                .borderColor(Color.Gray)
+                .borderWidth(1)
+                .borderRadius(3)
                 .fontColor('#1677FF')
                 .width('20%')
                 .height(39)
@@ -161,8 +164,8 @@ struct Index {
           }
           .width('100%')
           .height('100%')
-          // .backgroundColor('#F7F8FA');
-          .backgroundColor(Color.Pink);
+          .backgroundColor('#F7F8FA');
+          // .backgroundColor(Color.Pink);
         }
         .tabBar(this.TabBuilder('首页', 0,$r('app.media.foreground')));
 
@@ -258,7 +261,7 @@ struct Index {
     if (this.headerImagePath && this.headerImagePath.length > 0) {
       return this.headerImagePath;
     }
-    return $r('app.media.background');
+    return $r('app.media.hixy_logo_new');
   }
 
   // Format a Date to yyyy-mm-dd for display
@@ -373,7 +376,7 @@ struct Index {
   private TabBuilder(title: string, targetIndex: number, normalImg?: Resource, selectedImg?: Resource) {
     Column() {
       Image(normalImg ? (this.currentIndex === targetIndex ? selectedImg ?? normalImg : normalImg) :
-        $r('app.media.startIcon'))
+        $r('app.media.hixy_logo_new'))
         .width(24)
         .height(24)
         .align(Alignment.Center);
