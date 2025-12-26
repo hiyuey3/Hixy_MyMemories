@@ -1,4 +1,4 @@
-import { Settings } from './Settings';
+// import { Settings } from './Settings';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import router from '@system.router';
 import { About } from './About';
