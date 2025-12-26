@@ -1,5 +1,8 @@
 import promptAction from '@ohos.promptAction';
 import router from '@system.router';
+
+// 这个文件已被废弃
+// THIS FILE IS deprecated
 @Component
 export struct Settings {
   @State notifyEnabled: boolean = true;
