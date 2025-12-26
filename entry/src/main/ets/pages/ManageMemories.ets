@@ -6,6 +6,7 @@ import { relationalStore } from '@kit.ArkData';
 import vibrator from '@ohos.vibrator';
 
 @Entry
+// Removed @Entry — Index is the single app entry. Keep component available for routing.
 @Component
 export struct ManageMemories {
   @State events: MemoryItem[] = [];
@@ -155,13 +156,13 @@ export struct ManageMemories {
 
   private async onAdd(): Promise<void> {
     try {
-      router.push({ uri: 'pages/AddMemory' });
+      // Open EditMemory without params to enter add mode
+      router.push({ uri: 'pages/EditMemory' });
     } catch (e) {
       try {
-        promptAction.showToast({ message: '无法跳转到新增页面' });
-      } catch (e) {
-      }
-      console.error('跳转 AddMemory 失败', e);
+        promptAction.showToast({ message: '无法跳转到编辑页面' });
+      } catch (e) {}
+      console.error('跳转 EditMemory 失败', e);
     }
   }
 
@@ -199,13 +200,11 @@ export struct ManageMemories {
       try {
         promptAction.showToast({ message: '已删除' });
       } catch (e) {
+
       }
     } catch (err) {
       console.error('删除失败', err);
-      try {
-        promptAction.showToast({ message: '删除失败' });
-      } catch (e) {
-      }
+      try { promptAction.showToast({ message: '删除失败' }); } catch (e) {}
     }
   }
 

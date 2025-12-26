@@ -411,7 +411,7 @@ struct Index {
       console.log('Add button clicked: attempting to navigate to AddMemory');
       try { promptAction.showToast({ message: '跳转到新增事件...' }); } catch (e) {}
       try {
-        router.push({ uri: 'pages/AddMemory' });
+        router.push({ uri: 'pages/EditMemory' });
         console.log('router.push called for pages/AddMemory');
         // this.addFeedback = '跳转请求已发送';
         try { promptAction.showToast({ message: '已请求跳转' }); } catch (e) {}

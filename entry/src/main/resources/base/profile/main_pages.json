@@ -1,7 +1,6 @@
 {
   "src": [
     "pages/Index",
-    "pages/AddMemory",
     "pages/ManageMemories",
     "pages/EditMemory"
   ]
