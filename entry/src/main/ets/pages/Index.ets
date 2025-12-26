@@ -1,5 +1,6 @@
 // import { Settings } from './Settings';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
+import { formatDate as formatDateUtil, daysTextFor as daysTextForUtil, daysColorFor as daysColorForUtil, getEventsSortedByDaysUntil as sortByDaysUntilUtil, countUpcoming as countUpcomingUtil, countMemories as countMemoriesUtil } from '../utils/dateUtils';
 import router from '@system.router';
 import { About } from './About';
 import { MemoryItem, MemoryType } from '../types/MemoryTypes';
@@ -264,25 +265,9 @@ struct Index {
     return $r('app.media.hixy_logo_new');
   }
 
-  // Format a Date to yyyy-mm-dd for display
-  private formatDate(d: Date): string {
-    const y = d.getFullYear();
-    const m = `${d.getMonth() + 1}`.padStart(2, '0');
-    const day = `${d.getDate()}`.padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-
-  // Days difference between today (midnight) and target date (midnight)
-  private daysDiff(target: Date): number {
-    const today = new Date();
-    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-    const dest = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
-    return Math.round((dest - start) / (24 * 3600 * 1000));
-  }
-
   // Return events sorted by days until (ascending)
   private getEventsSortedByDaysUntil(): MemoryItem[] {
-    return [...this.events].sort((a, b) => this.daysDiff(a.date) - this.daysDiff(b.date));
+    return sortByDaysUntilUtil(this.events);
   }
 
   // Public alias for sorted events (keeps call sites stable)
@@ -292,12 +277,27 @@ struct Index {
 
   // Count of upcoming (daysDiff >= 0)
   private getUpcoming(): number {
-    return this.events.filter(i => this.daysDiff(i.date) >= 0).length;
+    return countUpcomingUtil(this.events);
   }
 
   // Count of past memories (daysDiff < 0)
   private getMemories(): number {
-    return this.events.filter(i => this.daysDiff(i.date) < 0).length;
+    return countMemoriesUtil(this.events);
+  }
+
+  // Helper: formatted days text for an item
+  private daysTextFor(item: MemoryItem): string {
+    return daysTextForUtil(item.date);
+  }
+
+  // Helper: color for the days text (upcoming vs past)
+  private daysColorFor(item: MemoryItem): string {
+    return daysColorForUtil(item.date);
+  }
+
+  // Helper: date formatting wrapper
+  private formatDate(d: Date): string {
+    return formatDateUtil(d);
   }
 
   @Builder
@@ -359,17 +359,6 @@ struct Index {
       offsetX: 0,
       offsetY: 4
     });
-  }
-
-  // Helper: formatted days text for an item
-  private daysTextFor(item: MemoryItem): string {
-    const diff = this.daysDiff(item.date);
-    return diff >= 0 ? `还有 ${diff} 天` : `已过 ${Math.abs(diff)} 天`;
-  }
-
-  // Helper: color for the days text (upcoming vs past)
-  private daysColorFor(item: MemoryItem): string {
-    return this.daysDiff(item.date) >= 0 ? '#1677FF' : '#FF7A45';
   }
 
   @Builder

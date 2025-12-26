@@ -2,6 +2,7 @@ import router from '@system.router';
 import { MemoryItem, MemoryType } from '../types/MemoryTypes';
 import promptAction from '@ohos.promptAction';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
+import { formatDate as formatDateUtil } from '../utils/dateUtils';
 import { relationalStore } from '@kit.ArkData';
 import vibrator from '@ohos.vibrator';
 
@@ -212,17 +213,6 @@ export struct ManageMemories {
     this.deleteTargetId = undefined;
   }
 
-  private formatDate(d: Date): string {
-    try {
-      const y = d.getFullYear();
-      const m = `${d.getMonth() + 1}`.padStart(2, '0');
-      const day = `${d.getDate()}`.padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    } catch (e) {
-      return ''
-    }
-  }
-
   // Debug helper: write a test row and query DB using MemDBUtils directly
   private async testWrite(): Promise<void> {
     const title = `Test ${Date.now()}`;
@@ -288,14 +278,7 @@ struct EventCard {
   onPerformDelete: () => void = () => {};
 
   private formatDate(d: Date): string {
-    try {
-      const y = d.getFullYear();
-      const m = `${d.getMonth() + 1}`.padStart(2, '0');
-      const day = `${d.getDate()}`.padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    } catch (e) {
-      return ''
-    }
+    return formatDateUtil(d);
   }
 
   private triggerVibration() {
