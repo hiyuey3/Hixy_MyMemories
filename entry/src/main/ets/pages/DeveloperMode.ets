@@ -47,12 +47,12 @@ export struct ManageMemories {
     Column({ space: 16 }) {
       // Header
       Column() {
-        Text('开发者模式')
+        Text('管理模式')
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .fontColor('#111')
           .margin({ top: 18 });
-        Text('仅供开发与调试使用，慎重操作')
+        Text('仅在开发者指导下调试使用，慎重操作！！！')
           .fontSize(12)
           .fontColor('#9AA0A6')
           .margin({ top: 6, bottom: 6 });

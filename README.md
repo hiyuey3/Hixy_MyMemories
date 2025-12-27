@@ -1,159 +1,122 @@
 # MyMemories (Hixy_MyMemories)
 
 一、移动APP简介
-MyMemories 是一款用于记录“倒数日/纪念日/重要日子”的 HarmonyOS 应用（ArkTS + ArkUI）。支持事件新增、编辑、删除、日期计算（剩余/已过天数）、批量导入导出、细腻的卡片式 UI 和基础的用户反馈（Toast、振动）。
+MyMemories 是一款专注于“倒数日”与“纪念日”管理的 HarmonyOS 移动应用。它旨在帮助用户以极简、优雅的方式记录生活中的重要时刻——无论是即将到来的考试、生日、假期，还是值得铭记的纪念日。
+应用采用清新现代的 UI 设计，支持事件的增删改查、日历视图查看、数据导入导出等功能。我们的标语是：“让时光有迹可循，让记忆温暖如初。”
 
 二、移动APP功能设计与相关技术
-## 2.1 系统总体设计
-本系统主要包括如下模块（页面与组件）：
-- 用户首页模块（Index + HomePage）：展示头图、统计卡片、事件列表，支持新增入口。
-- 记忆列表模块（MemoriesPage）：提供月历视图，支持按日期过滤和跳转指定日期。
-- 管理模块（ManageMemories/DeveloperMode）：批量导入导出、清理数据、调试写入、删除确认等。
-- 详情模块（EventDetail）：展示事件详情、备注，支持编辑与删除。
-- 编辑模块（EditMemory）：表单录入标题、日期、类型与备注，保存到本地数据库。
-- 关于模块（About）：展示版本、开发者信息、入口到开发者模式。
-- 组件库（EventCard、IndexTabs、BottomTabItem、HomeHeader）：复用展示与导航组件。
-- 工具与数据层（dateUtils、MemDBUtils）：日期计算与 RDB 封装。
 
-系统总体功能模块图（示意）如下：
-- 首页（Index）
-  - 主页内容（HomePage）
-    - 统计（Upcoming/Memories）
-    - 列表（EventCard）
-    - 新增/管理入口
-  - Tabs（IndexTabs）
-    - 记忆（MemoriesPage：月历过滤）
-    - 关于（About）
-- 编辑（EditMemory）
-- 详情（EventDetail）
-- 管理/开发者模式（ManageMemories/DeveloperMode：导入/导出/清理/删除确认）
-- 工具（dateUtils：日期计算；MemDBUtils：RDB 读写）
+2.1 系统总体设计
+本系统采用模块化设计，主要包含以下核心模块：
+- **首页模块**：展示应用头图、核心数据统计（即将到来/纪念回顾）以及按时间排序的事件列表。
+- **记忆模块**：提供月历视图，支持按日期筛选事件，方便用户回顾特定日期的记忆。
+- **详情与编辑模块**：查看事件详细信息（含备注），支持新建事件或对已有事件进行编辑、删除。
+- **关于与设置模块**：展示应用版本、开发者信息（含联系方式）、以及开发者调试模式（数据管理）。
 
-## 2.2 功能详细设计
-（1）事件新增/编辑（EditMemory）
-- 功能描述：用户进入编辑页，填写标题、选择日期、选择类型（倒数/纪念）、填写备注，点击“保存”提交。若为编辑模式则根据选中 ID 预填原有数据。
-- 使用技术或知识点：TextInput、TextArea、DatePicker、Button、Router 导航、RDB 写入（MemDBUtils.insert/update）。
+系统的总体功能结构如图1所示（示意图）：
+```mermaid
+graph TD
+    A[MyMemories App] --> B[首页 Index]
+    A --> C[记忆 Memories]
+    A --> D[关于 About]
+    B --> B1[统计卡片]
+    B --> B2[事件列表]
+    B --> B3[新增事件]
+    B2 --> E[事件详情]
+    E --> F[编辑/删除]
+    C --> C1[月历视图]
+    C --> C2[日期筛选]
+    D --> D1[版本信息]
+    D --> D2[开发者模式]
+```
 
-（2）首页展示与统计（Index + HomePage）
-- 功能描述：展示头图与两张统计卡片（即将到来的事件数、纪念回顾事件数），下方为事件列表卡片。点击“新增”进入编辑页，点击“管理”进入管理页。
-- 使用技术或知识点：组件化（HomePage/EventCard）、Tabs、AppStorage、RDB 查询（MemDBUtils.queryMemories）、dateUtils 天数计算与排序。
+2.2 功能详细设计
 
-（3）记忆列表（月历过滤）（MemoriesPage）
-- 功能描述：以月历形式展示可见月份，标注有事件的日期；支持选择日期过滤列表、跳转指定日期、快速返回今日。
-- 使用技术或知识点：Builder 渲染网格、日期工具方法（getMonthMatrix/sameDay）、ArkUI 列表与按钮。
+（1）事件管理（新增/编辑/删除）
+- **功能描述**：用户可以通过首页的“+”按钮新增事件，或在详情页点击“编辑”修改事件。支持设置标题、日期、类型（倒数日/纪念日）以及备注信息。在详情页或编辑页底部，用户可以删除不再需要的事件，删除前会有二次确认弹窗防止误操作。
+- **使用技术或知识点**：
+  - ArkUI 组件：`TextInput`, `TextArea`, `DatePicker`, `Button`, `Stack` (底部按钮固定)。
+  - 数据持久化：使用 HarmonyOS 的 `relationalStore` (RDB) 进行 SQLite 数据库的增删改查操作。
+  - 路由跳转：`router.push` 与 `router.back` 实现页面间传参和切换。
 
-（4）事件详情（EventDetail）
-- 功能描述：展示标题、日期、类型与备注；支持“编辑”和“删除”操作，删除前弹出确认对话框。
-- 使用技术或知识点：Router 参数获取、MemDBUtils 查询与删除、promptAction 弹框、AppStorage 同步刷新。
+（2）首页展示与统计
+- **功能描述**：首页顶部展示精美的 Banner 图（记录重要时刻），下方通过两个统计卡片直观展示“即将到来”和“纪念回顾”的事件数量。列表区域按剩余天数自动排序，让紧迫的事件优先展示。
+- **使用技术或知识点**：
+  - 列表渲染：`List` + `ForEach` 高效渲染长列表。
+  - 日期计算：封装 `dateUtils` 工具类，计算两个日期之间的天数差。
+  - 状态管理：使用 `@State` 和 `@Prop` 驱动 UI 自动刷新。
 
-（5）管理/开发者模式（DeveloperMode）
-- 功能描述：导出当前事件为 JSON、复制到剪贴板；导入 JSON 批量写入数据库；调试新增一条测试数据；清理全部数据；删除单条数据带确认与振动反馈。
-- 使用技术或知识点：Pasteboard、Vibrator、Toast、RDB 批量写入与删除、JSON 序列化/反序列化、UI 状态控制（@State/@Link）。
+（3）记忆日历
+- **功能描述**：以月历形式展示时间流，用户可以切换月份，点击具体日期查看当天的事件。
+- **使用技术或知识点**：
+  - 自定义构建函数：`@Builder` 构建日历网格。
+  - 逻辑处理：计算每月天数、第一天是周几，动态生成日历数据。
+
+（4）关于与开发者模式
+- **功能描述**：展示应用 Logo（由 IGE 设计）、版本号、Slogan 及开发者联系方式（酷安、小红书、QQ/微信）。内置“开发者模式”，支持 JSON 格式的数据导入导出，方便数据迁移和备份。
+- **使用技术或知识点**：
+  - 剪贴板操作：`pasteboard` 实现数据的复制与粘贴。
+  - 交互反馈：`promptAction.showToast` 提供操作结果提示。
 
 三、数据来源
-本项目使用 HarmonyOS 本地 RDB 进行数据持久化，由 `MemDBUtils.ets` 封装。核心表结构如下（表：`memories`）：
-- 字段与含义：
-  - id: integer, 主键自增（主码）
-  - task_name: text, 事件标题（非空）
-  - finished: boolean/integer, 是否已完成（用于区分倒数/纪念）
-  - target_date: number, 目标日期（毫秒时间戳，可选）
-  - content: text, 备注（可选）
 
-数据映射到类型：
-- MemoryItem: { id: number; title: string; date: Date|number|string|null|undefined; type: 'countdown'|'anniversary'; note?: string }
-- 类型转换：task_name -> title；finished -> type（true=anniversary/false=countdown）；target_date -> date；content -> note
+本系统使用 HarmonyOS 本地数据库（RDB）存储所有用户数据，不依赖网络接口，保障隐私安全。
+数据库名为 `memories.db`，核心表 `memories` 设计如下：
 
-如果使用 JSON 数据（导入/导出），文件格式如下：
-- 导出 JSON（示例，文本以 `ioText` 文本框呈现，复制到剪贴板）：
-```
+| 字段名 | 类型 | 描述 | 备注 |
+| :--- | :--- | :--- | :--- |
+| id | INTEGER | 事件ID | 主键，自增 |
+| task_name | TEXT | 事件标题 | 必填 |
+| finished | INTEGER | 事件类型 | 0: 倒数日, 1: 纪念日 |
+| target_date | INTEGER | 目标日期 | 毫秒级时间戳 |
+| content | TEXT | 备注信息 | 选填 |
+
+如果是 JSON 数据导入导出，格式如下：
+**Json_memories 描述**：
+```json
 [
-  { "title": "生日", "date": 1735000000000, "type": "countdown" },
-  { "title": "纪念日", "date": "2025-10-01", "type": "anniversary" }
+  { "title": "恋爱纪念日", "date": 1672502400000, "type": "anniversary", "note": "在一起的第一天" },
+  { "title": "考研倒计时", "date": 1703260800000, "type": "countdown", "note": "加油！" }
 ]
 ```
-- 导入 JSON（示例）：同上。应用会解析每条记录：
-  - title: 字符串，必填
-  - type: 'countdown' 或 'anniversary'（缺省为 'countdown'）
-  - date: 毫秒、ISO 字符串或空（空将按当前时间或逻辑默认处理）
 
 四、系统成果
-请在提交报告时贴出完整的功能截图（建议包含）：
-- 首页（头图、统计卡片、事件列表）
-- 记忆列表（月历与日期过滤）
-- 事件详情（展示与编辑入口、删除确认）
-- 编辑页（表单录入与保存成功）
-- 管理/开发者模式（导入/导出、清理、删除确认、复制到剪贴板）
-- 导入 JSON 样例与导出 JSON 文本
 
-示例流程（4.1 登录模块参考，替换为本系统实际流程）：
-- 新增事件：点击“新增”→ 填写表单 → 保存后返回首页并刷新列表。
-- 删除事件：在详情或管理页点击“删除”→ 弹出确认 → 删除成功后返回首页并刷新。
+（此处建议贴出应用运行截图）
+
+4.1 首页与列表
+首页采用清新的蓝紫色调 Banner，统计卡片清晰明了。列表项展示事件标题、日期及剩余/已过天数，左侧图标根据类型区分颜色（蓝色为倒数日，橙色为纪念日）。
+
+4.2 编辑与详情
+编辑页表单简洁，支持备注输入。详情页展示完整信息，底部固定“编辑”、“删除”和“返回首页”按钮，操作便捷。
+
+4.3 关于页面
+关于页面展示了应用 Logo、Slogan 以及开发团队信息，致敬了 Logo 设计师 @IGE，并提供了多种联系方式。
 
 五、遇到关键问题与解决方案
-- 问题：不同 SDK 版本对 `RdbPredicates.orderByDesc` 的支持差异。
-  - 解决：调用处增加 try/catch 容错，不影响查询主流程。
-- 问题：UI 主题颜色与暗色模式兼容。
-  - 解决：建议逐步将硬编码颜色替换为资源引用（如 `$r('app.color.start_window_background')`），本项目已在部分组件采用资源色。
-- 问题：导入 JSON 时日期格式不一。
-  - 解决：兼容 number/string，并对非法值回退到当前时间或跳过记录；导出时统一为毫秒或 ISO 字符串。
-- 问题：页面刷新与数据一致性。
-  - 解决：保存/删除后设置 AppStorage 标记并在首页生命周期钩子中统一重载；管理页在操作后调用 `loadEvents()`。
+
+1. **问题：ArkTS 中 Stack 与 Column 的布局层级问题**
+   - **描述**：在首页 Banner 上叠加文字时，直接使用 SVG 内部文字在部分设备无法显示。
+   - **解决方案**：采用 `Stack` 布局，将 SVG 图片作为底层背景，上层叠加 `Column` 包裹的 `Text` 组件，并添加半透明背景遮罩，确保文字在任何背景下都清晰可见。
+
+2. **问题：底部按钮在长页面中的定位**
+   - **描述**：在编辑页和详情页，当内容较少时按钮在中间，内容多时需滚动。
+   - **解决方案**：使用 `Flex` 布局或 `Column` + `Blank().layoutWeight(1)` 占位符，将操作按钮区域强制推至页面最底部，保证交互体验一致性。
+
+3. **问题：数据库异步操作与 UI 刷新**
+   - **描述**：数据修改后返回首页，列表未及时更新。
+   - **解决方案**：利用 `AppStorage` 设置全局标记 `needsReload`，在页面 `onShow` 或 `aboutToAppear` 生命周期中检查该标记并重新加载数据。
 
 六、个人收获与反思
-- 对 ArkTS + ArkUI 的声明式编程模式有了实践与理解，组件化与状态驱动提升了可读性与维护性。
-- RDB 封装与类型映射提升了数据层的清晰度，避免了散落的 SQL 操作。
-- 在界面交互上，适度的用户反馈（Toast、振动、确认对话框）有效提升了易用性。
-- 后续可以加强：统一主题颜色、增加单元测试（组件与 DB 工具）、完善 MemoryStore 以降低多个页面的耦合。
+
+通过开发 MyMemories，深入理解了 HarmonyOS ArkTS 的声明式 UI 开发范式。
+- **技术层面**：掌握了 RDB 本地数据库的封装与使用，熟悉了 ArkUI 常用组件（List, Stack, Picker 等）的属性与布局规则。
+- **产品思维**：在设计 UI 时，学会了从用户角度思考，例如增加“备注”的占位显示、优化底部按钮的触达区域、以及添加“开发者模式”方便数据迁移。
+- **不足与展望**：目前应用仅支持本地存储，未来考虑接入云服务实现多端同步；同时计划增加桌面卡片（Service Widget）功能，让倒数日查看更便捷。
 
 七、附录
-- 文档索引：
-  - PROJECT_OVERVIEW.md — 项目概览与结构
-  - DOCUMENTATION.md — 架构与模块说明
-  - API_REFERENCE.md — 类型与接口参考
-  - DEVELOPER_GUIDE.md — 开发与扩展指南
-  - USER_GUIDE.md — 使用指南
-- 关键文件：
-  - `entry/src/main/ets/utils/MemDBUtils.ets` — RDB 封装与 CRUD
-  - `entry/src/main/ets/utils/dateUtils.ets` — 日期工具与天数计算
-  - `entry/src/main/ets/pages/` — 页面入口与内容
-  - `entry/src/main/ets/components/` — UI 组件
-- 构建与运行（DevEco Studio 推荐）：打开项目 → 选择设备 → Run；命令行示例：
-```bash
-cd Hixy_MyMemories/entry
-# 具体构建命令以 DevEco 项目配置为准
-# 如需安装 .hap 可参考 DevEco 文档
-```
 
-> 注：报告中的“系统总体功能图/流程图”可使用 Visor 或任意流程图工具绘制，并将截图贴入结果章节。
+- **Logo 设计**：@IGE
+- **参考文档**：[HarmonyOS 开发者官网](https://developer.huawei.com/consumer/cn/)
+- **开源地址**：[GitHub - MyMemories](https://github.com/hiyuey3)
 
-## 官方引用（建议替换为准确 URL）
-- HarmonyOS ArkUI 声明式开发（官方）
-  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkui-overview
-  - 用途：UI 架构与组件用法参考
-- ArkTS 语言与开发规范（官方）
-  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-introduction
-  - 用途：语言特性与工程规范
-- 本地数据存储：Relational Store / RDB（官方）
-  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/data-relational-store
-  - 用途：RDB 初始化、CRUD、查询谓词
-- 路由与页面导航：UIAbility / @system.router（官方）
-  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/uiability-navigation
-  - 用途：页面跳转与生命周期
-- 振动能力：@ohos.vibrator（官方 API）
-  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-references/js-apis-vibrator
-  - 用途：删除/确认操作的振动反馈
-- 剪贴板：@ohos.pasteboard（官方 API）
-  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-references/js-apis-pasteboard
-  - 用途：导出 JSON 的复制功能
-- 提示与对话框：@ohos.promptAction（官方 API）
-  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-references/js-apis-promptaction
-  - 用途：Toast 与确认对话
-- ArkUI 组件索引（Tabs、List、Button、Text、Image）（官方）
-  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkui-components
-  - 用途：组件参考与属性说明
-- Hvigor 构建工具（官方）
-  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/hvigor-introduction
-  - 用途：构建打包流程
-- 资源与暗色模式（官方）
-  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/resource-color-and-darkmode
-  - 用途：颜色资源与暗色主题适配
