@@ -1,4 +1,3 @@
-import router from '@system.router';
 import promptAction from '@ohos.promptAction';
 @Component
 export struct About {
@@ -21,7 +20,7 @@ export struct About {
           .fontSize(22)
           .fontWeight(FontWeight.Bold)
           .margin({ top: 20, bottom: 8 })
-          .align(Alignment.Center);
+          .textAlign(TextAlign.Center);
 
         // Logo：优先显示资源中的图片
         Image($r('app.media.hixy_logo_old'))
@@ -51,7 +50,8 @@ export struct About {
     .height('100%')
     .alignItems(HorizontalAlign.Center)
     .padding({ left: 16, right: 16 })
-    .backgroundColor(Color.Pink)
+    .backgroundColor('#f5f5f5')
+    // .backgroundColor(Color.Pink)
     // .backgroundColor('#f5f5f5');
   }
 
@@ -62,7 +62,7 @@ export struct About {
       Text('开发者信息')
         .fontSize(16)
         .fontWeight(FontWeight.Bold)
-        .align(Alignment.Start)
+        .textAlign(TextAlign.Start)
         .width('100%')
         .margin({ bottom: 12 });
 
@@ -76,7 +76,8 @@ export struct About {
 
       Row() {
         Text('联系邮箱').fontSize(14).fontColor('#666');
-        Text(this.email).fontSize(14).fontColor('#0A59F7');
+        Text(this.email).fontSize(14).fontColor('#0A59F7')
+          .onClick(() => { this.toast(this.email); });
       }
       .width('100%')
       .justifyContent(FlexAlign.SpaceBetween)
@@ -84,7 +85,8 @@ export struct About {
 
       Row() {
         Text('GitHub').fontSize(14).fontColor('#666');
-        Text('github.com/hiyuey3').fontSize(14).fontColor('#0A59F7');
+        Text('github.com/hiyuey3').fontSize(14).fontColor('#0A59F7')
+          .onClick(() => { this.toast('打开 github.com/hiyuey3'); });
       }
       .width('100%')
       .justifyContent(FlexAlign.SpaceBetween)
@@ -96,10 +98,46 @@ export struct About {
       }
       .width('100%')
       .justifyContent(FlexAlign.SpaceBetween);
+
+      Row() {
+        Text('官方网站').fontSize(14).fontColor('#666');
+        Text('xyw.cx').fontSize(14).fontColor('#0A59F7')
+          .onClick(() => { this.toast('打开 xyw.cx'); });
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
+      .margin({ bottom: 10 });
+
+      Row() {
+        Text('微博').fontSize(14).fontColor('#666');
+        Text('@小影工作室').fontSize(14).fontColor('#333')
+          .onClick(() => { this.toast('打开 微博 @小影工作室'); });
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
+      .margin({ bottom: 10 });
+
+      Row() {
+        Text('微信').fontSize(14).fontColor('#666');
+        Text('hiyuey3').fontSize(14).fontColor('#333')
+          .onClick(() => { this.toast('复制微信 hiyuey3'); });
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
+      .margin({ bottom: 10 });
+
+      Row() {
+        Text('公众号').fontSize(14).fontColor('#666');
+        Text('小影团队').fontSize(14).fontColor('#333')
+          .onClick(() => { this.toast('关注公众号：小影团队'); });
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
+      .margin({ bottom: 10 });
     }
     .width('94%')
     .padding(20)
-    .backgroundColor(Color.White)
+    .backgroundColor('#FFFFFF')
     .borderRadius(12)
     .margin({ top: 8 });
   }
