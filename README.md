@@ -85,28 +85,28 @@ graph TD
 
 | 首页概览 | 新增事件 |
 | :---: | :---: |
-| <img src="Screenshoot/首页截屏.png" width="300" /> | <img src="Screenshoot/首页点击新增事件选中倒数日.png" width="300" /> |
+| <img src="Screenshoot/首页截屏.png" width="100" /> | <img src="Screenshoot/首页点击新增事件选中倒数日.png" width="100" /> |
 
 4.2 记忆日历
 以月历形式展示时间流，支持日期筛选，方便回顾特定日期的记忆。
 
 | 记忆月历 | 日期筛选 |
 | :---: | :---: |
-| <img src="Screenshoot/记忆页面.png" width="300" /> | <img src="Screenshoot/记忆页面筛选.png" width="300" /> |
+| <img src="Screenshoot/记忆页面.png" width="100" /> | <img src="Screenshoot/记忆页面筛选.png" width="100" /> |
 
 4.3 编辑与详情
 详情页展示完整信息，底部固定操作按钮；编辑页表单简洁，支持备注输入。
 
 | 事件详情 | 删除确认 | 编辑页面 |
 | :---: | :---: | :---: |
-| <img src="Screenshoot/点击单条卡片跳出详情卡页面.png" width="300" /> | <img src="Screenshoot/点击单条卡片跳出详情卡页面点删除提示确认页面.png" width="300" /> | <img src="Screenshoot/编辑纪念日.png" width="300" /> |
+| <img src="Screenshoot/点击单条卡片跳出详情卡页面.png" width="100" /> | <img src="Screenshoot/点击单条卡片跳出详情卡页面点删除提示确认页面.png" width="100" /> | <img src="Screenshoot/编辑纪念日.png" width="100" /> |
 
 4.4 关于页面与开发者模式
 关于页面展示应用信息与致敬；开发者模式支持数据导入导出与清理。
 
 | 关于页面 | 导出数据 | 导入数据 |
 | :---: | :---: | :---: |
-| <img src="Screenshoot/关于页面.png" width="300" /> | <img src="Screenshoot/开发者模式-导出测试.png" width="300" /> | <img src="Screenshoot/开发者模式-导入测试.png" width="300" /> |
+| <img src="Screenshoot/关于页面.png" width="100" /> | <img src="Screenshoot/开发者模式-导出测试.png" width="100" /> | <img src="Screenshoot/开发者模式-导入测试.png" width="100" /> |
 
 五、遇到关键问题与解决方案
 1. 问题：ArkTS 中 Stack 与 Column 的布局层级问题
