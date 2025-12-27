@@ -8,6 +8,13 @@ MyMemories ｜ 我的记忆点
 
 由本作者书写的代码部分使用 AGPLv3 许可证授权
 
+本人朋友及本人为我设计个人的Logo
+
+|                                    旧版 Logo                                     |                                    新版 Logo                                     |
+|:------------------------------------------------------------------------------:|:------------------------------------------------------------------------------:|
+| <img src="entry/src/main/resources/base/media/hixy_logo_old.jpg" width="20" /> | <img src="entry/src/main/resources/base/media/hixy_logo_new.png" width="20" /> |
+
+
 一、移动APP简介
 
 MyMemories 是一款专注于“倒数日”与“纪念日”管理的 HarmonyOS NEXT 移动应用，基于API版本 21。它旨在帮助用户以极简、优雅的方式记录生活中的重要时刻——无论是即将到来的考试、生日、假期，还是值得铭记的纪念日。
@@ -164,7 +171,10 @@ graph TD
 - 主题/图标激活色：`#1677FF`（保留部分资源与图标文件使用该色）
 
 7.2 参考与鸣谢 (References & Credits)
-- Logo 设计：@IGE
+- 小影Logo 设计：@IGE
+- 新Logo @hiyuey3
+
+
 - 参考文档：HarmonyOS 开发者官网 https://developer.huawei.com/consumer/cn/
 - 开源地址：GitHub - MyMemories https://github.com/hiyuey3
 
