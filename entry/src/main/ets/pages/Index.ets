@@ -32,6 +32,11 @@ struct Index {
     // Reload events whenever page is shown
     this.loadEvents();
     // start a short burst refresh to catch recent writes
+    const reload = AppStorage.Get<boolean>('needsReload');
+    if (reload) {
+      this.loadEvents();
+      AppStorage.Set<boolean>('needsReload', false);
+    }
   }
 
   aboutToAppear(): void {
@@ -40,6 +45,11 @@ struct Index {
     // Small delayed refresh to ensure DB commit is visible on slower devices
     try { setTimeout(() => this.loadEvents(), 300); } catch (e) {}
     // also start a short burst refresh
+    const reload = AppStorage.Get<boolean>('needsReload');
+    if (reload) {
+      this.loadEvents();
+      AppStorage.Set<boolean>('needsReload', false);
+    }
   }
 
   onDestroy(): void {}

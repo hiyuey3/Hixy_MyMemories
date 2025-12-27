@@ -3,6 +3,7 @@ import router from '@system.router';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import * as dateUtils from '../utils/dateUtils';
 import { MemoryItem } from '../types/MemoryTypes';
+import promptAction from '@ohos.promptAction';
 
 interface RouteParams { id?: number }
 
@@ -61,8 +62,21 @@ export struct EventDetail {
   private async deleteItem(): Promise<void> {
     if (!this.item) return;
     try {
-      await MemoryDBUtil.deleteMemoryById('memories', this.item.id);
-      router.back();
+      const result = await promptAction.showDialog({
+        title: '确认删除',
+        message: `确定要删除“${this.item.title}”吗？该操作不可恢复。`,
+        buttons: [
+          { text: '取消', color: '#666' },
+          { text: '删除', color: '#FF4D4F' }
+        ]
+      });
+      // result.index: 0 取消, 1 删除
+      if (result && typeof result.index === 'number' && result.index === 1) {
+        await MemoryDBUtil.deleteMemoryById('memories', this.item.id);
+        // 设置重载标记并返回首页
+        AppStorage.Set<boolean>('needsReload', true);
+        try { router.push({ uri: 'pages/Index' }); } catch (e) { router.back(); }
+      }
     } catch (e) {
       console.log('删除失败: ' + e);
     }
@@ -131,8 +145,6 @@ export struct EventDetail {
             .width('40%')
             .height(42)
             .onClick(() => {
-              // 简易确认：再次点击才删除
-              // 可替换为自定义弹窗组件以获得更佳体验
               this.deleteItem();
             });
         }
