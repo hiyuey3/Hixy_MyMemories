@@ -2,11 +2,8 @@
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import * as dateUtils from '../utils/dateUtils';
 import router from '@system.router';
-import { About } from './About';
+import { IndexTabs } from '../components/IndexTabs';
 import { MemoryItem, MemoryType } from '../types/MemoryTypes';
-import { HomePage } from './HomePage';
-import { MemoriesPage } from './MemoriesPage';
-import { BottomTabItem } from '../components/BottomTabItem';
 
 
 @Entry
@@ -20,7 +17,7 @@ struct Index {
   // @State addFeedback: string = '';
   // Persisted header image uri
   @State headerImagePath: string = '';
-  private tabsController: TabsController = new TabsController();
+  // tabsController removed; Tabs handled inside IndexTabs
   // no burst refresh timers; rely on lifecycle + explicit reload on tab click
 
   onInit(): void {
@@ -59,80 +56,20 @@ struct Index {
 
   build() {
     Column() {
-
-      Tabs({ barPosition: BarPosition.End, controller: this.tabsController, index: this.currentIndex }) {
-        // Home tab
-        TabContent() {
-          HomePage({
-            events: this.events,
-            imageSource: this.imageSource(),
-            onAdd: () => this.openAddMemory(),
-            onManage: () => {
-              router.push({ uri: 'pages/ManageMemories' });
-            }
-          });
+      IndexTabs({
+        events: this.events,
+        sortedEvents: this.sorted(),
+        currentIndex: this.currentIndex,
+        imageSource: this.imageSource(),
+        onTabChange: (idx: number) => {
+          this.currentIndex = idx;
+        },
+        onAdd: () => this.openAddMemory(),
+        onReloadHome: () => {
+          this.loadEvents();
+          setTimeout(() => this.loadEvents(), 300);
         }
-        .tabBar(BottomTabItem({
-          title: '首页',
-          targetIndex: 0,
-          currentIndex: this.currentIndex,
-          normalImg: $r('app.media.tab_home'),
-          selectedImg: $r('app.media.tab_home_active'),
-          onSelect: (idx: number) => {
-            this.currentIndex = idx;
-            this.tabsController.changeIndex(idx);
-            if (idx === 0) {
-              this.loadEvents();
-              setTimeout(() => this.loadEvents(), 300);
-            }
-          }
-        }));
-
-        // Memories tab
-        TabContent() {
-          MemoriesPage({ events: this.sorted() })
-        }
-        .tabBar(BottomTabItem({
-          title: '记忆',
-          targetIndex: 1,
-          currentIndex: this.currentIndex,
-          normalImg: $r('app.media.tab_memories'),
-          selectedImg: $r('app.media.tab_memories_active'),
-          onSelect: (idx: number) => {
-            this.currentIndex = idx;
-            this.tabsController.changeIndex(idx);
-          }
-        }));
-
-        // Settings tab
-        // TabContent() {
-          // Settings()
-        // }
-        // .tabBar(this.TabBuilder('设置', 2, $r('app.media.foreground')));
-
-        // About tab
-        TabContent() {
-          About()
-        }
-        .tabBar(BottomTabItem({
-          title: '关于',
-          targetIndex: 2,
-          currentIndex: this.currentIndex,
-          normalImg: $r('app.media.tab_about'),
-          selectedImg: $r('app.media.tab_about_active'),
-          onSelect: (idx: number) => {
-            this.currentIndex = idx;
-            this.tabsController.changeIndex(idx);
-          }
-        }));
-
-      }
-      .width('100%')
-      .height('100%')
-      .scrollable(false)
-      .backgroundColor('#F7F8FA')
-      .animationDuration(0);
-
+      });
     }
     .width('100%')
     .height('100%');
@@ -151,14 +88,14 @@ struct Index {
       const cols = ['id', 'task_name', 'finished', 'target_date'];
       const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
       if (rows && rows.length > 0) {
-        this.events = rows.map((r: Memory) => {
+        const mapped: MemoryItem[] = rows.map((r: Memory): MemoryItem => {
           const id: number = r.id ?? 0;
           const title: string = r.title ?? '';
-          // Use targetDate if available; ensure we pass a primitive ms value to avoid DateLike mismatch
-          const date = (typeof r.targetDate === 'number' && !isNaN(r.targetDate)) ? r.targetDate : undefined;
+          const date: Date | number | undefined = (typeof r.targetDate === 'number' && !isNaN(r.targetDate)) ? r.targetDate : undefined;
           const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
           return { id, title, date, type } as MemoryItem;
         });
+        this.events = mapped;
       } else {
         // DB returned empty; show empty list (no MemoryStore fallback per requirement)
         this.events = [];
