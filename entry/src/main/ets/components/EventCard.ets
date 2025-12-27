@@ -26,6 +26,26 @@ export struct EventCard {
     return dateUtils.daysColorFor(item.date, undefined, item.type === 'anniversary');
   }
 
+  // Countdown helper: status text
+  private countdownStatusText(item: MemoryItem): string {
+    const diff = dateUtils.daysDiff(item.date, undefined, false);
+    if (isNaN(diff)) return '';
+    return diff >= 0 ? '倒计时中' : '已过期';
+  }
+
+  // Anniversary helpers
+  private anniversarySinceText(item: MemoryItem): string {
+    const stats = dateUtils.anniversaryStats(item.date, undefined);
+    if (isNaN(stats.daysSince)) return '';
+    return `已过 ${stats.daysSince} 天`;
+  }
+
+  private anniversaryUntilText(item: MemoryItem): string {
+    const stats = dateUtils.anniversaryStats(item.date, undefined);
+    if (isNaN(stats.daysUntil)) return '';
+    return `距下次 ${stats.daysUntil} 天`;
+  }
+
   build() {
     // 标题 + 日期 / title and date
     Row({ space: 1 }) {
@@ -62,10 +82,23 @@ export struct EventCard {
           .backgroundColor(this.item.type === 'countdown' ? '#1677FF' : '#FF7A45')
           .borderRadius(12);
 
-        Text(this.daysTextFor(this.item))
-          .fontSize(14)
-          .margin({ top: 6, bottom: 6 })
-          .fontColor(this.daysColorFor(this.item));
+        if (this.item.type === 'anniversary') {
+          Text(this.anniversaryUntilText(this.item))
+            .fontSize(14)
+            .margin({ top: 6, bottom: 2 })
+            .fontColor('#1677FF');
+          Text(this.anniversarySinceText(this.item))
+            .fontSize(12)
+            .fontColor('#FF7A45');
+        } else {
+          Text(this.daysTextFor(this.item))
+            .fontSize(14)
+            .margin({ top: 6, bottom: 2 })
+            .fontColor(this.daysColorFor(this.item));
+          Text(this.countdownStatusText(this.item))
+            .fontSize(12)
+            .fontColor('#666');
+        }
       }
     }
     .justifyContent(FlexAlign.SpaceBetween)

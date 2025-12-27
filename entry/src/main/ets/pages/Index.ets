@@ -151,6 +151,11 @@ struct Index {
     return $r('app.media.hixy_logo_new');
   }
 
+  // Local format helper delegating to dateUtils
+  private formatDate(d: DateLike): string {
+    return dateUtils.formatDate(d);
+  }
+
   // Normalize events for dateUtils: ensure date is present and avoid spread (ArkTS no-spread rule)
   private normalizeEvents(events: MemoryItem[]): MemoryItem[] {
     const list: MemoryItem[] = [];
@@ -204,9 +209,24 @@ struct Index {
     return dateUtils.daysColorFor(item.date, undefined, item.type === 'anniversary');
   }
 
-  // Helper: date formatting wrapper
-  private formatDate(d: DateLike): string {
-    return dateUtils.formatDate(d);
+  // Countdown status helper for second line on countdown cards
+  private countdownStatusText(item: MemoryItem): string {
+    const diff: number = dateUtils.daysDiff(item.date, undefined, false);
+    if (isNaN(diff)) return '';
+    return diff >= 0 ? '倒计时中' : '已过期';
+  }
+
+  // Helper: anniversary stats texts
+  private anniversarySinceText(item: MemoryItem): string {
+    const stats = dateUtils.anniversaryStats(item.date, undefined);
+    if (isNaN(stats.daysSince)) return '';
+    return `已过 ${stats.daysSince} 天`;
+  }
+
+  private anniversaryUntilText(item: MemoryItem): string {
+    const stats = dateUtils.anniversaryStats(item.date, undefined);
+    if (isNaN(stats.daysUntil)) return '';
+    return `距下次 ${stats.daysUntil} 天`;
   }
 
   @Builder
@@ -226,7 +246,7 @@ struct Index {
               .maxLines(1)
             // .position({left:0,top:0});
             // .overflow(TextOverflow.Ellipsis);
-            // .position({left:0,bottom:3});
+            // .position({left:0,bottom=3});
             Text(this.formatDate(item.date))
               .fontSize(13)
               .fontColor('#666')
@@ -251,10 +271,24 @@ struct Index {
           })
           .backgroundColor(item.type === 'countdown' ? '#1677FF' : '#FF7A45')
           .borderRadius(12);
-        Text(this.daysTextFor(item))
-          .fontSize(14)
-          .margin({top:6 ,bottom: 6 })
-          .fontColor(this.daysColorFor(item));
+        // For countdown, show numeric days and a status line; for anniversary show both since and until next
+        if (item.type === 'anniversary') {
+          Text(this.anniversaryUntilText(item))
+            .fontSize(14)
+            .margin({top:6 ,bottom: 2 })
+            .fontColor('#1677FF');
+          Text(this.anniversarySinceText(item))
+            .fontSize(12)
+            .fontColor('#FF7A45');
+        } else {
+          Text(this.daysTextFor(item))
+            .fontSize(14)
+            .margin({ top: 6, bottom: 2 })
+            .fontColor(this.daysColorFor(item));
+          Text(this.countdownStatusText(item))
+            .fontSize(12)
+            .fontColor('#666');
+        }
       }
     }
     .justifyContent(FlexAlign.SpaceBetween)

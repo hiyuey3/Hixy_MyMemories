@@ -6,7 +6,7 @@ import * as dateUtils from '../utils/dateUtils';
 export struct HomePage {
   @Prop events: MemoryItem[] = [];
   @Prop imageSource: string | Resource;
-  onAdd: () => void = () => {};
+  onAdd: () => void = () => {}; //
   onManage: () => void = () => {};
 
   // Ensure events all carry a date for dateUtils
@@ -54,6 +54,26 @@ export struct HomePage {
 
   private formatDate(d: DateLike): string {
     return dateUtils.formatDate(d);
+  }
+
+  // Countdown helper: status line text
+  private countdownStatusText(item: MemoryItem): string {
+    const diff = dateUtils.daysDiff(item.date, undefined, false);
+    if (isNaN(diff)) return '';
+    return diff >= 0 ? '倒计时中' : '已过期';
+  }
+
+  // Anniversary helpers
+  private anniversarySinceText(item: MemoryItem): string {
+    const stats = dateUtils.anniversaryStats(item.date, undefined);
+    if (isNaN(stats.daysSince)) return '';
+    return `已过 ${stats.daysSince} 天`;
+  }
+
+  private anniversaryUntilText(item: MemoryItem): string {
+    const stats = dateUtils.anniversaryStats(item.date, undefined);
+    if (isNaN(stats.daysUntil)) return '';
+    return `距下次 ${stats.daysUntil} 天`;
   }
 
   build() {
@@ -182,11 +202,26 @@ export struct HomePage {
           .padding({ left: 10, right: 10, top: 4, bottom: 4 })
           .backgroundColor(item.type === 'countdown' ? '#1677FF' : '#FF7A45')
           .borderRadius(12);
-        Text(this.daysTextFor(item))
-          .fontSize(14)
-          .margin({top:6 ,bottom: 6 })
-          .fontColor(this.daysColorFor(item));
+        if (item.type === 'anniversary') {
+          Text(this.anniversaryUntilText(item))
+            .fontSize(14)
+            .margin({ top: 6, bottom: 2 })
+            .fontColor('#1677FF');
+          Text(this.anniversarySinceText(item))
+            .fontSize(12)
+            .fontColor('#FF7A45');
+        } else {
+          Text(this.daysTextFor(item))
+            .fontSize(14)
+            .margin({ top: 6, bottom: 2 })
+            .fontColor(this.daysColorFor(item));
+          Text(this.countdownStatusText(item))
+            .fontSize(12)
+            .fontColor('#666');
+        }
       }
+      .width(120)
+      .alignItems(HorizontalAlign.End);
     }
     .justifyContent(FlexAlign.SpaceBetween)
     .padding(14)
