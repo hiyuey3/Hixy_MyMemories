@@ -82,12 +82,22 @@ export struct EventDetail {
         Column({ space: 8 }) {
           Text(this.item.title).fontSize(22).fontWeight(FontWeight.Bold).fontColor('#111');
           if (this.item && this.item.note && this.item.note.length > 0) {
-            Text(`备注：${this.item.note}`)
+            // 大文本框显示备注（只读）
+            Text('备注')
+              .fontSize(14)
+              .fontColor('#666')
+              .margin({ top: 10, bottom: 6 });
+            TextArea({ placeholder: '暂无备注', text: this.item.note })
+              .height(180)
+              .borderColor('#E5E7EB')
+              .borderWidth(1)
+              .borderRadius(10)
+              .backgroundColor('#FFFFFF')
               .fontSize(16)
               .fontColor('#333')
               .textAlign(TextAlign.Start)
-              .maxLines(20)
-              .margin({ top: 10 });
+              .enabled(false)
+              .padding(10);
           }
           Row({ space: 10 }) {
             Text(this.item.type === 'countdown' ? '倒数' : '纪念')

@@ -59,11 +59,6 @@ export default struct EditMemory {
   }
 
   private async save(): Promise<void> {
-    // 简单返回助手 / back helper
-    const navigateBack = (): void => {
-      setTimeout(() => { router.back(); }, 120);
-    }
-
     const newTitle = (this.title || '').trim();
     if (!newTitle) { return; }
 
@@ -79,7 +74,7 @@ export default struct EditMemory {
         this.memoryId = newRowId;
         AppStorage.Set<boolean>('needsReload', true);
         AppStorage.Set<number>('selectedId', 0);
-        router.push({ uri: 'pages/Index' });
+        try { router.back(); } catch (e) { console.warn(e); }
         return;
       }
       return;
@@ -95,17 +90,18 @@ export default struct EditMemory {
         this.memoryId = newRowId;
         AppStorage.Set<boolean>('needsReload', true);
         AppStorage.Set<number>('selectedId', 0);
-        router.push({ uri: 'pages/Index' });
+        try { router.back(); } catch (e) { console.warn(e); }
         return;
       }
     } else {
       const rowsAffected: number = await MemoryDBUtil.updateMemoryById('memories', numericId, vb);
       if (typeof rowsAffected === 'number' && rowsAffected > 0) {
-        // 更新成功后返回管理页 / on success navigate back to manage list
+        // 更新成功后返回上一个页面并触发重载
         this.title = newTitle;
         await this.load(numericId);
         AppStorage.Set<number>('selectedId', 0);
-        router.push({ uri: 'pages/ManageMemories' });
+        AppStorage.Set<boolean>('needsReload', true);
+        try { router.back(); } catch (e) { console.warn(e); }
         return;
       }
       const newRowId: number = await MemoryDBUtil.insertMemory('memories', vb);
@@ -113,7 +109,7 @@ export default struct EditMemory {
         this.memoryId = newRowId;
         AppStorage.Set<boolean>('needsReload', true);
         AppStorage.Set<number>('selectedId', 0);
-        router.push({ uri: 'pages/Index' });
+        try { router.back(); } catch (e) { console.warn(e); }
         return;
       }
     }
