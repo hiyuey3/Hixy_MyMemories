@@ -1,4 +1,5 @@
 import promptAction from '@ohos.promptAction';
+import router from '@system.router';
 @Component
 export struct About {
   // 基本信息（可根据发布流程从包信息自动注入）
@@ -45,6 +46,18 @@ export struct About {
           .fontColor('#999');
       }
       .margin({ top: 18 });
+
+      // 开发人员模式入口（小字灰色，放在最底部）
+      Column() {
+        Text('开发人员模式')
+          .fontSize(12)
+          .fontColor('#999')
+          .margin({ top: 10 })
+          .onClick(() => {
+            try { router.push({ uri: 'pages/ManageMemories' }); } catch (e) { this.toast('跳转失败'); }
+          });
+      }
+      .margin({ top: 8 });
     }
     .width('100%')
     .height('100%')

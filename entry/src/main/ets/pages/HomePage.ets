@@ -116,21 +116,11 @@ export struct HomePage {
           .borderWidth(2)
           .backgroundColor(Color.Pink)
           .fontColor('#fff')
-          .width('70%')
+          .width('85%')
           .height(39)
           .onClick(() => this.onAdd());
 
-        Button('✍️管理')
-          .type(ButtonType.Normal)
-          .backgroundColor('#ffffff')
-          .borderColor(Color.Gray)
-          .borderWidth(1)
-          .borderRadius(3)
-          .fontColor('#1677FF')
-          .width('20%')
-          .height(39)
-          .margin({ left: 8 })
-          .onClick(() => this.onManage());
+        // 管理入口已迁移到「关于」页面底部，仅保留新增按钮在首页
 
        }
        .justifyContent(FlexAlign.Center)
