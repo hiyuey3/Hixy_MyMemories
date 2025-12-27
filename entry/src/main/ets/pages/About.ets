@@ -26,7 +26,7 @@ export struct About {
             .borderRadius(54)
             .objectFit(ImageFit.Cover)
             .margin({ bottom: 4 });
-          Text('Logo 由 IGE 设计')
+          Text('©Logo 由 @IGE 设计')
             .fontSize(11)
             .fontColor('#7E8589')
             .textAlign(TextAlign.Center);
