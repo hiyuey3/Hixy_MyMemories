@@ -3,7 +3,7 @@
 概览项目中的主要类型与接口，便于快速查阅与开发。
 
 ## 类型与数据模型
-- MemoryItem：{ id: number; title: string; date: Date; type: 'countdown' | 'anniversary'; note? }
+- MemoryItem：{ id: number; title: string; date: Date|number|string|null|undefined; type: 'countdown'|'anniversary'; note?: string }
 - MemoryType：'countdown' | 'anniversary'
 
 ## 数据库工具（MemDBUtils）
@@ -16,31 +16,19 @@
   - updateMemoryById(tableName: string, memoryId: number, value: relationalStore.ValuesBucket): Promise<number> — 更新记录
   - subscribe(cb: () => void): () => void — 订阅变化
 
-## 状态管理（MemoryStore）
-- 位置：`entry/src/main/ets/store/MemoryStore.ets`
-- 接口：
-  - init(context?: Context): Promise<void>
-  - getEvents(): MemoryItem[]
-  - getEventById(id: number): MemoryItem | undefined
-  - addEvent(item: MemoryItem): Promise<void>
-  - updateEvent(item: MemoryItem): Promise<void>
-  - deleteEvent(id: number): Promise<void>
-  - setSelected(id?: number): void
-  - getSelected(): number | undefined
-  - subscribe(cb: () => void): () => void
+## 日期工具（dateUtils）
+- 位置：`entry/src/main/ets/utils/dateUtils.ets`
+- 方法：
+  - formatDate(d: DateLike): string — 日期格式化（yyyy-MM-dd）
+  - daysDiff(target: DateLike, now?: DateLike, isAnniversary?: boolean): number — 天数差
+  - anniversaryStats(target: DateLike, now?: DateLike): { daysSince, daysUntil } — 纪念日统计
+  - getEventsSortedByDaysUntil(events: T[], now?: DateLike, isAnniversaryFor?: (e: T) => boolean): T[] — 按天数排序
+  - countUpcoming(events: T[], ...): number — 未来事件计数
+  - countMemories(events: T[], ...): number — 已过事件计数
 
-## 页面组件
-- 位置：`entry/src/main/ets/pages/`
-- Index：主页，加载事件、统计与导航
-- HomePage：首页呈现与布局
-- ManageMemories：列表、编辑、删除、震动反馈
-- EditMemory：表单加载与保存
-- EventDetail：详情、编辑、删除
-- About：关于与联系渠道
-
-## 约定与建议
-- 所有数据库操作为异步，注意错误处理与用户反馈
-- 使用订阅/状态驱动 UI 刷新
-- 颜色尽量使用主题/分层参数，减少硬编码
+## 官方引用（建议替换为准确 URL）
+- ArkUI 概览：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkui-overview
+- ArkTS 介绍：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-introduction
+- RDB 指南：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/data-relational-store
 
 更多细节请参考完整源代码与文档：`DEVELOPER_GUIDE.md`、`DOCUMENTATION.md`。
