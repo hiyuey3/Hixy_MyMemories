@@ -32,6 +32,11 @@ function toDate(input: DateLike): Date | null {
   return null;
 }
 
+// normalize to local midnight for day-precision math
+function normalizeDate(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
 export function formatDate(d: DateLike): string {
   const dt: Date | null = toDate(d);
   if (!dt) {
@@ -48,56 +53,46 @@ export function daysDiff(target: DateLike, now?: DateLike, isAnniversary?: boole
   if (!t) {
     return NaN;
   }
-  const n: Date = toDate(now) ?? new Date();
-  const start: number = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
+  const n: Date = normalizeDate(toDate(now) ?? new Date());
+  const start: number = n.getTime();
   const dayMs: number = 24 * 3600 * 1000;
 
   if (!isAnniversary) {
-    const dest: number = new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime();
-    return Math.round((dest - start) / dayMs);
+    const dest: number = normalizeDate(t).getTime();
+    return Math.floor((dest - start) / dayMs);
   }
 
-  // Anniversary: compute next occurrence of target's month/day relative to 'now'
   const targetMonth = t.getMonth();
   const targetDay = t.getDate();
   let destDate = new Date(n.getFullYear(), targetMonth, targetDay);
-  // If the occurrence this year has already passed (before today), use next year
-  const destNormalized = new Date(destDate.getFullYear(), destDate.getMonth(), destDate.getDate()).getTime();
+  const destNormalized = normalizeDate(destDate).getTime();
   if (destNormalized < start) {
     destDate = new Date(n.getFullYear() + 1, targetMonth, targetDay);
   }
-  const dest = new Date(destDate.getFullYear(), destDate.getMonth(), destDate.getDate()).getTime();
-  return Math.round((dest - start) / dayMs);
+  const dest = normalizeDate(destDate).getTime();
+  return Math.floor((dest - start) / dayMs);
 }
 
-// For anniversaries we want both: days since original date and days until next annual occurrence.
 export function anniversaryStats(target: DateLike, now?: DateLike): AnniversaryStats {
   const t: Date | null = toDate(target);
   if (!t) {
     return new AnniversaryStats(NaN, NaN);
   }
-  const n: Date = toDate(now) ?? new Date();
+  const n: Date = normalizeDate(toDate(now) ?? new Date());
   const dayMs = 24 * 3600 * 1000;
 
-  // normalize dates to midnight
-  const today = new Date(n.getFullYear(), n.getMonth(), n.getDate());
-  const targetMonth = t.getMonth();
-  const targetDay = t.getDate();
+  const today = n;
+  const origin = normalizeDate(t);
+  const targetMonth = origin.getMonth();
+  const targetDay = origin.getDate();
 
-  // this year's annual occurrence
-  const thisYearOccur = new Date(today.getFullYear(), targetMonth, targetDay);
-  const thisYearTime = thisYearOccur.getTime();
-  const todayTime = today.getTime();
-
-  // next annual occurrence: if this year's already passed or is today, use next year
-  let nextOccur = thisYearOccur;
-  if (thisYearTime <= todayTime) {
+  let nextOccur = new Date(today.getFullYear(), targetMonth, targetDay);
+  if (nextOccur.getTime() < today.getTime()) {
     nextOccur = new Date(today.getFullYear() + 1, targetMonth, targetDay);
   }
 
-  // daysSince: total days from original event date to today (not just from last year's occurrence)
-  const daysUntil = Math.round((nextOccur.getTime() - todayTime) / dayMs);
-  const daysSince = Math.round((todayTime - t.getTime()) / dayMs);
+  const daysUntil = Math.floor((normalizeDate(nextOccur).getTime() - today.getTime()) / dayMs);
+  const daysSince = Math.floor((today.getTime() - origin.getTime()) / dayMs);
   return new AnniversaryStats(daysSince, daysUntil);
 }
 

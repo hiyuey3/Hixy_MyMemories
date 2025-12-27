@@ -139,14 +139,11 @@ export struct ManageMemories {
         const id: number = r.id ?? 0;
         const title: string = r.title ?? '';
         // Prefer stored targetDate (milliseconds since epoch) when available and valid (>0)
-        const date: Date = (typeof r.targetDate === 'number' && !isNaN(r.targetDate) && r.targetDate > 0) ? new Date(r.targetDate) : new Date();
+        const date: number | Date | null = (typeof r.targetDate === 'number' && !isNaN(r.targetDate) && r.targetDate > 0)
+          ? r.targetDate
+          : null;
         const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
-        return {
-          id,
-          title,
-          date,
-          type
-        } as MemoryItem;
+        return { id, title, date, type } as MemoryItem;
       });
     } catch (err) {
       console.log(`加载记忆失败: ${err}`);
@@ -224,10 +221,7 @@ export struct ManageMemories {
       const vb: relationalStore.ValuesBucket = makeValuesBucket(title, 0, tomorrowMs);
       const rowId: number = await MemoryDBUtil.insertMemory('memories', vb);
       if (rowId && rowId > 0) {
-        try {
-          promptAction.showToast({ message: `写入成功 id=${rowId}` });
-        } catch (e) {
-        }
+        try { promptAction.showToast({ message: `写入成功 id=${rowId}` }); } catch (e) {}
       }
     } catch (e) {
       console.error('testWrite: DB insert failed', e);
@@ -253,14 +247,11 @@ export struct ManageMemories {
       this.events = (rows || []).map((r: Memory) => {
         const id: number = r.id ?? 0;
         const t: string = r.title ?? '';
-        const date: Date = (typeof r.targetDate === 'number' && !isNaN(r.targetDate) && r.targetDate > 0) ? new Date(r.targetDate) : new Date();
+        const date: number | Date | null = (typeof r.targetDate === 'number' && !isNaN(r.targetDate) && r.targetDate > 0)
+          ? r.targetDate
+          : null;
         const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
-        return {
-          id,
-          title: t,
-          date,
-          type
-        } as MemoryItem;
+        return { id, title: t, date, type } as MemoryItem;
       });
     } catch (e) {
       console.error('testWrite: query failed', e);

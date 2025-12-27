@@ -33,6 +33,7 @@ export default struct EditMemory {
       this.title = '';
       this.date = new Date();
       this.type = 'countdown';
+      try { AppStorage.Set<number>('selectedId', 0); } catch (e) {}
     }
   }
 
@@ -93,8 +94,8 @@ export default struct EditMemory {
           const newRowId: number = await MemoryDBUtil.insertMemory('memories', vb);
           if (newRowId && newRowId > 0) {
             this.memoryId = newRowId;
-            // mark index to reload when returning
             try { AppStorage.Set<boolean>('needsReload', true); } catch (e) {}
+            try { AppStorage.Set<number>('selectedId', 0); } catch (e) {}
             try { promptAction.showToast({ message: '已保存到数据库' }); } catch (e) {}
             // Navigate to Index so lifecycle hooks can refresh lists
             try {
@@ -127,6 +128,7 @@ export default struct EditMemory {
           try { promptAction.showToast({ message: `已作为新记录保存 id=${newRowId}` }); } catch (e) {}
           // mark index to reload
           try { AppStorage.Set<boolean>('needsReload', true); } catch (e) {}
+          try { AppStorage.Set<number>('selectedId', 0); } catch (e) {}
           try { router.push({ uri: 'pages/Index' }); } catch (e) { navigateBack(); }
           return;
         }
@@ -137,6 +139,7 @@ export default struct EditMemory {
           this.title = newTitle;
           await this.load(numericId);
           try { promptAction.showToast({ message: '保存成功' }); } catch (e) {}
+          try { AppStorage.Set<number>('selectedId', 0); } catch (e) {}
           // After edit, go back to management view
           try { router.push({ uri: 'pages/ManageMemories' }); } catch (e) { navigateBack(); }
           return;
@@ -147,6 +150,7 @@ export default struct EditMemory {
           this.memoryId = newRowId;
           try { promptAction.showToast({ message: `已作为新记录保存 id=${newRowId}` }); } catch (e) {}
           try { AppStorage.Set<boolean>('needsReload', true); } catch (e) {}
+          try { AppStorage.Set<number>('selectedId', 0); } catch (e) {}
           try { router.push({ uri: 'pages/Index' }); } catch (e) { navigateBack(); }
           return;
         }

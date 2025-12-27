@@ -244,8 +244,8 @@ struct Index {
         this.events = rows.map((r: Memory) => {
           const id: number = r.id ?? 0;
           const title: string = r.title ?? '';
-          // Use targetDate if available, otherwise undefined (let MemoryItem handle null dates)
-          const date = (typeof r.targetDate === 'number') ? r.targetDate : undefined;
+          // Use targetDate if available; ensure we pass a primitive ms value to avoid DateLike mismatch
+          const date = (typeof r.targetDate === 'number' && !isNaN(r.targetDate)) ? r.targetDate : undefined;
           const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
           return { id, title, date, type } as MemoryItem;
         });
@@ -267,9 +267,29 @@ struct Index {
     return $r('app.media.hixy_logo_new');
   }
 
+  // Normalize events for dateUtils: ensure date is present and avoid spread (ArkTS no-spread rule)
+  private normalizeEvents(events: MemoryItem[]): MemoryItem[] {
+    const list: MemoryItem[] = [];
+    if (!events) {
+      return list;
+    }
+    for (const e of events) {
+      const normalized: MemoryItem = {
+        id: e.id,
+        title: e.title,
+        date: e.date !== undefined && e.date !== null ? e.date : new Date(),
+        type: e.type,
+        note: e.note
+      };
+      list.push(normalized);
+    }
+    return list;
+  }
+
   // Return events sorted by days until (ascending)
   private getEventsSortedByDaysUntil(): MemoryItem[] {
-    return dateUtils.getEventsSortedByDaysUntil(this.events, undefined, (e) => e.type === 'anniversary');
+    const safeEvents: MemoryItem[] = this.normalizeEvents(this.events);
+    return dateUtils.getEventsSortedByDaysUntil(safeEvents, undefined, (e: MemoryItem) => e.type === 'anniversary');
   }
 
   // Public alias for sorted events (keeps call sites stable)
@@ -279,12 +299,14 @@ struct Index {
 
   // Count of upcoming (daysDiff >= 0)
   private getUpcoming(): number {
-    return dateUtils.countUpcoming(this.events, undefined, (e) => e.type === 'anniversary');
+    const safeEvents: MemoryItem[] = this.normalizeEvents(this.events);
+    return dateUtils.countUpcoming(safeEvents, undefined, (e: MemoryItem) => e.type === 'anniversary');
   }
 
   // Count of past memories (daysDiff < 0) - all types combined
   private getMemories(): number {
-    return dateUtils.countMemories(this.events, undefined, (e) => e.type === 'anniversary');
+    const safeEvents: MemoryItem[] = this.normalizeEvents(this.events);
+    return dateUtils.countMemories(safeEvents, undefined, (e: MemoryItem) => e.type === 'anniversary');
   }
 
   // Helper: formatted days text for an item
@@ -400,22 +422,19 @@ struct Index {
     try {
       // Clear AppStorage selectedId to ensure we don't load any previous record
       try { AppStorage.Set<number>('selectedId', 0); } catch (e) {}
-      // this.addFeedback = '点击：正在尝试跳转...';
+      // ensure no stale router params; only open in add mode
       console.log('Add button clicked: attempting to navigate to AddMemory');
       try { promptAction.showToast({ message: '跳转到新增事件...' }); } catch (e) {}
       try {
         router.push({ uri: 'pages/EditMemory' });
         console.log('router.push called for pages/AddMemory');
-        // this.addFeedback = '跳转请求已发送';
         try { promptAction.showToast({ message: '已请求跳转' }); } catch (e) {}
       } catch (pushErr) {
         console.error('router.push threw for pages/AddMemory:', pushErr);
-        // this.addFeedback = '跳转失败';
         try { promptAction.showToast({ message: '跳转失败' }); } catch (e) {}
       }
     } catch (err) {
       console.error('router.push failed for pages/AddMemory:', err);
-      // this.addFeedback = '跳转失败';
       try { promptAction.showToast({ message: '跳转失败' }); } catch (e) { console.error(e); }
     }
    }
