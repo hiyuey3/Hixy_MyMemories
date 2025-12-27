@@ -1,7 +1,7 @@
 {
   "src": [
     "pages/Index",
-    "pages/ManageMemories",
+    "pages/DeveloperMode",
     "pages/EditMemory",
     "pages/EventDetail"
   ]
