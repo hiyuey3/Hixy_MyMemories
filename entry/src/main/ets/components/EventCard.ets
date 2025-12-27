@@ -1,6 +1,7 @@
 // 公共卡片组件：展示标题、日期、类型和天数 / Shared event card component
 import { MemoryItem, DateLike } from '../types/MemoryTypes';
 import * as dateUtils from '../utils/dateUtils';
+import router from '@system.router';
 
 @Component
 export struct EventCard {
@@ -106,6 +107,11 @@ export struct EventCard {
       .width('95%')
       .shadow({ radius: 8, color: '#1A000000', offsetX: 0, offsetY: 4 });
     }
-    .width('99%');
+    .width('99%')
+    .onClick(() => {
+      // Navigate to detail page for this item
+      AppStorage.Set<number>('selectedId', this.item.id);
+      router.push({ uri: 'pages/EventDetail', params: { id: this.item.id } });
+    });
   }
 }
