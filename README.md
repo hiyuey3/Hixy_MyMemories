@@ -8,11 +8,17 @@ MyMemories ｜ 我的记忆点
 
 由本作者书写的代码部分使用 AGPLv3 许可证授权
 
-本人朋友及本人为我设计个人的Logo
+本人朋友及本人为我设计个人的Logo:
 
 |                                    旧版 Logo                                     |                                    新版 Logo                                     |
 |:------------------------------------------------------------------------------:|:------------------------------------------------------------------------------:|
-| <img src="entry/src/main/resources/base/media/hixy_logo_old.jpg" width="20" /> | <img src="entry/src/main/resources/base/media/hixy_logo_new.png" width="20" /> |
+| <img src="entry/src/main/resources/base/media/hixy_logo_old.jpg" width="50" /> | <img src="entry/src/main/resources/base/media/hixy_logo_new.png" width="50" /> |
+
+BUG反馈：https://github.com/hixy-dev/MyMemories/issues
+
+除了项目中列出的邮箱
+还可以通过国际计算机学会（ACM）提供的邮箱联系我：
+titusyu@acm.org
 
 
 一、移动APP简介
