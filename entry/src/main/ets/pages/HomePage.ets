@@ -63,17 +63,38 @@ export struct HomePage {
     Column({ space: 12 }) {
       // 头图
       Column() {
-        Image(this.imageSource)
-          .id('headerImage')
-          .width(340)
-          .height(120)
-          .objectFit(ImageFit.Cover)
+        Stack({ alignContent: Alignment.Center }) {
+          Image($r('app.media.header_banner'))
+            .id('headerImage')
+            .width(360)
+            .height(140)
+            .objectFit(ImageFit.Cover)
+            .borderRadius(16)
+            .align(Alignment.Center);
+
+          Column({ space: 4 }) {
+            Text('记录重要时刻')
+              .fontSize(18)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#F5F7FB')
+              .textAlign(TextAlign.Center);
+            Text('倒数日 · 纪念日 · 管理器')
+              .fontSize(12)
+              .fontColor('#E8F4FF')
+              .textAlign(TextAlign.Center);
+          }
+          .padding({ left: 14, right: 14, top: 10, bottom: 10 })
+          .backgroundColor('#33000000')
           .borderRadius(12)
-          .align(Alignment.Center);
+          .align(Alignment.BottomEnd)
+          .margin({ right: 16, bottom: 12 });
+        }
+        .width('100%')
+        .height(140);
       }
-      .height('120')
+      .padding({ top: 16 })
       .width('100%')
-      .padding({ top: 16 });
+      .height('140');
 
       // 统计卡片与事件列表
       Column({ space: 8 }) {

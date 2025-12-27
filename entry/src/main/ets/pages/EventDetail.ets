@@ -97,24 +97,23 @@ export struct EventDetail {
       } else {
         Column({ space: 8 }) {
           Text(this.item.title).fontSize(22).fontWeight(FontWeight.Bold).fontColor('#111');
-          if (this.item && this.item.note && this.item.note.length > 0) {
-            // 大文本框显示备注（只读）
-            Text('备注')
-              .fontSize(14)
-              .fontColor('#666')
-              .margin({ top: 10, bottom: 6 });
-            TextArea({ placeholder: '暂无备注', text: this.item.note })
-              .height(180)
-              .borderColor('#E5E7EB')
-              .borderWidth(1)
-              .borderRadius(10)
-              .backgroundColor('#FFFFFF')
-              .fontSize(16)
-              .fontColor('#333')
-              .textAlign(TextAlign.Start)
-              .enabled(false)
-              .padding(10);
-          }
+          // 始终显示备注区（即便为空，也显示占位）
+          Text('备注')
+            .fontSize(14)
+            .fontColor('#666')
+            .margin({ top: 10, bottom: 6 });
+          TextArea({ placeholder: '暂无备注', text: this.item.note ?? '' })
+            .height(180)
+            .borderColor('#E5E7EB')
+            .borderWidth(1)
+            .borderRadius(10)
+            .backgroundColor('#FFFFFF')
+            .fontSize(16)
+            .fontColor('#333')
+            .textAlign(TextAlign.Start)
+            .enabled(false)
+            .padding(10);
+
           Row({ space: 10 }) {
             Text(this.item.type === 'countdown' ? '倒数' : '纪念')
               .fontSize(12)
@@ -130,6 +129,9 @@ export struct EventDetail {
         if (this.item.title === '未找到记录' || this.item.title === '加载失败') {
           Text('提示：未找到该事件或加载失败').fontSize(12).fontColor('#999').padding({ left: 18 });
         }
+
+        // 占位将按钮推到底部
+        Blank().layoutWeight(1);
 
         Row({ space: 12 }) {
           Button('编辑')
@@ -160,8 +162,8 @@ export struct EventDetail {
             .backgroundColor('#FFFFFF')
             .borderColor('#1677FF')
             .borderWidth(1)
-            .width('70%')
-            .height(48)
+            .width('75%')
+            .height(45)
             .onClick(() => {
               try { router.push({ uri: 'pages/Index' }); } catch (e) { console.log(e); }
             });

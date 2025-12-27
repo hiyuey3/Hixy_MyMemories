@@ -126,7 +126,11 @@ export default struct EditMemory {
 
   build() {
     Column({ space: 12 }) {
-      Text(this.memoryId ? '编辑' : '新增事件').fontSize(20).fontWeight(FontWeight.Bold).align(Alignment.Center).margin({ top: 20 });
+      Text(this.memoryId ? '编辑' : '新增事件')
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .align(Alignment.Center)
+        .margin({ top: 20 });
       TextInput({ placeholder: '标题', text: this.title }).onChange((v: string) => this.title = v);
 
 
@@ -163,13 +167,63 @@ export default struct EditMemory {
         }
       }
 
-      Row({ space: 12 }) {
-        Button('取消').backgroundColor('#F2F2F2').onClick(() => { try { router.back(); } catch (e) { console.warn(e); } }).width('48%');
-        Button('保存').type(ButtonType.Capsule).backgroundColor('#1677FF').fontColor('#fff').onClick(() => this.save()).width('48%');
+      // 占位将按钮推到底部
+      Blank().layoutWeight(1);
+
+      // Bottom actions pinned to page bottom: Delete (if editing) + Cancel/Save
+      Column() {
+        // if (this.memoryId) {
+        //   Button('删除')
+        //     .type(ButtonType.Capsule)
+        //     .backgroundColor('#FFF5F5')
+        //     .fontColor('#FF4D4F')
+        //     .borderRadius(8)
+        //     .height(40)
+        //     .onClick(() => this.delete());
+        // }
+        Row({ space: 12 }) {
+          Button('取消')
+            .backgroundColor('#F2F2F2')
+            .fontColor('#333')
+            .height(44)
+            .onClick(() => { try { router.back(); } catch (e) { console.warn(e); } })
+            .width('48%');
+          Button('保存')
+            .type(ButtonType.Capsule)
+            .backgroundColor('#1677FF')
+            .fontColor('#fff')
+            .height(44)
+            .onClick(() => this.save())
+            .width('48%');
+        }
+        .margin({ top: 12 });
       }
+      .width('100%');
     }
     .width('100%')
     .height('100%')
-    .padding(18)
+    .padding(18);
+  }
+
+  // 删除当前事件（仅在编辑模式下可用）
+  private async delete(): Promise<void> {
+    if (!this.memoryId) {
+      try { router.back(); } catch (_) {}
+      return;
+    }
+    const numericId = Number(this.memoryId);
+    try {
+      const rowsDeleted: number = await MemoryDBUtil.deleteMemoryById('memories', numericId);
+      if (typeof rowsDeleted === 'number' && rowsDeleted > 0) {
+        AppStorage.Set<boolean>('needsReload', true);
+        AppStorage.Set<number>('selectedId', 0);
+        try { router.back(); } catch (_) {}
+        return;
+      }
+    } catch (e) {
+      console.warn('Delete failed', e);
+    }
+    // 回退兜底
+    try { router.back(); } catch (_) {}
   }
 }
