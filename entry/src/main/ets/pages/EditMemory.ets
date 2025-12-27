@@ -48,15 +48,17 @@ export default struct EditMemory {
         .margin({ top: 20 });
       Row({ space: 10 }) {
         Column(){
-          Text('类型').fontSize(14).fontColor('#666');
+          Text('类型').fontSize(14).fontColor('#666').margin({bottom:5});
           Row({ space: 8 }) {
             Button('倒数日')
               .type(ButtonType.Normal)
+              .width('45%')
               .backgroundColor(this.type === 'countdown' ? '#5A7CC2' : '#F2F2F2')
               .fontColor(this.type === 'countdown' ? '#fff' : '#333')
               .onClick(() => this.type = 'countdown');
             Button('纪念日')
               .type(ButtonType.Normal)
+              .width('45%')
               .backgroundColor(this.type === 'anniversary' ? '#FF7F50' : '#F2F2F2')
               .fontColor(this.type === 'anniversary' ? '#fff' : '#333')
               .onClick(() => this.type = 'anniversary');

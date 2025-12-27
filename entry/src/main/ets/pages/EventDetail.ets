@@ -23,71 +23,21 @@ export struct EventDetail {
     if (typeof id === 'number') {
       this.loadItem(id);
       // subscribe to DB changes to refresh when data updates
-      try { this.unsub = MemoryDBUtil.subscribe(() => this.loadItem(id)); } catch (_) {}
+      try {
+        this.unsub = MemoryDBUtil.subscribe(() => this.loadItem(id));
+      } catch (_) {
+      }
     }
   }
 
   onDestroy() {
     if (this.unsub) {
-      try { this.unsub(); } catch (_) {}
+      try {
+        this.unsub();
+      } catch (_) {
+      }
       this.unsub = undefined;
     }
-  }
-
-  private async loadItem(id: number): Promise<void> {
-    try {
-      const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', ['id', 'task_name', 'finished', 'target_date', 'content']);
-      const row = rows.find(r => r.id === id);
-      if (row) {
-        const item: MemoryItem = {
-          id: row.id ?? 0,
-          title: row.title ?? '',
-          date: (typeof row.targetDate === 'number' && !isNaN(row.targetDate)) ? row.targetDate : undefined,
-          type: row.finished ? 'anniversary' : 'countdown',
-          note: row.content ?? ''
-        };
-        this.item = item;
-      } else {
-        this.item = { id, title: '未找到记录', date: undefined, type: 'countdown' } as MemoryItem;
-      }
-    } catch (e) {
-      console.log('加载详情失败: ' + e);
-      this.item = { id, title: '加载失败', date: undefined, type: 'countdown' } as MemoryItem;
-    }
-  }
-
-  private formatDate(): string {
-    if (!this.item) return '';
-    return dateUtils.formatDate(this.item.date);
-  }
-
-  private async deleteItem(): Promise<void> {
-    if (!this.item) return;
-    try {
-      const result = await promptAction.showDialog({
-        title: '确认删除',
-        message: `确定要删除“${this.item.title}”吗？该操作不可恢复。`,
-        buttons: [
-          { text: '取消', color: '#666' },
-          { text: '删除', color: '#FF4D4F' }
-        ]
-      });
-      // result.index: 0 取消, 1 删除
-      if (result && typeof result.index === 'number' && result.index === 1) {
-        await MemoryDBUtil.deleteMemoryById('memories', this.item.id);
-        // 设置重载标记并返回首页
-        AppStorage.Set<boolean>('needsReload', true);
-        try { router.push({ uri: 'pages/Index' }); } catch (e) { router.back(); }
-      }
-    } catch (e) {
-      console.log('删除失败: ' + e);
-    }
-  }
-
-  private goEdit(): void {
-    if (!this.item) return;
-    AppStorage.Set<number>('selectedId', this.item.id);
-    router.push({ uri: 'pages/EditMemory', params: { editId: this.item.id } });
   }
 
   build() {
@@ -97,6 +47,21 @@ export struct EventDetail {
       } else {
         Column({ space: 8 }) {
           Text(this.item.title).fontSize(22).fontWeight(FontWeight.Bold).fontColor('#111');
+          Row({ space: 10 }) {
+            Text(this.item.type === 'countdown' ? '倒数' : '纪念')
+              .fontSize(12)
+              .fontColor('#fff')
+              .padding({
+                left: 10,
+                right: 10,
+                top: 4,
+                bottom: 4
+              })
+              .backgroundColor(this.item.type === 'countdown' ? '#4166F5' : '#FF7F50')
+              .borderRadius(12);
+            Text(this.formatDate()).fontSize(14).fontColor('#666');
+          }
+
           // 始终显示备注区（即便为空，也显示占位）
           Text('备注')
             .fontSize(14)
@@ -114,15 +79,7 @@ export struct EventDetail {
             .enabled(false)
             .padding(10);
 
-          Row({ space: 10 }) {
-            Text(this.item.type === 'countdown' ? '倒数' : '纪念')
-              .fontSize(12)
-              .fontColor('#fff')
-              .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-              .backgroundColor(this.item.type === 'countdown' ? '#4166F5' : '#FF7F50')
-              .borderRadius(12);
-            Text(this.formatDate()).fontSize(14).fontColor('#666');
-          }
+
         }
         .padding({ left: 18, right: 18, top: 20 });
 
@@ -165,7 +122,11 @@ export struct EventDetail {
             .width('75%')
             .height(45)
             .onClick(() => {
-              try { router.push({ uri: 'pages/Index' }); } catch (e) { console.log(e); }
+              try {
+                router.push({ uri: 'pages/Index' });
+              } catch (e) {
+                console.log(e);
+              }
             });
         }
         .justifyContent(FlexAlign.Center)
@@ -175,5 +136,82 @@ export struct EventDetail {
     .width('100%')
     .height('100%')
     .backgroundColor('#F7F8FA');
+  }
+
+  private async loadItem(id: number): Promise<void> {
+    try {
+      const rows: Memory[] =
+        await MemoryDBUtil.queryMemories('memories', ['id', 'task_name', 'finished', 'target_date', 'content']);
+      const row = rows.find(r => r.id === id);
+      if (row) {
+        const item: MemoryItem = {
+          id: row.id ?? 0,
+          title: row.title ?? '',
+          date: (typeof row.targetDate === 'number' && !isNaN(row.targetDate)) ? row.targetDate : undefined,
+          type: row.finished ? 'anniversary' : 'countdown',
+          note: row.content ?? ''
+        };
+        this.item = item;
+      } else {
+        this.item = {
+          id,
+          title: '未找到记录',
+          date: undefined,
+          type: 'countdown'
+        } as MemoryItem;
+      }
+    } catch (e) {
+      console.log('加载详情失败: ' + e);
+      this.item = {
+        id,
+        title: '加载失败',
+        date: undefined,
+        type: 'countdown'
+      } as MemoryItem;
+    }
+  }
+
+  private formatDate(): string {
+    if (!this.item) {
+      return '';
+    }
+    return dateUtils.formatDate(this.item.date);
+  }
+
+  private async deleteItem(): Promise<void> {
+    if (!this.item) {
+      return;
+    }
+    try {
+      const result = await promptAction.showDialog({
+        title: '确认删除',
+        message: `确定要删除“${this.item.title}”吗？该操作不可恢复。`,
+        buttons: [
+          { text: '取消', color: '#666' },
+          { text: '删除', color: '#FF4D4F' }
+        ]
+      });
+      // result.index: 0 取消, 1 删除
+      if (result && typeof result.index === 'number' && result.index === 1) {
+        await MemoryDBUtil.deleteMemoryById('memories', this.item.id);
+        // 设置重载标记并返回首页
+        AppStorage.Set<boolean>('needsReload', true);
+        try {
+          router.push({ uri: 'pages/Index' });
+        } catch (e) {
+          router.back();
+        }
+      }
+    } catch (e) {
+      console.log('删除失败: ' + e);
+    }
+  }
+
+  private goEdit(): void {
+    if (!this.item) {
+      return;
+    }
+    AppStorage.Set<number>('selectedId', this.item.id);
+    router.push({ uri: 'pages/EditMemory', params: { editId: this.item.id } });
   }
 }

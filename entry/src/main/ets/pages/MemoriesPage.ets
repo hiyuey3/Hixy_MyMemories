@@ -50,7 +50,12 @@ export struct MemoriesPage {
           this.renderWeekHeader(this.weekLabels());
           this.renderCalendarGrid(this.getMonthMatrix(this.visibleMonth), this.getEventDaysInVisibleMonth());
           Row({ space: 8 }) {
-            Button('<').type(ButtonType.Circle).onClick(() => this.shiftVisibleMonth(-1)).layoutWeight(1).height(30);
+            Button('<')
+              .type(ButtonType.Circle)
+              .onClick(() => this.shiftVisibleMonth(-1))
+              .layoutWeight(1)
+              .height(30)
+              .backgroundColor('#9ACEEB')
             Button('今日')
               .type(ButtonType.Capsule)
               .onClick(() => {
@@ -58,11 +63,12 @@ export struct MemoriesPage {
                 this.visibleMonth = dateUtils.getMonthStart(today);
                 this.selectedDate = today;
                 this.jumpInput = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-              })
+              }).backgroundColor('#3EB489')
               .layoutWeight(1)
               .height(29)
               .width('40%');
             Button('清除')
+              .backgroundColor('#FF5349')
               .type(ButtonType.Capsule)
               .onClick(() => {
                 this.selectedDate = null;
@@ -70,7 +76,7 @@ export struct MemoriesPage {
               .layoutWeight(1)
               .height(29)
               .width('40%');
-            Button('>').type(ButtonType.Circle).onClick(() => this.shiftVisibleMonth(1)).layoutWeight(1).height(30);
+            Button('>').type(ButtonType.Circle).onClick(() => this.shiftVisibleMonth(1)).layoutWeight(1).height(30).backgroundColor('#9ACEEB');
           }.padding({ left: 5, right: 5 })
         }
 
