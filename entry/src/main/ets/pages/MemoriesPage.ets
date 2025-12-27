@@ -3,6 +3,7 @@ import router from '@system.router';
 import { MemoryItem, DateLike } from '../types/MemoryTypes';
 import { EventCard } from '../components/EventCard';
 
+@Entry
 @Component
 export struct MemoriesPage {
   @Prop events: MemoryItem[] = [];
@@ -104,7 +105,7 @@ export struct MemoriesPage {
       Row({ space: 4 }) {
         ForEach(row, (day: number | null) => {
           if (day === null) {
-            Blank().width('12.5%').height(32);
+            Blank().width('12.5%').height(10);
           } else {
             Button(`${day}`)
               .type(ButtonType.Capsule)
@@ -134,26 +135,26 @@ export struct MemoriesPage {
       // 月历选择（过滤列表）
       Column({ space: 6 }) {
         Column({ space: 6 }) {
-          Text(`${this.visibleMonth.getFullYear()}年${this.visibleMonth.getMonth() + 1}月`).fontSize(15).fontWeight(FontWeight.Medium).align(Alignment.Center);
+          Text(`${this.visibleMonth.getFullYear()}年${this.visibleMonth.getMonth() + 1}月`).fontSize(20).fontWeight(FontWeight.Medium).align(Alignment.Center);
           this.renderWeekHeader(this.weekLabels());
           this.renderCalendarGrid(this.getMonthMatrix(this.visibleMonth), this.getEventDaysInVisibleMonth());
           Row({ space: 8 }) {
-            Button('<').type(ButtonType.Capsule).onClick(() => this.shiftVisibleMonth(-1)).layoutWeight(1).height(32);
+            Button('<').type(ButtonType.Circle).onClick(() => this.shiftVisibleMonth(-1)).layoutWeight(1).height(30);
             Button('今日').type(ButtonType.Capsule).onClick(() => {
                const today = new Date();
                this.visibleMonth = this.getMonthStart(today);
                this.selectedDate = today;
                this.jumpInput = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-             }).layoutWeight(1).height(32);
+             }).layoutWeight(1).height(29);
             Button('清除').type(ButtonType.Capsule).onClick(() => {
                this.selectedDate = null;
-             }).layoutWeight(1).height(32);
-            Button('>').type(ButtonType.Capsule).onClick(() => this.shiftVisibleMonth(1)).layoutWeight(1).height(32);
-           }
+             }).layoutWeight(1).height(29);
+            Button('>').type(ButtonType.Circle).onClick(() => this.shiftVisibleMonth(1)).layoutWeight(1).height(30);
+           }.padding({left: 10, right: 10});
         }
         // 跳转指定日期
         Row({ space: 8 }) {
-          TextInput({ placeholder: 'YYYY-MM-DD', text: this.jumpInput }).onChange((v: string) => this.jumpInput = v).layoutWeight(1).height(36);
+          TextInput({ placeholder: 'YYYY-MM-DD', text: this.jumpInput }).onChange((v: string) => this.jumpInput = v).layoutWeight(1).height(33);
           Button('跳转').type(ButtonType.Capsule).onClick(() => {
             try {
               const parsed = new Date(this.jumpInput);
@@ -161,11 +162,12 @@ export struct MemoriesPage {
               this.visibleMonth = this.getMonthStart(parsed);
               this.selectedDate = parsed;
             } catch (_) {}
-          }).width(88).height(36);
+          }).width(88).height(33);
         }
+        // .height(30)
         .padding(12)
         .backgroundColor('#FFFFFF')
-        .borderRadius(12)
+        .borderRadius(5)
         .borderColor('#F0F1F3')
         .borderWidth(1)
         .shadow({ radius: 6, color: '#1A000000', offsetX: 0, offsetY: 2 });
