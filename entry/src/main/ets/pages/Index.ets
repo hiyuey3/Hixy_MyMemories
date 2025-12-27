@@ -1,10 +1,10 @@
-// import { Settings } from './Settings';
+// 首页容器：负责 Tab 切换与数据加载 / Root page: tabs + data loading
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import * as dateUtils from '../utils/dateUtils';
 import router from '@system.router';
 import { About } from './About';
 import { MemoryItem, MemoryType, DateLike } from '../types/MemoryTypes';
-import promptAction from '@ohos.promptAction';
+import {HomePage} from './HomePage';
 
 
 @Entry
@@ -18,9 +18,6 @@ struct Index {
   @State headerImagePath: string = '';
   private tabsController: TabsController = new TabsController();
   // no burst refresh timers; rely on lifecycle + explicit reload on tab click
-  private toast(msg: string): void {
-    try { promptAction.showToast({ message: msg }); } catch (_) {}
-  }
 
   onInit(): void {
     // Initialize DB and load events
@@ -52,121 +49,14 @@ struct Index {
       Tabs({ barPosition: BarPosition.End, controller: this.tabsController, index: this.currentIndex }) {
         // Home tab
         TabContent() {
-          Column({ space: 12 }) {
-            Column() {
-              // Single Image with dynamic source (shown as circle via borderRadius)
-              Image(this.imageSource())
-                .id('headerImage')
-                .width(340)
-                .height(120)
-                .objectFit(ImageFit.Cover)
-                .borderRadius(15)
-                .align(Alignment.Center);
+          HomePage({
+            events: this.events,
+            imageSource: this.imageSource(),
+            onAdd: () => this.openAddMemory(),
+            onManage: () => {
+              router.push({ uri: 'pages/ManageMemories' });
             }
-            .height('120')
-            .width('100%')
-            .padding({ top: 18 });
-
-            Column({ space: 8 }) {
-              Text('倒数日 | 纪念日').fontSize(24).fontWeight(FontWeight.Bold).fontColor('#1F1F1F');
-              Row({ space: 12 }) {
-
-                Column() {
-                  Text(`${this.getUpcoming()}`).fontSize(28).fontWeight(FontWeight.Bold)
-                    // .fontColor('#1677FF');
-                    .fontColor(Color.Red)
-                  Text('即将到来').fontSize(13).fontColor(Color.Black);
-                }
-                .backgroundColor(Color.Transparent)
-                .borderWidth(2)
-                .borderColor(Color.Gray)
-                .padding(12)
-                .width('48%')
-                .height(80)
-                // .backgroundColor('#F2F6FF')
-                .borderRadius(12);
-
-                Column() {
-                  Text(`${this.getMemories()}`).fontSize(28).fontWeight(FontWeight.Bold).fontColor('#FF7A45');
-                  Text('纪念回顾').fontSize(13).fontColor('#666');
-                }
-                .width('48%')
-                .height(80)
-                .padding(12)
-                .backgroundColor(Color.Transparent)
-                .borderWidth(2)
-                .borderColor(Color.Gray)
-                // .backgroundColor('#FFF4EC')
-                .borderRadius(12);
-              }
-            }
-            .padding({
-              left: 18,
-              right: 18,
-              top: 20,
-              bottom: 12
-            });
-
-            List({ space: 10 }) {
-              ForEach(this.sorted(), (item: MemoryItem) => {
-                ListItem() {
-                  this.EventCard(item);
-                }
-              })
-            }
-            .edgeEffect(EdgeEffect.None)
-            .width('100%')
-            .height('100%')
-            .layoutWeight(1)
-            .padding({ left: 18, right: 18, bottom: 10 });
-
-            Row() {
-              Button('➕ 新增事件')
-                .type(ButtonType.Capsule)
-                // 添加阴影
-                .shadow({
-                  radius: 6,
-                  color: '#1A000000',
-                  offsetX: -4,
-                  offsetY: 10
-                })
-                .borderColor(Color.White)
-                .borderStyle(BorderStyle.Solid)
-                .borderWidth(2)
-                .backgroundColor(Color.Pink)
-                .fontColor('#fff')
-                .width('70%')
-                .height(39)
-                .onClick(() => this.openAddMemory());
-              // visible feedback for debugging
-              // if (this.addFeedback.length > 0) {
-              //   Text(this.addFeedback).fontSize(12).fontColor('#fff').margin({ left: 8 });
-              // }
-              // 管理按钮（打开管理页面）
-              Button('✍️管理')
-                .type(ButtonType.Normal)
-                .backgroundColor('#ffffff')
-                .borderColor(Color.Gray)
-                .borderWidth(1)
-                .borderRadius(3)
-                .fontColor('#1677FF')
-                .width('20%')
-                .height(39)
-                .margin({ left: 8 })
-                .onClick(() => {
-                  this.toast('打开管理页面...');
-                  try { router.push({ uri: 'pages/ManageMemories' }); } catch (_) { this.toast('无法打开管理页面'); }
-                });
-
-             }
-             .justifyContent(FlexAlign.Center)
-             .padding({ bottom: 10 });
-
-          }
-          .width('100%')
-          .height('100%')
-          .backgroundColor('#F7F8FA');
-          // .backgroundColor(Color.Pink);
+          });
         }
         .tabBar(this.TabBuilder('首页', 0,$r('app.media.foreground')));
 
@@ -180,14 +70,8 @@ struct Index {
                     this.EventCard(item);
                   }
                   .onClick(() => {
-                    // write AppStorage as compatibility fallback, and prefer passing id via router params
-                    try { AppStorage.Set<number>('selectedId', item.id); } catch (e) {}
-                    try {
-                      router.push({ uri: 'pages/EventDetail', params: { id: item.id } });
-                    } catch (e) {
-                      // fallback to plain push if params not supported
-                      try { router.push({ uri: 'pages/EventDetail' }); } catch (err) { console.error(err); }
-                    }
+                    AppStorage.Set<number>('selectedId', item.id);
+                    router.push({ uri: 'pages/EventDetail', params: { id: item.id } });
                   });
                 }
               })
@@ -237,7 +121,7 @@ struct Index {
   // Load events from DB and map to MemoryItem[]
   private async loadEvents(): Promise<void> {
     try {
-      // include 'target_date' so we can use the user-selected date from DB
+      // 查询 DB 并组装渲染数据 / fetch rows then hydrate for UI
       const cols = ['id', 'task_name', 'finished', 'target_date'];
       const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
       if (rows && rows.length > 0) {
@@ -274,6 +158,7 @@ struct Index {
       return list;
     }
     for (const e of events) {
+      // 统一补全日期，避免 dateUtils 计算异常 / ensure date present for dateUtils
       const normalized: MemoryItem = {
         id: e.id,
         title: e.title,
@@ -388,6 +273,7 @@ struct Index {
   @Builder
   private TabBuilder(title: string, targetIndex: number, normalImg?: Resource, selectedImg?: Resource) {
     Column() {
+      // Tab 图标与标题 / Tab icon & label
       Image(normalImg ? (this.currentIndex === targetIndex ? selectedImg ?? normalImg : normalImg) :
         $r('app.media.hixy_logo_new'))
         .width(24)
@@ -404,38 +290,34 @@ struct Index {
     .justifyContent(FlexAlign.Center)
     .onClick(() => {
       this.currentIndex = targetIndex;
-      try {
-        this.tabsController.changeIndex(this.currentIndex);
-      } catch (e) {
-        console.error(e);
-      }
-      // If user clicks back to Home tab, reload data immediately
+      this.tabsController.changeIndex(this.currentIndex);
       if (targetIndex === 0) {
+        // 返回首页时即时刷新 / force refresh when switching to Home
         this.loadEvents();
-        try { setTimeout(() => this.loadEvents(), 300); } catch (e) {}
+        setTimeout(() => this.loadEvents(), 300);
       }
     });
   }
 
-  // Open AddMemory page with logging and error handling
+  // Open AddMemory page with minimal error handling
   private openAddMemory(): void {
-    try {
-      // Clear AppStorage selectedId to ensure we don't load any previous record
-      try { AppStorage.Set<number>('selectedId', 0); } catch (e) {}
-      // ensure no stale router params; only open in add mode
-      console.log('Add button clicked: attempting to navigate to AddMemory');
-      try { promptAction.showToast({ message: '跳转到新增事件...' }); } catch (e) {}
-      try {
-        router.push({ uri: 'pages/EditMemory' });
-        console.log('router.push called for pages/AddMemory');
-        try { promptAction.showToast({ message: '已请求跳转' }); } catch (e) {}
-      } catch (pushErr) {
-        console.error('router.push threw for pages/AddMemory:', pushErr);
-        try { promptAction.showToast({ message: '跳转失败' }); } catch (e) {}
-      }
-    } catch (err) {
-      console.error('router.push failed for pages/AddMemory:', err);
-      try { promptAction.showToast({ message: '跳转失败' }); } catch (e) { console.error(e); }
+    AppStorage.Set<number>('selectedId', 0);
+    router.push({ uri: 'pages/EditMemory' });
+  }
+
+  @Builder
+  private HeaderImage(): void {
+    Column() {
+      Image(this.imageSource())
+        .id('headerImage')
+        .width(340)
+        .height(120)
+        .objectFit(ImageFit.Cover)
+        .borderRadius(15)
+        .align(Alignment.Center);
     }
-   }
+    .height('120')
+    .width('100%')
+    .padding({ top: 18 });
+  }
  }

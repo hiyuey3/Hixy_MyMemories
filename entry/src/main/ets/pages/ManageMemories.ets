@@ -1,6 +1,5 @@
 import router from '@system.router';
 import { MemoryItem, MemoryType, DateLike } from '../types/MemoryTypes';
-import promptAction from '@ohos.promptAction';
 import { MemoryDBUtil, Memory, makeValuesBucket } from '../utils/MemDBUtils';
 import { relationalStore } from '@kit.ArkData';
 import { formatDate as formatDateUtil } from '../utils/dateUtils';
@@ -124,10 +123,8 @@ export struct ManageMemories {
     try {
       // 震动50毫秒
       vibrator.vibrate(50);
-      promptAction.showToast({ message: '删除触发震动提示' });
     } catch (err) {
       console.error('震动失败', err);
-      try { promptAction.showToast({ message: '震动功能调用失败' }); } catch (_) {}
     }
   }
 
@@ -152,35 +149,13 @@ export struct ManageMemories {
   }
 
   private async onAdd(): Promise<void> {
-    try {
-      // Clear AppStorage selectedId to ensure we don't load any previous record
-      try { AppStorage.Set<number>('selectedId', 0); } catch (e) {}
-      // Open EditMemory without params to enter add mode
-      router.push({ uri: 'pages/EditMemory' });
-    } catch (e) {
-      try {
-        promptAction.showToast({ message: '无法跳转到编辑页面' });
-      } catch (e) {}
-      console.error('跳转 EditMemory 失败', e);
-    }
+    AppStorage.Set<number>('selectedId', 0);
+    router.push({ uri: 'pages/EditMemory' });
   }
 
   private async onEdit(item: MemoryItem): Promise<void> {
-    try {
-      AppStorage.setOrCreate('selectedId', item.id);
-      router.push({
-        uri: 'pages/EditMemory',
-        params: {
-          editId: item.id
-        }
-      });
-    } catch (e) {
-      console.error('跳转 EditMemory 失败', e);
-      try {
-        promptAction.showToast({ message: '无法跳转到编辑页面' });
-      } catch (e) {
-      }
-    }
+    AppStorage.setOrCreate('selectedId', item.id);
+    router.push({ uri: 'pages/EditMemory', params: { editId: item.id } });
   }
 
   private async onDelete(id: number): Promise<void> {
@@ -196,14 +171,9 @@ export struct ManageMemories {
       await MemoryDBUtil.deleteMemoryById('memories', this.deleteTargetId);
       this.deleteTargetId = undefined;
       await this.loadEvents();
-      try {
-        promptAction.showToast({ message: '已删除' });
-      } catch (e) {}
-      // Give short vibration feedback to user on delete
-      try { this.triggerVibration(); } catch (vErr) { console.warn('triggerVibration failed', vErr); }
+      this.triggerVibration();
     } catch (err) {
       console.error('删除失败', err);
-      try { promptAction.showToast({ message: '删除失败' }); } catch (e) {}
     }
   }
 
@@ -220,15 +190,9 @@ export struct ManageMemories {
       const tomorrowMs: number = t.getTime();
       const vb: relationalStore.ValuesBucket = makeValuesBucket(title, 0, tomorrowMs);
       const rowId: number = await MemoryDBUtil.insertMemory('memories', vb);
-      if (rowId && rowId > 0) {
-        try { promptAction.showToast({ message: `写入成功 id=${rowId}` }); } catch (e) {}
-      }
+      console.log('testWrite: inserted rowId', rowId);
     } catch (e) {
       console.error('testWrite: DB insert failed', e);
-      try {
-        promptAction.showToast({ message: '写入失败 (DB insert)' });
-      } catch (e2) {
-      }
       return;
     }
 
@@ -237,13 +201,7 @@ export struct ManageMemories {
       await new Promise<void>((resolve) => setTimeout(resolve, 500));
       const cols: string[] = ['id', 'task_name', 'finished', 'target_date'];
       const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
-      const cnt = rows ? rows.length : 0;
-      try {
-        promptAction.showToast({ message: `测试写入完成，DB 行数: ${cnt}` });
-      } catch (e) {
-      }
       console.log('testWrite: query rows:', rows);
-      // refresh UI from DB rows
       this.events = (rows || []).map((r: Memory) => {
         const id: number = r.id ?? 0;
         const t: string = r.title ?? '';
@@ -255,10 +213,6 @@ export struct ManageMemories {
       });
     } catch (e) {
       console.error('testWrite: query failed', e);
-      try {
-        promptAction.showToast({ message: '查询失败' });
-      } catch (e2) {
-      }
     }
   }
 }
@@ -305,9 +259,7 @@ struct EventCard {
             .backgroundColor('#F2F2F2')
             .onClick(() => {
               this.onCancelDelete();
-              try { promptAction.showToast({ message: '已取消删除' }); } catch (e) {}
               this.triggerVibration();
-              try { promptAction.showToast({ message: '取消删除触发震动提示' }); } catch (e) {}
             })
             .width(50)
             // .borderRadius(50);
