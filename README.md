@@ -16,7 +16,7 @@ MyMemories ｜ 我的记忆点
 
 BUG反馈：
 
-ISSUES：https://github.com/hixy-dev/MyMemories/issues
+ISSUES：https://github.com/hiyuey3/Hixy_MyMemories/MyMemories/issues
 
 通过国际计算机学会（ACM）提供的邮箱联系我： titusyu@acm.org
 
