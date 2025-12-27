@@ -70,7 +70,7 @@ export function daysDiff(target: DateLike, now?: DateLike, isAnniversary?: boole
   return Math.round((dest - start) / dayMs);
 }
 
-// For anniversaries we want both: days since last occurrence and days until next occurrence.
+// For anniversaries we want both: days since original date and days until next annual occurrence.
 export function anniversaryStats(target: DateLike, now?: DateLike): AnniversaryStats {
   const t: Date | null = toDate(target);
   if (!t) {
@@ -84,20 +84,20 @@ export function anniversaryStats(target: DateLike, now?: DateLike): AnniversaryS
   const targetMonth = t.getMonth();
   const targetDay = t.getDate();
 
-  // this year's occurrence
+  // this year's annual occurrence
   const thisYearOccur = new Date(today.getFullYear(), targetMonth, targetDay);
+  const thisYearTime = thisYearOccur.getTime();
+  const todayTime = today.getTime();
+
+  // next annual occurrence: if this year's already passed or is today, use next year
   let nextOccur = thisYearOccur;
-  if (thisYearOccur.getTime() < today.getTime()) {
+  if (thisYearTime <= todayTime) {
     nextOccur = new Date(today.getFullYear() + 1, targetMonth, targetDay);
   }
-  // previous occurrence: if this year's occurrence is <= today then prev is this year's, else prev is last year
-  let prevOccur = thisYearOccur;
-  if (thisYearOccur.getTime() > today.getTime()) {
-    prevOccur = new Date(today.getFullYear() - 1, targetMonth, targetDay);
-  }
 
-  const daysUntil = Math.round((nextOccur.getTime() - today.getTime()) / dayMs);
-  const daysSince = Math.round((today.getTime() - prevOccur.getTime()) / dayMs);
+  // daysSince: total days from original event date to today (not just from last year's occurrence)
+  const daysUntil = Math.round((nextOccur.getTime() - todayTime) / dayMs);
+  const daysSince = Math.round((todayTime - t.getTime()) / dayMs);
   return new AnniversaryStats(daysSince, daysUntil);
 }
 

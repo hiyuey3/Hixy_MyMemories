@@ -3,7 +3,7 @@ import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import * as dateUtils from '../utils/dateUtils';
 import router from '@system.router';
 import { About } from './About';
-import { MemoryItem, MemoryType } from '../types/MemoryTypes';
+import { MemoryItem, MemoryType, DateLike } from '../types/MemoryTypes';
 import promptAction from '@ohos.promptAction';
 
 
@@ -244,8 +244,8 @@ struct Index {
         this.events = rows.map((r: Memory) => {
           const id: number = r.id ?? 0;
           const title: string = r.title ?? '';
-          // Prefer stored targetDate (ms since epoch) when available
-          const date: Date = (typeof r.targetDate === 'number') ? new Date(r.targetDate) : new Date();
+          // Use targetDate if available, otherwise undefined (let MemoryItem handle null dates)
+          const date = (typeof r.targetDate === 'number') ? r.targetDate : undefined;
           const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
           return { id, title, date, type } as MemoryItem;
         });
@@ -282,7 +282,7 @@ struct Index {
     return dateUtils.countUpcoming(this.events, undefined, (e) => e.type === 'anniversary');
   }
 
-  // Count of past memories (daysDiff < 0)
+  // Count of past memories (daysDiff < 0) - all types combined
   private getMemories(): number {
     return dateUtils.countMemories(this.events, undefined, (e) => e.type === 'anniversary');
   }
@@ -298,7 +298,7 @@ struct Index {
   }
 
   // Helper: date formatting wrapper
-  private formatDate(d: Date): string {
+  private formatDate(d: DateLike): string {
     return dateUtils.formatDate(d);
   }
 
@@ -398,6 +398,8 @@ struct Index {
   // Open AddMemory page with logging and error handling
   private openAddMemory(): void {
     try {
+      // Clear AppStorage selectedId to ensure we don't load any previous record
+      try { AppStorage.Set<number>('selectedId', 0); } catch (e) {}
       // this.addFeedback = '点击：正在尝试跳转...';
       console.log('Add button clicked: attempting to navigate to AddMemory');
       try { promptAction.showToast({ message: '跳转到新增事件...' }); } catch (e) {}

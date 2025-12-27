@@ -1,5 +1,5 @@
 import router from '@system.router';
-import { MemoryItem, MemoryType } from '../types/MemoryTypes';
+import { MemoryItem, MemoryType, DateLike } from '../types/MemoryTypes';
 import promptAction from '@ohos.promptAction';
 import { MemoryDBUtil, Memory, makeValuesBucket } from '../utils/MemDBUtils';
 import { relationalStore } from '@kit.ArkData';
@@ -156,6 +156,8 @@ export struct ManageMemories {
 
   private async onAdd(): Promise<void> {
     try {
+      // Clear AppStorage selectedId to ensure we don't load any previous record
+      try { AppStorage.Set<number>('selectedId', 0); } catch (e) {}
       // Open EditMemory without params to enter add mode
       router.push({ uri: 'pages/EditMemory' });
     } catch (e) {
@@ -279,7 +281,7 @@ struct EventCard {
   onCancelDelete: () => void = () => {};
   onPerformDelete: () => void = () => {};
 
-  private formatDate(d: Date): string {
+  private formatDate(d: DateLike): string {
     return formatDateUtil(d);
   }
 

@@ -59,7 +59,7 @@ export default struct EditMemory {
         this.date = new Date();
       }
       this.type = row.finished ? 'anniversary' : 'countdown';
-      try { promptAction.showToast({ message: `加载：${this.title}` }); } catch (e) {}
+      try { promptAction.showToast({ message: `加载：${this.memoryId}` }); } catch (e) {}
     } catch (e) {
       console.error('EditMemory.load failed', e);
     }

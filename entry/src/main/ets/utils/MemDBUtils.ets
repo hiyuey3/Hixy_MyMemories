@@ -27,7 +27,7 @@ export class Memory {
 
 }
 
-class MemoryDBUtils {
+export class MemoryDBUtils {
   // 定义数据库变量
   private rdbStore: relationalStore.RdbStore | null = null
   // Promise resolved when rdbStore becomes available
