@@ -4,16 +4,30 @@ import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import * as dateUtils from '../utils/dateUtils';
 import { MemoryItem } from '../types/MemoryTypes';
 
+interface RouteParams { id?: number }
+
 @Entry
 @Component
 export struct EventDetail {
   @State item: MemoryItem | undefined = undefined;
+  private unsub?: () => void;
 
   aboutToAppear() {
+    const params: RouteParams = (router.getParams() as RouteParams);
+    const paramId: number | undefined = typeof params?.id === 'number' ? params.id : undefined;
     const selectedId: number | undefined = AppStorage.Get<number>('selectedId');
-    const id: number | undefined = selectedId;
+    const id: number | undefined = paramId ?? selectedId;
     if (typeof id === 'number') {
       this.loadItem(id);
+      // subscribe to DB changes to refresh when data updates
+      try { this.unsub = MemoryDBUtil.subscribe(() => this.loadItem(id)); } catch (_) {}
+    }
+  }
+
+  onDestroy() {
+    if (this.unsub) {
+      try { this.unsub(); } catch (_) {}
+      this.unsub = undefined;
     }
   }
 
@@ -29,9 +43,14 @@ export struct EventDetail {
           type: row.finished ? 'anniversary' : 'countdown'
         };
         this.item = item;
+      } else {
+        // not found: show placeholder to avoid infinite loading
+        this.item = { id, title: '未找到记录', date: undefined, type: 'countdown' } as MemoryItem;
       }
     } catch (e) {
       console.log('加载详情失败: ' + e);
+      // show placeholder on error
+      this.item = { id, title: '加载失败', date: undefined, type: 'countdown' } as MemoryItem;
     }
   }
 
@@ -53,7 +72,7 @@ export struct EventDetail {
   private goEdit(): void {
     if (!this.item) return;
     AppStorage.Set<number>('selectedId', this.item.id);
-    router.push({ uri: 'pages/EditMemory', params: { id: this.item.id } });
+    router.push({ uri: 'pages/EditMemory', params: { editId: this.item.id } });
   }
 
   build() {
@@ -74,6 +93,10 @@ export struct EventDetail {
           }
         }
         .padding({ left: 18, right: 18, top: 20 });
+
+        if (this.item.title === '未找到记录' || this.item.title === '加载失败') {
+          Text('提示：未找到该事件或加载失败').fontSize(12).fontColor('#999').padding({ left: 18 });
+        }
 
         Row({ space: 12 }) {
           Button('编辑')
