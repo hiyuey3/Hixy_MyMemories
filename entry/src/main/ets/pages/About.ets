@@ -18,6 +18,8 @@ export struct About {
       // 顶部品牌卡片，突出产品与版本信息
       Column({ space: 8 }) {
         Column({ space: 10 }) {
+          Blank()
+            .margin({ top: 9 });
           Image($r('app.media.hixy_logo_old'))
             .width(108)
             .height(108)
@@ -44,7 +46,7 @@ export struct About {
               .borderRadius(12);
           }
           .alignItems(VerticalAlign.Center);
-          Text('专注倒数日与纪念日，记录每一个重要时刻。')
+          Text('做简单的，让时光点有迹可循，让记忆点温暖如初。')
             .fontSize(13)
             .fontColor('#4B5563')
             .textAlign(TextAlign.Center)
@@ -65,7 +67,10 @@ export struct About {
       Column() {
         Text(this.copyright)
           .fontSize(12)
-          .fontColor('#9AA0A6');
+          .fontColor('#9AA0A6')
+          .onClick(() => {
+            try { router.push({ uri: 'pages/DeveloperMode' }); } catch (e) { this.toast('跳转失败'); }
+          });
         Text(this.ICPnumber)
           .fontSize(12)
           .fontColor('#9AA0A6')
@@ -73,17 +78,17 @@ export struct About {
       }
       .alignItems(HorizontalAlign.Center);
 
-      // 开发人员模式入口（非常小的灰色字，防误触）
-      Column() {
-        Text('开发人员模式')
-          .fontSize(11)
-          .fontColor('#B0B6BB')
-          .margin({ top: 16, bottom: 20 })
-          .onClick(() => {
-            try { router.push({ uri: 'pages/DeveloperMode' }); } catch (e) { this.toast('跳转失败'); }
-          });
-      }
-      .alignItems(HorizontalAlign.Center);
+      // 开发人员模式入口
+      // Column() {
+      //   Text('管理模式')
+      //     .fontSize(11)
+      //     .fontColor('#B0B6BB')
+      //     .margin({ top: 16, bottom: 20 })
+      //     .onClick(() => {
+      //       try { router.push({ uri: 'pages/DeveloperMode' }); } catch (e) { this.toast('跳转失败'); }
+      //     });
+      // }
+      // .alignItems(HorizontalAlign.Center);
     }
     .width('100%')
     .height('100%')
@@ -112,7 +117,11 @@ export struct About {
       // 官方文档
       this.InfoRow('官方文档', 'doc.5i03.cn', '#0A59F7', () => { this.toast('打开 doc.5i03.cn'); });
       Divider().height(1).backgroundColor('#F0F2F4');
-      this.InfoRow('微信公众号', '小影团队');
+      this.InfoRow('酷安', '@晚饭没有跺椒鱼头', '#0A59F7', () => { this.toast('@晚饭没有跺椒鱼头'); });
+      Divider().height(1).backgroundColor('#F0F2F4');
+      this.InfoRow('QQ/微信', '1417322772', '#0A59F7', () => { this.toast('QQ/微信：1417322772'); });
+      Divider().height(1).backgroundColor('#F0F2F4');
+      this.InfoRow('小红书', '睡觉专家', '#0A59F7', () => { this.toast('打开 小红书：睡觉专家'); });
     }
     .width('100%')
     .padding(18)
