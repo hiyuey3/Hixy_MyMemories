@@ -6,6 +6,7 @@ import { About } from './About';
 import { MemoryItem, MemoryType } from '../types/MemoryTypes';
 import { HomePage } from './HomePage';
 import { MemoriesPage } from './MemoriesPage';
+import { BottomTabItem } from '../components/BottomTabItem';
 
 
 @Entry
@@ -32,6 +33,11 @@ struct Index {
     // Reload events whenever page is shown
     this.loadEvents();
     // start a short burst refresh to catch recent writes
+    const reload = AppStorage.Get<boolean>('needsReload');
+    if (reload) {
+      this.loadEvents();
+      AppStorage.Set<boolean>('needsReload', false);
+    }
   }
 
   aboutToAppear(): void {
@@ -40,6 +46,11 @@ struct Index {
     // Small delayed refresh to ensure DB commit is visible on slower devices
     try { setTimeout(() => this.loadEvents(), 300); } catch (e) {}
     // also start a short burst refresh
+    const reload = AppStorage.Get<boolean>('needsReload');
+    if (reload) {
+      this.loadEvents();
+      AppStorage.Set<boolean>('needsReload', false);
+    }
   }
 
   onDestroy(): void {}
@@ -61,13 +72,37 @@ struct Index {
             }
           });
         }
-        .tabBar(this.TabBuilder('首页', 0,$r('app.media.foreground')));
+        .tabBar(BottomTabItem({
+          title: '首页',
+          targetIndex: 0,
+          currentIndex: this.currentIndex,
+          normalImg: $r('app.media.tab_home'),
+          selectedImg: $r('app.media.tab_home_active'),
+          onSelect: (idx: number) => {
+            this.currentIndex = idx;
+            this.tabsController.changeIndex(idx);
+            if (idx === 0) {
+              this.loadEvents();
+              setTimeout(() => this.loadEvents(), 300);
+            }
+          }
+        }));
 
         // Memories tab
         TabContent() {
           MemoriesPage({ events: this.sorted() })
         }
-        .tabBar(this.TabBuilder('记忆', 1, $r('app.media.foreground')));
+        .tabBar(BottomTabItem({
+          title: '记忆',
+          targetIndex: 1,
+          currentIndex: this.currentIndex,
+          normalImg: $r('app.media.tab_memories'),
+          selectedImg: $r('app.media.tab_memories_active'),
+          onSelect: (idx: number) => {
+            this.currentIndex = idx;
+            this.tabsController.changeIndex(idx);
+          }
+        }));
 
         // Settings tab
         // TabContent() {
@@ -79,13 +114,23 @@ struct Index {
         TabContent() {
           About()
         }
-        .tabBar(this.TabBuilder('关于', 2, $r('app.media.foreground')));
+        .tabBar(BottomTabItem({
+          title: '关于',
+          targetIndex: 2,
+          currentIndex: this.currentIndex,
+          normalImg: $r('app.media.tab_about'),
+          selectedImg: $r('app.media.tab_about_active'),
+          onSelect: (idx: number) => {
+            this.currentIndex = idx;
+            this.tabsController.changeIndex(idx);
+          }
+        }));
 
       }
       .width('100%')
       .height('100%')
       .scrollable(false)
-      .backgroundColor(Color.Pink)
+      .backgroundColor('#F7F8FA')
       .animationDuration(0);
 
     }
@@ -167,38 +212,9 @@ struct Index {
     return this.getEventsSortedByDaysUntil();
   }
 
-  @Builder
-  private TabBuilder(title: string, targetIndex: number, normalImg?: Resource, selectedImg?: Resource) {
-    Column() {
-      // Tab 图标与标题 / Tab icon & label
-      Image(normalImg ? (this.currentIndex === targetIndex ? selectedImg ?? normalImg : normalImg) :
-        $r('app.media.hixy_logo_new'))
-        .width(24)
-        .height(24)
-        .align(Alignment.Center);
-      Text(title)
-        .fontSize(12)
-        .fontColor(this.currentIndex === targetIndex ? '#ff4116ff' : '#333')
-        .align(Alignment.Center)
-        .margin({ top: 6 });
+    // Open AddMemory page with minimal error handling
+    private openAddMemory(): void {
+      AppStorage.Set<number>('selectedId', 0);
+      router.push({ uri: 'pages/EditMemory' });
     }
-    .width('100%')
-    .height(64)
-    .justifyContent(FlexAlign.Center)
-    .onClick(() => {
-      this.currentIndex = targetIndex;
-      this.tabsController.changeIndex(this.currentIndex);
-      if (targetIndex === 0) {
-        // 返回首页时即时刷新 / force refresh when switching to Home
-        this.loadEvents();
-        setTimeout(() => this.loadEvents(), 300);
-      }
-    });
   }
-
-   // Open AddMemory page with minimal error handling
-   private openAddMemory(): void {
-     AppStorage.Set<number>('selectedId', 0);
-     router.push({ uri: 'pages/EditMemory' });
-   }
- }

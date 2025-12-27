@@ -74,7 +74,7 @@ export default struct EditMemory {
         this.memoryId = newRowId;
         AppStorage.Set<boolean>('needsReload', true);
         AppStorage.Set<number>('selectedId', 0);
-        try { router.back(); } catch (e) { console.warn(e); }
+        try { router.push({ uri: 'pages/Index' }); } catch (e) { try { router.back(); } catch (_) {} }
         return;
       }
       return;
@@ -90,7 +90,7 @@ export default struct EditMemory {
         this.memoryId = newRowId;
         AppStorage.Set<boolean>('needsReload', true);
         AppStorage.Set<number>('selectedId', 0);
-        try { router.back(); } catch (e) { console.warn(e); }
+        try { router.push({ uri: 'pages/Index' }); } catch (e) { try { router.back(); } catch (_) {} }
         return;
       }
     } else {
@@ -109,7 +109,7 @@ export default struct EditMemory {
         this.memoryId = newRowId;
         AppStorage.Set<boolean>('needsReload', true);
         AppStorage.Set<number>('selectedId', 0);
-        try { router.back(); } catch (e) { console.warn(e); }
+        try { router.push({ uri: 'pages/Index' }); } catch (e) { try { router.back(); } catch (_) {} }
         return;
       }
     }

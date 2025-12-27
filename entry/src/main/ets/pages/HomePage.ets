@@ -55,44 +55,46 @@ export struct HomePage {
           .width(340)
           .height(120)
           .objectFit(ImageFit.Cover)
-          .borderRadius(15)
+          .borderRadius(12)
           .align(Alignment.Center);
       }
       .height('120')
       .width('100%')
-      .padding({ top: 18 });
+      .padding({ top: 16 });
 
       Column({ space: 8 }) {
-        Text('倒数日 | 纪念日').fontSize(24).fontWeight(FontWeight.Bold).fontColor('#1F1F1F');
+        Text('倒数日 | 纪念日').fontSize(22).fontWeight(FontWeight.Bold).fontColor('#1F1F1F');
         Row({ space: 12 }) {
 
           Column() {
-            Text(`${this.getUpcoming()}`).fontSize(28).fontWeight(FontWeight.Bold)
-              .fontColor(Color.Red);
-            Text('即将到来').fontSize(13).fontColor(Color.Black);
+            Text(`${this.getUpcoming()}`).fontSize(24).fontWeight(FontWeight.Bold)
+              .fontColor('#1677FF');
+            Text('即将到来').fontSize(12).fontColor('#666');
           }
-          .backgroundColor(Color.Transparent)
-          .borderWidth(2)
-          .borderColor(Color.Gray)
-          .padding(12)
+          .backgroundColor('#FFFFFF')
+          .borderWidth(1)
+          .borderColor('#E5E7EB')
+          .padding(10)
           .width('48%')
-          .height(80)
-          .borderRadius(12);
+          .height(72)
+          .borderRadius(10)
+          .shadow({ radius: 4, color: '#12000000', offsetX: 0, offsetY: 2 });
 
           Column() {
-            Text(`${this.getMemories()}`).fontSize(28).fontWeight(FontWeight.Bold).fontColor('#FF7A45');
-            Text('纪念回顾').fontSize(13).fontColor('#666');
+            Text(`${this.getMemories()}`).fontSize(24).fontWeight(FontWeight.Bold).fontColor('#FF7A45');
+            Text('纪念回顾').fontSize(12).fontColor('#666');
           }
           .width('48%')
-          .height(80)
-          .padding(12)
-          .backgroundColor(Color.Transparent)
-          .borderWidth(2)
-          .borderColor(Color.Gray)
-          .borderRadius(12);
+          .height(72)
+          .padding(10)
+          .backgroundColor('#FFFFFF')
+          .borderWidth(1)
+          .borderColor('#E5E7EB')
+          .borderRadius(10)
+          .shadow({ radius: 4, color: '#12000000', offsetX: 0, offsetY: 2 });
         }
       }
-      .padding({ left: 18, right: 18, top: 20, bottom: 12 });
+      .padding({ left: 16, right: 16, top: 16, bottom: 12 });
 
       List({ space: 10 }) {
         ForEach(this.getEventsSortedByDaysUntil(), (item: MemoryItem) => {
@@ -105,26 +107,23 @@ export struct HomePage {
       .width('100%')
       .height('100%')
       .layoutWeight(1)
-      .padding({ left: 18, right: 18, bottom: 10 });
+      .padding({ left: 16, right: 16, bottom: 10 });
 
       Row() {
         Button('➕ 新增事件')
           .type(ButtonType.Capsule)
-          .shadow({ radius: 6, color: '#1A000000', offsetX: -4, offsetY: 10 })
-          .borderColor(Color.White)
-          .borderStyle(BorderStyle.Solid)
-          .borderWidth(2)
-          .backgroundColor(Color.Pink)
-          .fontColor('#fff')
+          .shadow({ radius: 4, color: '#12000000', offsetX: 0, offsetY: 2 })
+          .backgroundColor('#1677FF')
+          .fontColor('#FFFFFF')
           .width('85%')
-          .height(39)
-          .onClick(() => this.onAdd());
+          .height(40)
+           .onClick(() => this.onAdd());
 
         // 管理入口已迁移到「关于」页面底部，仅保留新增按钮在首页
 
        }
        .justifyContent(FlexAlign.Center)
-       .padding({ bottom: 10 });
+       .padding({ bottom: 12 });
 
     }
     .width('100%')
