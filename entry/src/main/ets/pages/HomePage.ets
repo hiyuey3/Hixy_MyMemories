@@ -2,6 +2,7 @@
 import { MemoryItem, DateLike } from '../types/MemoryTypes';
 import * as dateUtils from '../utils/dateUtils';
 
+@Preview
 @Component
 export struct HomePage {
   @Prop events: MemoryItem[] = [];
@@ -174,60 +175,72 @@ export struct HomePage {
 
   @Builder
   private EventCard(item: MemoryItem): void {
-    // 单条卡片 / single event card
-    Row({ space: 1}) {
-      Column({ space: 1 }) {
-        Row() {
-          Column() {
-            Text(item.title)
-              .fontSize(18)
-              .fontWeight(FontWeight.Medium)
-              .textAlign(TextAlign.Start)
-              .fontColor('#111')
-              .maxLines(1);
+    // 单条卡片 / single event card with left accent
+    Row({ space: 10}) {
+      // Left vertical accent bar
+      Blank()
+        .width(4)
+        .height('20%')
+        .backgroundColor(item.type === 'countdown' ? '#1677FF' : '#FF7A45')
+        .borderRadius(2)
+      .padding({right:0})
 
-            Text(this.formatDate(item.date))
-              .fontSize(13)
-              .fontColor('#666')
-              .textAlign(TextAlign.Start);
+      // Main content
+      Row({ space: 1}) {
+        Column({ space: 1 }) {
+          Row() {
+            Column() {
+              Text(item.title)
+                .fontSize(18)
+                .fontWeight(FontWeight.Medium)
+                .textAlign(TextAlign.Start)
+                .fontColor('#111')
+                .maxLines(1);
+
+              Text(this.formatDate(item.date))
+                .fontSize(13)
+                .fontColor('#666')
+                .textAlign(TextAlign.Start);
+            }
+            .alignItems(HorizontalAlign.Start);
           }
-          .alignItems(HorizontalAlign.Start);
         }
-      }
 
-      Column(){
-        Text(item.type === 'countdown' ? '倒数' : '纪念')
-          .fontSize(12)
-          .fontColor('#fff')
-          .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-          .backgroundColor(item.type === 'countdown' ? '#1677FF' : '#FF7A45')
-          .borderRadius(12);
-        if (item.type === 'anniversary') {
-          Text(this.anniversaryUntilText(item))
-            .fontSize(14)
-            .margin({ top: 6, bottom: 2 })
-            .fontColor('#1677FF');
-          Text(this.anniversarySinceText(item))
+        Column(){
+          Text(item.type === 'countdown' ? '倒数' : '纪念')
             .fontSize(12)
-            .fontColor('#FF7A45');
-        } else {
-          Text(this.daysTextFor(item))
-            .fontSize(14)
-            .margin({ top: 6, bottom: 2 })
-            .fontColor(this.daysColorFor(item));
-          Text(this.countdownStatusText(item))
-            .fontSize(12)
-            .fontColor('#666');
+            .fontColor('#fff')
+            .padding({ left: 10, right: 10, top: 4, bottom: 4 })
+            .backgroundColor(item.type === 'countdown' ? '#1677FF' : '#FF7A45')
+            .borderRadius(12);
+          if (item.type === 'anniversary') {
+            Text(this.anniversaryUntilText(item))
+              .fontSize(14)
+              .margin({ top: 6, bottom: 2 })
+              .fontColor('#1677FF');
+            Text(this.anniversarySinceText(item))
+              .fontSize(12)
+              .fontColor('#FF7A45');
+          } else {
+            Text(this.daysTextFor(item))
+              .fontSize(14)
+              .margin({ top: 6, bottom: 2 })
+              .fontColor(this.daysColorFor(item));
+            Text(this.countdownStatusText(item))
+              .fontSize(12)
+              .fontColor('#666');
+          }
         }
+        .width(120)
+        .alignItems(HorizontalAlign.End)
       }
-      .width(120)
-      .alignItems(HorizontalAlign.End);
+      .justifyContent(FlexAlign.SpaceBetween)
+      .padding(14)
+      .backgroundColor($r('app.color.start_window_background'))
+      .borderRadius(14)
+      .width('95%')
+      .shadow({ radius: 8, color: '#1A000000', offsetX: 0, offsetY: 4 });
     }
-    .justifyContent(FlexAlign.SpaceBetween)
-    .padding(14)
-    .backgroundColor($r('app.color.start_window_background'))
-    .borderRadius(14)
-    .width('100%')
-    .shadow({ radius: 8, color: '#1A000000', offsetX: 0, offsetY: 4 });
+    .width('99%');
   }
 }
