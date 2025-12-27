@@ -125,3 +125,35 @@ cd Hixy_MyMemories/entry
 ```
 
 > 注：报告中的“系统总体功能图/流程图”可使用 Visor 或任意流程图工具绘制，并将截图贴入结果章节。
+
+## 官方引用（建议替换为准确 URL）
+- HarmonyOS ArkUI 声明式开发（官方）
+  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkui-overview
+  - 用途：UI 架构与组件用法参考
+- ArkTS 语言与开发规范（官方）
+  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-introduction
+  - 用途：语言特性与工程规范
+- 本地数据存储：Relational Store / RDB（官方）
+  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/data-relational-store
+  - 用途：RDB 初始化、CRUD、查询谓词
+- 路由与页面导航：UIAbility / @system.router（官方）
+  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/uiability-navigation
+  - 用途：页面跳转与生命周期
+- 振动能力：@ohos.vibrator（官方 API）
+  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-references/js-apis-vibrator
+  - 用途：删除/确认操作的振动反馈
+- 剪贴板：@ohos.pasteboard（官方 API）
+  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-references/js-apis-pasteboard
+  - 用途：导出 JSON 的复制功能
+- 提示与对话框：@ohos.promptAction（官方 API）
+  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-references/js-apis-promptaction
+  - 用途：Toast 与确认对话
+- ArkUI 组件索引（Tabs、List、Button、Text、Image）（官方）
+  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkui-components
+  - 用途：组件参考与属性说明
+- Hvigor 构建工具（官方）
+  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/hvigor-introduction
+  - 用途：构建打包流程
+- 资源与暗色模式（官方）
+  - 链接（占位）：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/resource-color-and-darkmode
+  - 用途：颜色资源与暗色主题适配
