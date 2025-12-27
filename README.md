@@ -1,4 +1,4 @@
-# MyMemories (Hixy_MyMemories)
+# MyMemories ｜ 我的记忆点 
 
 零、前言
 
