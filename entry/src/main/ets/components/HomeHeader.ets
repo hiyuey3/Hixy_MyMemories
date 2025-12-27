@@ -80,7 +80,7 @@ export struct HomeHeader {
             Text(`${this.getMemories()}`)
               .fontSize(28)
               .fontWeight(FontWeight.Bold)
-              .fontColor('#FF7A45');
+              .fontColor('#FF7F50');
             Text('纪念回顾')
               .fontSize(13)
               .fontColor('#666');

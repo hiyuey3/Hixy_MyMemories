@@ -101,9 +101,9 @@ export struct HomePage {
         Text('倒数日 | 纪念日').fontSize(22).fontWeight(FontWeight.Bold).fontColor('#1F1F1F');
         Row({ space: 12 }) {
           Column() {
-            Text(`${this.getUpcoming()}`).fontSize(24).fontWeight(FontWeight.Bold)
-              .fontColor('#1677FF');
-            Text('即将到来').fontSize(12).fontColor('#666');
+            Text(`${this.getUpcoming()}`).fontSize(28).fontWeight(FontWeight.Bold)
+              .fontColor('#5A7CC2');
+            Text('即将到来').fontSize(13).fontColor(Color.Black);
           }
           .backgroundColor('#FFFFFF')
           .borderWidth(1)
@@ -115,7 +115,7 @@ export struct HomePage {
           .shadow({ radius: 4, color: '#12000000', offsetX: 0, offsetY: 2 });
 
           Column() {
-            Text(`${this.getMemories()}`).fontSize(24).fontWeight(FontWeight.Bold).fontColor('#FF7A45');
+            Text(`${this.getMemories()}`).fontSize(24).fontWeight(FontWeight.Bold).fontColor('#FF7F50');
             Text('纪念回顾').fontSize(12).fontColor('#666');
           }
           .width('48%')

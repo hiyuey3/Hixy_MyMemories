@@ -159,7 +159,7 @@ export function daysColorFor(target: DateLike, now?: DateLike, isAnniversary?: b
   if (isNaN(diff)) {
     return '#666';
   }
-  return diff >= 0 ? '#1677FF' : '#FF7A45';
+  return diff >= 0 ? '#5A7CC2' : '#FF7A45';
 }
 
 /**
@@ -217,4 +217,26 @@ export function countMemories<T extends EventWithDate>(events: T[], now?: DateLi
     const d: number = daysDiff(e.date, now, isAnniversaryFor ? !!isAnniversaryFor(e) : false);
     return !isNaN(d) && d < 0;
   }).length;
+}
+
+// Exported helpers for pages/components that need common date operations
+export function toDatePublic(input: DateLike): Date | null {
+  return toDate(input);
+}
+
+export function sameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+export function getMonthStart(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+export function getDaysInMonth(d: Date): number {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+}
+
+export function getWeekdayOfFirst(d: Date): number {
+  const wd = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+  return wd === 0 ? 7 : wd;
 }

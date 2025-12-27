@@ -39,91 +39,6 @@ export default struct EditMemory {
     }
   }
 
-  private async load(id: number): Promise<void> {
-    console.log('EditMemory.load: requested id=', id);
-    // 读取并填充表单 / hydrate form from DB row
-    const cols: string[] = ['id', 'task_name', 'finished', 'target_date', 'content'];
-    const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
-    const row = (rows || []).find(r => (r.id ?? 0) === id);
-    if (!row) {
-      console.warn('EditMemory.load: no row found for id=', id);
-      return;
-    }
-    this.memoryId = row.id ?? id;
-    this.title = row.title ?? '';
-    if (typeof row.targetDate === 'number' && !isNaN(row.targetDate) && row.targetDate > 0) {
-      this.date = new Date(Number(row.targetDate));
-    } else {
-      this.date = new Date();
-    }
-    this.type = row.finished ? 'anniversary' : 'countdown';
-    this.content = row.content ?? '';
-  }
-
-  private async save(): Promise<void> {
-    const newTitle = (this.title || '').trim();
-    if (!newTitle) { return; }
-
-    // 序列化日期为毫秒时间戳 / persist date as ms
-    const targetDateMs: number = this.date ? Number(this.date.getTime()) : Date.now();
-    const vb: relationalStore.ValuesBucket = makeValuesBucket(newTitle, this.type === 'anniversary' ? 1 : 0, targetDateMs, this.content);
-    const cols: string[] = ['id', 'task_name', 'finished'];
-
-    if (!this.memoryId) {
-      // 插入新增 / insert new
-      const newRowId: number = await MemoryDBUtil.insertMemory('memories', vb);
-      if (newRowId && newRowId > 0) {
-        this.memoryId = newRowId;
-        AppStorage.Set<boolean>('needsReload', true);
-        AppStorage.Set<number>('selectedId', 0);
-        try { router.push({ uri: 'pages/Index' }); } catch (e) { try { router.back(); } catch (_) {} }
-        return;
-      }
-      return;
-    }
-
-    const numericId = Number(this.memoryId);
-    const rowsBefore: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
-    const found = (rowsBefore || []).find(r => (r.id ?? 0) === numericId);
-
-    if (!found) {
-      const newRowId: number = await MemoryDBUtil.insertMemory('memories', vb);
-      if (newRowId && newRowId > 0) {
-        this.memoryId = newRowId;
-        AppStorage.Set<boolean>('needsReload', true);
-        AppStorage.Set<number>('selectedId', 0);
-        try { router.push({ uri: 'pages/Index' }); } catch (e) { try { router.back(); } catch (_) {} }
-        return;
-      }
-    } else {
-      const rowsAffected: number = await MemoryDBUtil.updateMemoryById('memories', numericId, vb);
-      if (typeof rowsAffected === 'number' && rowsAffected > 0) {
-        // 更新成功后返回上一个页面并触发重载
-        this.title = newTitle;
-        await this.load(numericId);
-        AppStorage.Set<number>('selectedId', 0);
-        AppStorage.Set<boolean>('needsReload', true);
-        try { router.back(); } catch (e) { console.warn(e); }
-        return;
-      }
-      const newRowId: number = await MemoryDBUtil.insertMemory('memories', vb);
-      if (newRowId && newRowId > 0) {
-        this.memoryId = newRowId;
-        AppStorage.Set<boolean>('needsReload', true);
-        AppStorage.Set<number>('selectedId', 0);
-        try { router.push({ uri: 'pages/Index' }); } catch (e) { try { router.back(); } catch (_) {} }
-        return;
-      }
-    }
-
-    try {
-      const rowsAfter: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
-      const foundAfter = (rowsAfter || []).find(r => (r.id ?? 0) === Number(this.memoryId));
-      console.log('EditMemory.save: post-save row=', JSON.stringify(foundAfter));
-    } catch (_) {}
-
-  }
-
   build() {
     Column({ space: 12 }) {
       Text(this.memoryId ? '编辑' : '新增事件')
@@ -156,12 +71,12 @@ export default struct EditMemory {
         Row({ space: 8 }) {
           Button('倒数日')
             .type(ButtonType.Capsule)
-            .backgroundColor(this.type === 'countdown' ? '#1677FF' : '#F2F2F2')
+            .backgroundColor(this.type === 'countdown' ? '#5A7CC2' : '#F2F2F2')
             .fontColor(this.type === 'countdown' ? '#fff' : '#333')
             .onClick(() => this.type = 'countdown');
           Button('纪念日')
             .type(ButtonType.Capsule)
-            .backgroundColor(this.type === 'anniversary' ? '#1677FF' : '#F2F2F2')
+            .backgroundColor(this.type === 'anniversary' ? '#FF7F50' : '#F2F2F2')
             .fontColor(this.type === 'anniversary' ? '#fff' : '#333')
             .onClick(() => this.type = 'anniversary');
         }
@@ -186,13 +101,18 @@ export default struct EditMemory {
             .backgroundColor('#F2F2F2')
             .fontColor('#333')
             .height(44)
-            .onClick(() => { try { router.back(); } catch (e) { console.warn(e); } })
+            .onClick(() => {
+              try {
+                router.back();
+              } catch (e) {
+                console.warn(e);
+              }
+            })
             .width('48%');
           Button('保存')
             .type(ButtonType.Capsule)
             .backgroundColor('#1677FF')
             .fontColor('#fff')
-            .height(44)
             .onClick(() => this.save())
             .width('48%');
         }
@@ -205,10 +125,127 @@ export default struct EditMemory {
     .padding(18);
   }
 
+  private async load(id: number): Promise<void> {
+    console.log('EditMemory.load: requested id=', id);
+    // 读取并填充表单 / hydrate form from DB row
+    const cols: string[] = ['id', 'task_name', 'finished', 'target_date', 'content'];
+    const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
+    const row = (rows || []).find(r => (r.id ?? 0) === id);
+    if (!row) {
+      console.warn('EditMemory.load: no row found for id=', id);
+      return;
+    }
+    this.memoryId = row.id ?? id;
+    this.title = row.title ?? '';
+    if (typeof row.targetDate === 'number' && !isNaN(row.targetDate) && row.targetDate > 0) {
+      this.date = new Date(Number(row.targetDate));
+    } else {
+      this.date = new Date();
+    }
+    this.type = row.finished ? 'anniversary' : 'countdown';
+    this.content = row.content ?? '';
+  }
+
+  private async save(): Promise<void> {
+    const newTitle = (this.title || '').trim();
+    if (!newTitle) {
+      return;
+    }
+
+    // 序列化日期为毫秒时间戳 / persist date as ms
+    const targetDateMs: number = this.date ? Number(this.date.getTime()) : Date.now();
+    const vb: relationalStore.ValuesBucket =
+      makeValuesBucket(newTitle, this.type === 'anniversary' ? 1 : 0, targetDateMs, this.content);
+    const cols: string[] = ['id', 'task_name', 'finished'];
+
+    if (!this.memoryId) {
+      // 插入新增 / insert new
+      const newRowId: number = await MemoryDBUtil.insertMemory('memories', vb);
+      if (newRowId && newRowId > 0) {
+        this.memoryId = newRowId;
+        AppStorage.Set<boolean>('needsReload', true);
+        AppStorage.Set<number>('selectedId', 0);
+        try {
+          router.push({ uri: 'pages/Index' });
+        } catch (e) {
+          try {
+            router.back();
+          } catch (_) {
+          }
+        }
+        return;
+      }
+      return;
+    }
+
+    const numericId = Number(this.memoryId);
+    const rowsBefore: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
+    const found = (rowsBefore || []).find(r => (r.id ?? 0) === numericId);
+
+    if (!found) {
+      const newRowId: number = await MemoryDBUtil.insertMemory('memories', vb);
+      if (newRowId && newRowId > 0) {
+        this.memoryId = newRowId;
+        AppStorage.Set<boolean>('needsReload', true);
+        AppStorage.Set<number>('selectedId', 0);
+        try {
+          router.push({ uri: 'pages/Index' });
+        } catch (e) {
+          try {
+            router.back();
+          } catch (_) {
+          }
+        }
+        return;
+      }
+    } else {
+      const rowsAffected: number = await MemoryDBUtil.updateMemoryById('memories', numericId, vb);
+      if (typeof rowsAffected === 'number' && rowsAffected > 0) {
+        // 更新成功后返回上一个页面并触发重载
+        this.title = newTitle;
+        await this.load(numericId);
+        AppStorage.Set<number>('selectedId', 0);
+        AppStorage.Set<boolean>('needsReload', true);
+        try {
+          router.back();
+        } catch (e) {
+          console.warn(e);
+        }
+        return;
+      }
+      const newRowId: number = await MemoryDBUtil.insertMemory('memories', vb);
+      if (newRowId && newRowId > 0) {
+        this.memoryId = newRowId;
+        AppStorage.Set<boolean>('needsReload', true);
+        AppStorage.Set<number>('selectedId', 0);
+        try {
+          router.push({ uri: 'pages/Index' });
+        } catch (e) {
+          try {
+            router.back();
+          } catch (_) {
+          }
+        }
+        return;
+      }
+    }
+
+    try {
+      const rowsAfter: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
+      const foundAfter = (rowsAfter || []).find(r => (r.id ?? 0) === Number(this.memoryId));
+      console.log('EditMemory.save: post-save row=', JSON.stringify(foundAfter));
+    } catch (_) {
+    }
+
+  }
+
   // 删除当前事件（仅在编辑模式下可用）
   private async delete(): Promise<void> {
     if (!this.memoryId) {
-      try { router.back(); } catch (_) {}
+      try {
+        router.back();
+      } catch (_) {
+      }
       return;
     }
     const numericId = Number(this.memoryId);
@@ -217,13 +254,19 @@ export default struct EditMemory {
       if (typeof rowsDeleted === 'number' && rowsDeleted > 0) {
         AppStorage.Set<boolean>('needsReload', true);
         AppStorage.Set<number>('selectedId', 0);
-        try { router.back(); } catch (_) {}
+        try {
+          router.back();
+        } catch (_) {
+        }
         return;
       }
     } catch (e) {
       console.warn('Delete failed', e);
     }
     // 回退兜底
-    try { router.back(); } catch (_) {}
+    try {
+      router.back();
+    } catch (_) {
+    }
   }
 }

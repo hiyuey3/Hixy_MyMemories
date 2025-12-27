@@ -21,7 +21,7 @@ export function BottomTabItem(props: BottomTabItemProps) {
       .align(Alignment.Center);
     Text(props.title)
       .fontSize(12)
-      .fontColor(props.currentIndex === props.targetIndex ? '#ff4116ff' : '#333')
+      .fontColor(props.currentIndex === props.targetIndex ? '#5A7CC2' : '#333')
       .align(Alignment.Center)
       .margin({ top: 6 });
   }

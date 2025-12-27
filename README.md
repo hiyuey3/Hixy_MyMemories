@@ -114,9 +114,37 @@ graph TD
 - **产品思维**：在设计 UI 时，学会了从用户角度思考，例如增加“备注”的占位显示、优化底部按钮的触达区域、以及添加“开发者模式”方便数据迁移。
 - **不足与展望**：目前应用仅支持本地存储，未来考虑接入云服务实现多端同步；同时计划增加桌面卡片（Service Widget）功能，让倒数日查看更便捷。
 
-七、附录
+六、附加信息
+
+## 配色方案 (Color Scheme)
+
+为增强 UI 的语义化识别与视觉一致性，项目采用了三种主要颜色：
+
+- 倒数日（Countdown） — Ultramarine: `#5A7CC2`
+  - 含义（中文）：群青色常用于表达冷静、专业与信任感，在倒数场景中传达“聚焦准备、稳步倒计”的情绪。
+  - Meaning (EN): Ultramarine conveys calmness and focus; suitable for countdowns where the user needs to prepare.
+  - 参考色意（参考）：https://www.canva.cn/colors/color-meanings/ultramarine/
+
+- 纪念日（Anniversary） — Coral: `#FF7F50`
+  - 含义（中文）：珊瑚色（浅珊瑚）温暖且具有情感指向，适合作为“纪念/回顾”类事件的强调色，传递亲切与回忆感。
+  - Meaning (EN): Coral is warm and emotive, good for anniversary/retroactive events to convey warmth and nostalgia.
+  - 参考色意（参考）：https://www.canva.cn/colors/color-meanings/coral/
+
+- 全局主题色（Theme / Accent） — Theme Blue: `#1677FF`
+  - 含义（中文）：作为应用的主视觉强调色（例如部分图标或高亮态），蓝色带来科技感与可靠性，与群青和珊瑚形成冷暖平衡。
+  - Meaning (EN): Theme blue is used as the global accent for primary actions and icons. It pairs with ultramarine and coral to create a balanced cool/warm palette.
+
+使用建议 / Usage guidelines:
+- 在事件类型标识和关键数字（例如首页“即将到来”计数）中使用语义色（`#5A7CC2` 或 `#FF7F50`）以增强信息识别。
+- 按钮、交互态和底部导航图标的“激活/选中”状态可使用主题色 `#1677FF` 或根据场景改为 `#5A7CC2`，以保持视觉一致性。
+- 文本与背景的对比需满足可读性，浅色背景上使用深色文本，彩色按钮上使用白色文字以保证可读性。
+
+示例（当前实现）：
+- 倒数日卡片与标签：`#5A7CC2`（群青）
+- 纪念日卡片与标签：`#FF7F50`（珊瑚）
+- 底部标签文字（选中态）: `#5A7CC2`（已在底部标签中采用群青）
+- 主题/图标激活色：`#1677FF`（保留部分资源与图标文件使用该色）
 
 - **Logo 设计**：@IGE
 - **参考文档**：[HarmonyOS 开发者官网](https://developer.huawei.com/consumer/cn/)
 - **开源地址**：[GitHub - MyMemories](https://github.com/hiyuey3)
-

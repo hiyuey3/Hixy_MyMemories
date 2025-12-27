@@ -119,7 +119,7 @@ export struct EventDetail {
               .fontSize(12)
               .fontColor('#fff')
               .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-              .backgroundColor(this.item.type === 'countdown' ? '#1677FF' : '#FF7A45')
+              .backgroundColor(this.item.type === 'countdown' ? '#4166F5' : '#FF7F50')
               .borderRadius(12);
             Text(this.formatDate()).fontSize(14).fontColor('#666');
           }
@@ -160,7 +160,7 @@ export struct EventDetail {
             .type(ButtonType.Capsule)
             .fontColor('#1677FF')
             .backgroundColor('#FFFFFF')
-            .borderColor('#1677FF')
+            .borderColor(Color.Pink)
             .borderWidth(1)
             .width('75%')
             .height(45)

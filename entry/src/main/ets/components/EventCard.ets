@@ -62,7 +62,7 @@ export struct EventCard {
         .width(4)
         .height(40)
         .alignSelf(ItemAlign.Center)
-        .backgroundColor(this.item.type === 'countdown' ? '#1677FF' : '#FF7A45')
+        .backgroundColor(this.item.type === 'countdown' ? '#5A7CC2' : '#FF7F50')
         .borderRadius(2);
 
       // Main card content
@@ -87,21 +87,28 @@ export struct EventCard {
         }
 
         Column() {
+          // 类型标签与天数字 / type badge and days text
           Text(this.item.type === 'countdown' ? '倒数' : '纪念')
             .fontSize(12)
             .fontColor('#fff')
-            .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-            .backgroundColor(this.item.type === 'countdown' ? '#1677FF' : '#FF7A45')
+            .padding({
+              left: 10,
+              right: 10,
+              top: 4,
+              bottom: 4
+            })
+            // .backgroundColor(this.item.type === 'countdown' ? '#5A7CC2' : '#FF7A45')
+            .backgroundColor(this.item.type === 'countdown' ? '#5A7CC2' : '#FF7F50')
             .borderRadius(12);
 
           if (this.item.type === 'anniversary') {
             Text(this.anniversaryUntilText(this.item))
               .fontSize(14)
               .margin({ top: 6, bottom: 2 })
-              .fontColor('#1677FF');
+              .fontColor('#4166F5');
             Text(this.anniversarySinceText(this.item))
               .fontSize(12)
-              .fontColor('#FF7A45');
+              .fontColor('#FF7F50');
           } else {
             Text(this.daysTextFor(this.item))
               .fontSize(14)
