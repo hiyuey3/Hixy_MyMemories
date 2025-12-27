@@ -46,6 +46,23 @@ export default struct EditMemory {
         .fontWeight(FontWeight.Bold)
         .align(Alignment.Center)
         .margin({ top: 20 });
+      Row({ space: 10 }) {
+        Column(){
+          Text('类型').fontSize(14).fontColor('#666');
+          Row({ space: 8 }) {
+            Button('倒数日')
+              .type(ButtonType.Normal)
+              .backgroundColor(this.type === 'countdown' ? '#5A7CC2' : '#F2F2F2')
+              .fontColor(this.type === 'countdown' ? '#fff' : '#333')
+              .onClick(() => this.type = 'countdown');
+            Button('纪念日')
+              .type(ButtonType.Normal)
+              .backgroundColor(this.type === 'anniversary' ? '#FF7F50' : '#F2F2F2')
+              .fontColor(this.type === 'anniversary' ? '#fff' : '#333')
+              .onClick(() => this.type = 'anniversary');
+          }
+        }
+      }
       TextInput({ placeholder: '标题', text: this.title }).onChange((v: string) => this.title = v);
 
 
@@ -66,21 +83,6 @@ export default struct EditMemory {
           .onDateChange((d: Date) => this.date = d);
       }
 
-      Row({ space: 10 }) {
-        Text('类型').fontSize(14).fontColor('#666');
-        Row({ space: 8 }) {
-          Button('倒数日')
-            .type(ButtonType.Capsule)
-            .backgroundColor(this.type === 'countdown' ? '#5A7CC2' : '#F2F2F2')
-            .fontColor(this.type === 'countdown' ? '#fff' : '#333')
-            .onClick(() => this.type = 'countdown');
-          Button('纪念日')
-            .type(ButtonType.Capsule)
-            .backgroundColor(this.type === 'anniversary' ? '#FF7F50' : '#F2F2F2')
-            .fontColor(this.type === 'anniversary' ? '#fff' : '#333')
-            .onClick(() => this.type = 'anniversary');
-        }
-      }
 
       // 占位将按钮推到底部
       Blank().layoutWeight(1);

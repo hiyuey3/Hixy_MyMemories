@@ -291,14 +291,16 @@ export class MemoryDBUtils {
 // Export standalone helper for other modules to import without relying on class instance shape
 interface ValuesBucketMap { task_name?: string; finished?: number; target_date?: number; content?: string }
 export function makeValuesBucket(taskName: string, finished: number, targetDate?: number, content?: string): relationalStore.ValuesBucket {
-  const vb: ValuesBucketMap = { task_name: taskName, finished: finished };
   if (typeof targetDate === 'number') {
-    vb.target_date = targetDate;
+    if (typeof content === 'string') {
+      return { task_name: taskName, finished: finished, target_date: targetDate, content: content } as relationalStore.ValuesBucket;
+    }
+    return { task_name: taskName, finished: finished, target_date: targetDate } as relationalStore.ValuesBucket;
   }
   if (typeof content === 'string') {
-    vb.content = content;
+    return { task_name: taskName, finished: finished, content: content } as relationalStore.ValuesBucket;
   }
-  return vb as relationalStore.ValuesBucket;
+  return { task_name: taskName, finished: finished } as relationalStore.ValuesBucket;
 }
 
 // 导出单例供其他模块使用
