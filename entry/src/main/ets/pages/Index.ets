@@ -3,9 +3,9 @@ import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import * as dateUtils from '../utils/dateUtils';
 import router from '@system.router';
 import { About } from './About';
-import { MemoryItem, MemoryType, DateLike } from '../types/MemoryTypes';
-import {HomePage} from './HomePage';
-import { EventCard } from '../components/EventCard';
+import { MemoryItem, MemoryType } from '../types/MemoryTypes';
+import { HomePage } from './HomePage';
+import { MemoriesPage } from './MemoriesPage';
 
 
 @Entry
@@ -14,6 +14,8 @@ struct Index {
   // events loaded from DB via MemoryDBUtil
   @State events: MemoryItem[] = [];
   @State currentIndex: number = 0;
+  @State selectedDate: Date | null = null;
+  @State visibleMonth: Date = new Date();
   // @State addFeedback: string = '';
   // Persisted header image uri
   @State headerImagePath: string = '';
@@ -63,27 +65,7 @@ struct Index {
 
         // Memories tab
         TabContent() {
-          Column({ space: 12 }) {
-            List({ space: 10 }) {
-              ForEach(this.sorted(), (item: MemoryItem) => {
-                ListItem() {
-                  EventCard({ item: item });
-                }
-                .onClick(() => {
-                  AppStorage.Set<number>('selectedId', item.id);
-                  router.push({ uri: 'pages/EventDetail', params: { id: item.id } });
-                });
-              })
-            }
-            .edgeEffect(EdgeEffect.None)
-            .width('100%')
-            .height('100%')
-            .layoutWeight(1)
-            .padding({ left: 18, right: 18, bottom: 18 });
-          }
-          .width('100%')
-          .height('100%')
-          .backgroundColor('#F7F8FA');
+          MemoriesPage({ events: this.sorted() })
         }
         .tabBar(this.TabBuilder('记忆', 1, $r('app.media.foreground')));
 
@@ -136,6 +118,10 @@ struct Index {
         // DB returned empty; show empty list (no MemoryStore fallback per requirement)
         this.events = [];
       }
+      // 默认可见月份与当前日期同步（留作未来使用）
+      if (!this.selectedDate) {
+        this.visibleMonth = new Date();
+      }
     } catch (err) {
       console.log(`加载记忆列表失败: ${err}`);
       this.events = [];
@@ -148,11 +134,6 @@ struct Index {
       return this.headerImagePath;
     }
     return $r('app.media.hixy_logo_new');
-  }
-
-  // Local format helper delegating to dateUtils
-  private formatDate(d: DateLike): string {
-    return dateUtils.formatDate(d);
   }
 
   // Normalize events for dateUtils: ensure date is present and avoid spread (ArkTS no-spread rule)
@@ -186,18 +167,6 @@ struct Index {
     return this.getEventsSortedByDaysUntil();
   }
 
-  // Count of upcoming (daysDiff >= 0)
-  private getUpcoming(): number {
-    const safeEvents: MemoryItem[] = this.normalizeEvents(this.events);
-    return dateUtils.countUpcoming(safeEvents, undefined, (e: MemoryItem) => e.type === 'anniversary');
-  }
-
-  // Count of past memories (daysDiff < 0) - all types combined
-  private getMemories(): number {
-    const safeEvents: MemoryItem[] = this.normalizeEvents(this.events);
-    return dateUtils.countMemories(safeEvents, undefined, (e: MemoryItem) => e.type === 'anniversary');
-  }
-
   @Builder
   private TabBuilder(title: string, targetIndex: number, normalImg?: Resource, selectedImg?: Resource) {
     Column() {
@@ -227,25 +196,9 @@ struct Index {
     });
   }
 
-  // Open AddMemory page with minimal error handling
-  private openAddMemory(): void {
-    AppStorage.Set<number>('selectedId', 0);
-    router.push({ uri: 'pages/EditMemory' });
-  }
-
-  @Builder
-  private HeaderImage(): void {
-    Column() {
-      Image(this.imageSource())
-        .id('headerImage')
-        .width(340)
-        .height(120)
-        .objectFit(ImageFit.Cover)
-        .borderRadius(15)
-        .align(Alignment.Center);
-    }
-    .height('120')
-    .width('100%')
-    .padding({ top: 18 });
-  }
+   // Open AddMemory page with minimal error handling
+   private openAddMemory(): void {
+     AppStorage.Set<number>('selectedId', 0);
+     router.push({ uri: 'pages/EditMemory' });
+   }
  }
