@@ -14,7 +14,7 @@
 import router from '@system.router';
 import { MemoryItem, DateLike } from '../types/MemoryTypes';
 import { EventCard } from '../components/EventCard';
-
+@Preview
 @Component
 export struct MemoriesPage {
   // 属性：事件列表
@@ -176,12 +176,12 @@ export struct MemoriesPage {
                this.visibleMonth = this.getMonthStart(today);
                this.selectedDate = today;
                this.jumpInput = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-             }).layoutWeight(1).height(29);
+             }).layoutWeight(1).height(29).width('40%');
             Button('清除').type(ButtonType.Capsule).onClick(() => {
                this.selectedDate = null;
-             }).layoutWeight(1).height(29);
+             }).layoutWeight(1).height(29).width('40%');
             Button('>').type(ButtonType.Circle).onClick(() => this.shiftVisibleMonth(1)).layoutWeight(1).height(30);
-           }.padding({left: 10, right: 10});
+           }.padding({left: 5, right: 5})
         }
         // 跳转指定日期
         Row({ space: 8 }) {
