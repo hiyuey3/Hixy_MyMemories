@@ -14,19 +14,20 @@ MyMemories ｜ 我的记忆点
 |:------------------------------------------------------------------------------:|:------------------------------------------------------------------------------:|
 | <img src="entry/src/main/resources/base/media/hixy_logo_old.jpg" width="50" /> | <img src="entry/src/main/resources/base/media/hixy_logo_new.png" width="50" /> |
 
-BUG反馈：https://github.com/hixy-dev/MyMemories/issues
+BUG反馈：
 
-除了项目中列出的邮箱
-还可以通过国际计算机学会（ACM）提供的邮箱联系我：
-titusyu@acm.org
+ISSUES：https://github.com/hixy-dev/MyMemories/issues
 
+通过国际计算机学会（ACM）提供的邮箱联系我： titusyu@acm.org
 
-一、移动APP简介
+通过我的邮件服务器联系我 hi@xyw.cx / cnyue@5i03.cn
+
+# 一、移动APP简介
 
 MyMemories 是一款专注于“倒数日”与“纪念日”管理的 HarmonyOS NEXT 移动应用，基于API版本 21。它旨在帮助用户以极简、优雅的方式记录生活中的重要时刻——无论是即将到来的考试、生日、假期，还是值得铭记的纪念日。
 应用采用清新现代的 UI 设计，支持事件的增删改查、日历视图查看、数据导入导出等功能。我们的标语是：“让时光有迹可循，让记忆温暖如初。”
 
-二、移动APP功能设计与相关技术
+# 二、移动APP功能设计与相关技术
 
 2.1 系统总体设计
 本系统采用模块化设计，主要包含以下核心模块：
@@ -79,7 +80,7 @@ graph TD
   - 剪贴板操作：`pasteboard` 实现数据的复制与粘贴。
   - 交互反馈：`promptAction.showToast` 提供操作结果提示。
 
-三、数据来源
+# 三、数据来源
 
 本系统使用 HarmonyOS 本地数据库（RDB）存储所有用户数据，不依赖网络接口，保障隐私安全。
 数据库名为 `memories.db`，核心表 `memories` 设计如下：
@@ -100,7 +101,7 @@ graph TD
 ]
 ```
 
-四、系统成果
+# 四、系统成果
 
 4.1 首页与列表
 首页采用清新的蓝紫色调 Banner，统计卡片清晰明了。列表项展示事件标题、日期及剩余/已过天数，左侧图标根据类型区分颜色（蓝色为倒数日，橙色为纪念日）。
@@ -130,7 +131,7 @@ graph TD
 | :---: | :---: | :---: |
 | <img src="Screenshoot/关于页面.png" width="150" /> | <img src="Screenshoot/开发者模式-导出测试.png" width="150" /> | <img src="Screenshoot/开发者模式-导入测试.png" width="150" /> |
 
-五、遇到关键问题与解决方案
+# 五、遇到关键问题与解决方案
 1. 问题：ArkTS 中 Stack 与 Column 的布局层级问题
    - 描述：在首页 Banner 上叠加文字时，直接使用 SVG 内部文字在部分设备无法显示。
    - 解决方案：采用 `Stack` 布局，将 SVG 图片作为底层背景，上层叠加 `Column` 包裹的 `Text` 组件，并添加半透明背景遮罩，确保文字在任何背景下都清晰可见。
@@ -143,13 +144,13 @@ graph TD
    - 描述：数据修改后返回首页，列表未及时更新。
    - 解决方案：利用 `AppStorage` 设置全局标记 `needsReload`，在页面 `onShow` 或 `aboutToAppear` 生命周期中检查该标记并重新加载数据。
 
-六、个人收获与反思
+# 六、个人收获与反思
 通过开发 MyMemories，深入理解了 HarmonyOS ArkTS 的声明式 UI 开发范式。
 - 技术层面：掌握了 RDB 本地数据库的封装与使用，熟悉了 ArkUI 常用组件（List, Stack, Picker 等）的属性与布局规则。
 - 产品思维：在设计 UI 时，学会了从用户角度思考，例如增加“备注”的占位显示、优化底部按钮的触达区域、以及添加“开发者模式”方便数据迁移。
 - 不足与展望：目前应用仅支持本地存储，未来考虑接入云服务实现多端同步；同时计划增加桌面卡片（Service Widget）功能，让倒数日查看更便捷。
 
-七、附加信息
+# 七、附加信息
 
 7.1 配色方案 (Color Scheme)
 为增强 UI 的语义化识别与视觉一致性，项目采用了三种主要颜色：
@@ -236,5 +237,5 @@ A.5 代码规范
 └─ 文档：USER_GUIDE.md / DEVELOPER_GUIDE.md / PROJECT_OVERVIEW.md / API_REFERENCE.md
 ```
 
-八、TODO 与未来工作
+# 八、TODO 与未来工作
 TODO.md
