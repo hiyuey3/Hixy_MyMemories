@@ -1,28 +1,48 @@
+// 记忆列表页面（MemoriesPage）
+// 功能：
+// - 显示记忆事件的月历视图
+// - 支持按日期过滤事件
+// - 提供跳转到指定日期的功能
+// - 列表展示事件详情卡片
+//
+// 依赖：
+// - MemoryItem 类型定义
+// - EventCard 组件
+// - HarmonyOS 路由模块
+
 // 记忆列表页面（独立） / Memories tab page with calendar filter
 import router from '@system.router';
 import { MemoryItem, DateLike } from '../types/MemoryTypes';
 import { EventCard } from '../components/EventCard';
 
-@Entry
 @Component
 export struct MemoriesPage {
-  @Prop events: MemoryItem[] = [];
+  // 属性：事件列表
+  @State events: MemoryItem[] = [];
+
+  // 状态：选中的日期
   @State selectedDate: Date | null = null;
+
+  // 状态：当前可见的月份
   @State visibleMonth: Date = this.getMonthStart(new Date());
+
+  // 状态：跳转输入框的内容
   @State jumpInput: string = '';
 
   aboutToAppear(): void {
-    // 同步可见月份到今日（未选择时）
+    // 生命周期方法：页面即将显示时同步当前月份
     if (!this.selectedDate) {
       this.visibleMonth = this.getMonthStart(new Date());
     }
   }
 
   private sameDay(a: Date, b: Date): boolean {
+    // 工具方法：判断两个日期是否为同一天
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
   }
 
   private toDate(v: DateLike): Date | null {
+    // 工具方法：将 DateLike 转换为 Date
     if (v instanceof Date) { return v; }
     if (typeof v === 'number') { return new Date(v); }
     if (typeof v === 'string') { return new Date(v); }
@@ -30,23 +50,28 @@ export struct MemoriesPage {
   }
 
   private getMonthStart(d: Date): Date {
+    // 工具方法：获取月份的第一天
     return new Date(d.getFullYear(), d.getMonth(), 1);
   }
 
   private getDaysInMonth(d: Date): number {
+    // 工具方法：获取月份的天数
     return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
   }
 
   private getWeekdayOfFirst(d: Date): number {
+    // 工具方法：获取月份第一天的星期几
     const wd = new Date(d.getFullYear(), d.getMonth(), 1).getDay(); // 0=Sun..6=Sat
     return wd === 0 ? 7 : wd; // 1..7
   }
 
   private weekLabels(): string[] {
+    // 工具方法：返回星期标签
     return ['一', '二', '三', '四', '五', '六', '日'];
   }
 
   private getMonthMatrix(d: Date): (number | null)[][] {
+    // 工具方法：生成月份的日期矩阵
     const lead: number = this.getWeekdayOfFirst(d) - 1;
     const days: number = this.getDaysInMonth(d);
     const cells: (number | null)[] = [];
@@ -62,6 +87,7 @@ export struct MemoriesPage {
   }
 
   private getEventDaysInVisibleMonth(): Set<number> {
+    // 工具方法：获取当前月份中有事件的日期集合
     const set = new Set<number>();
     const baseMonth: Date = this.visibleMonth;
     this.events.forEach((e: MemoryItem) => {
@@ -74,12 +100,14 @@ export struct MemoriesPage {
   }
 
   private shiftVisibleMonth(offset: number): void {
+    // 工具方法：切换当前可见月份
     const y = this.visibleMonth.getFullYear();
     const m = this.visibleMonth.getMonth();
     this.visibleMonth = new Date(y, m + offset, 1);
   }
 
   private filteredEvents(): MemoryItem[] {
+    // 工具方法：按选中日期过滤事件
     if (!this.selectedDate) {
       return this.events || [];
     }
@@ -92,6 +120,7 @@ export struct MemoriesPage {
 
   @Builder
   private renderWeekHeader(labels: string[]): void {
+    // 构建器：渲染星期标题行
     Row({ space: 4 }) {
       ForEach(labels, (w: string) => {
         Text(w).fontSize(11).fontColor('#888').width('12.5%').align(Alignment.Center);
@@ -101,6 +130,7 @@ export struct MemoriesPage {
 
   @Builder
   private renderCalendarGrid(matrix: (number | null)[][], markedDays: Set<number>): void {
+    // 构建器：渲染月历网格
     ForEach(matrix, (row: (number | null)[]) => {
       Row({ space: 4 }) {
         ForEach(row, (day: number | null) => {
@@ -129,6 +159,7 @@ export struct MemoriesPage {
   }
 
   build() {
+    // 页面构建器：渲染页面内容
     Column({ space: 12 }) {
       Text('记忆').fontSize(20).fontWeight(FontWeight.Bold).padding({ top: 6, left: 6, right: 6 });
 
@@ -192,6 +223,6 @@ export struct MemoriesPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F7F8FA');
+    .backgroundColor($r('app.color.background'));
   }
 }

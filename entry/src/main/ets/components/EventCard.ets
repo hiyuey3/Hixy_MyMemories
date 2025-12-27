@@ -1,4 +1,15 @@
-// 公共卡片组件：展示标题、日期、类型和天数 / Shared event card component
+// 事件卡片组件：展示单个事件的标题、日期、类型与天数信息
+// 主要职责：
+// - 接收一个 MemoryItem，计算并展示日期/倒数/纪念信息
+// - 提供纯展示逻辑，所有计算委托到 dateUtils
+// 输入/输出：
+// - @Prop item: MemoryItem（id、title、date、type、note）
+// 调用逻辑：
+// - 内部封装了日期格式化、天数文本、天数颜色等辅助函数
+// - build() 使用这些 helper 渲染 UI，保持组件无副作用
+// 错误与边界：
+// - 对 dateUtils 的返回做 NaN 检查，空或非法日期显示空串
+
 import { MemoryItem, DateLike } from '../types/MemoryTypes';
 import * as dateUtils from '../utils/dateUtils';
 import router from '@system.router';
@@ -8,14 +19,17 @@ export struct EventCard {
   @Prop item: MemoryItem;
 
   private formatDate(d: DateLike): string {
+    // 格式化日期为 yyyy-MM-dd，如输入无效返回空
     return dateUtils.formatDate(d);
   }
 
   private daysTextFor(item: MemoryItem): string {
+    // 文本化天数：纪念日显示距下次(已过)，倒数日显示剩余或已过
     return dateUtils.daysTextFor(item.date, undefined, item.type === 'anniversary');
   }
 
   private daysColorFor(item: MemoryItem): string {
+    // 根据天数差返回颜色（未来为蓝，已过为橙）
     return dateUtils.daysColorFor(item.date, undefined, item.type === 'anniversary');
   }
 
@@ -40,7 +54,8 @@ export struct EventCard {
   }
 
   build() {
-    // 标题 + 日期 / title and date with left accent bar (aligned to HomePage)
+    // 渲染：左侧色条 + 主要信息 + 右侧天数/状态
+    // 详细布局保留原有实现
     Row({ space: 10 }) {
       // Left vertical accent bar (shorter, vertically centered)
       Blank()

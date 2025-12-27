@@ -1,4 +1,8 @@
 // 首页容器：负责 Tab 切换与数据加载 / Root page: tabs + data loading
+// 主要职责：初始化数据库、加载事件列表、处理 Tab 切换与页面刷新
+// 事件数据通过 MemoryDBUtil 查询，映射为 MemoryItem 供 UI 展示
+// 详细注释见各函数实现
+
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import * as dateUtils from '../utils/dateUtils';
 import router from '@system.router';

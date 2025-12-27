@@ -38,13 +38,9 @@ export struct ManageMemories {
 
   // Called when this page is about to appear (safer than relying on back navigation)
   aboutToAppear(): void {
-    // immediate refresh
+    // refresh twice: immediately and after a short delay to catch recent DB commits
     this.loadEvents();
-    // delayed refresh to catch DB commits that may be slightly delayed
-    try {
-      setTimeout(() => this.loadEvents(), 300);
-    } catch (e) {
-    }
+    setTimeout(() => this.loadEvents(), 300);
   }
 
   build() {
@@ -96,7 +92,7 @@ export struct ManageMemories {
           .type(ButtonType.Capsule)
           .backgroundColor('#FFA940')
           .fontColor('#FFFFFF')
-          .onClick(() => { try { router.push({ uri: 'pages/Index' }); } catch (e) { console.error(e); } })
+          .onClick(() => router.push({ uri: 'pages/Index' }))
           .layoutWeight(1)
           .height(40);
       }
@@ -224,35 +220,24 @@ export struct ManageMemories {
 
   // Export logs stub (developer can replace with real export)
   private exportLogs(): void {
-    try {
-      this.toast('导出日志：已生成到应用沙箱（示例）');
-    } catch (e) { console.error(e); }
+    this.toast('导出日志：已生成到应用沙箱（示例）');
   }
 
   // Export current events to JSON (developer convenience)
   private exportData(): void {
-    try {
-      const payload: MemoryExportItem[] = (this.events || []).map((e: MemoryItem): MemoryExportItem => {
-        let normalizedDate: number | string | null = null;
-        if (e.date instanceof Date) {
-          normalizedDate = e.date.getTime();
-        } else if (typeof e.date === 'number') {
-          normalizedDate = e.date;
-        } else if (typeof e.date === 'string') {
-          normalizedDate = e.date;
-        }
-        return {
-          title: e.title,
-          date: normalizedDate,
-          type: e.type ?? 'countdown'
-        } as MemoryExportItem;
-      });
-      this.ioText = JSON.stringify(payload);
-      this.toast('导出完成，可复制 JSON');
-    } catch (e) {
-      console.error('exportData failed', e);
-      this.toast('导出失败');
-    }
+    const payload: MemoryExportItem[] = (this.events || []).map((e: MemoryItem): MemoryExportItem => {
+      let normalizedDate: number | string | null = null;
+      if (e.date instanceof Date) {
+        normalizedDate = e.date.getTime();
+      } else if (typeof e.date === 'number') {
+        normalizedDate = e.date;
+      } else if (typeof e.date === 'string') {
+        normalizedDate = e.date;
+      }
+      return { title: e.title, date: normalizedDate, type: e.type ?? 'countdown' } as MemoryExportItem;
+    });
+    this.ioText = JSON.stringify(payload);
+    this.toast('导出完成，可复制 JSON');
   }
 
   // Copy export JSON to clipboard
@@ -279,124 +264,104 @@ export struct ManageMemories {
       this.toast('请先粘贴 JSON 数据');
       return;
     }
+    let arr: MemoryImportItem[];
     try {
-      const parsedArr: MemoryImportItem[] = JSON.parse(this.ioText) as MemoryImportItem[];
-      if (!Array.isArray(parsedArr)) {
-        this.toast('格式错误：需要数组');
-        return;
-      }
-      const arr: MemoryImportItem[] = parsedArr;
-      let count = 0;
-      for (const item of arr) {
-        const title: string = (item?.title ?? '').toString().trim();
-        if (!title) { continue; }
-        const type: MemoryType = item?.type === 'anniversary' ? 'anniversary' : 'countdown';
-        const dateVal: number | string | null | undefined = item?.date;
-        let dateMs: number = Date.now();
-        if (typeof dateVal === 'number' && !isNaN(dateVal)) {
-          dateMs = dateVal;
-        } else if (typeof dateVal === 'string' && dateVal.length > 0) {
-          const parsed = Date.parse(dateVal);
-          if (!isNaN(parsed)) { dateMs = parsed; }
-        }
-        const vb: relationalStore.ValuesBucket = makeValuesBucket(title, type === 'anniversary' ? 1 : 0, dateMs);
-        try {
-          await MemoryDBUtil.insertMemory('memories', vb);
-          count++;
-        } catch (e) { console.error('import insert failed', e); }
-      }
-      await this.loadEvents();
-      this.toast(`导入完成，成功 ${count} 条`);
+      arr = JSON.parse(this.ioText) as MemoryImportItem[];
     } catch (e) {
-      console.error('importData failed', e);
+      console.error('importData parse failed', e);
       this.toast('导入失败，检查 JSON 格式');
+      return;
     }
-  }
-
-  private async loadEvents(): Promise<void> {
-    try {
-      // 读取 DB 并转换为 UI 模型 / fetch from DB and map to UI model
-      const cols: string[] = ['id', 'task_name', 'finished', 'target_date'];
-      const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
-      this.events = (rows || []).map((r: Memory) => {
-        const id: number = r.id ?? 0;
-        const title: string = r.title ?? '';
-        // Prefer stored targetDate (milliseconds since epoch) when available and valid (>0)
-        const date: number | Date | null = (typeof r.targetDate === 'number' && !isNaN(r.targetDate) && r.targetDate > 0)
-          ? r.targetDate
-          : null;
-        const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
-        return { id, title, date, type } as MemoryItem;
-      });
-    } catch (err) {
-      console.log(`加载记忆失败: ${err}`);
-      this.events = [];
+    if (!Array.isArray(arr)) {
+      this.toast('格式错误：需要数组');
+      return;
     }
+    let count = 0;
+    for (const item of arr) {
+      const title: string = (item?.title ?? '').toString().trim();
+      if (!title) { continue; }
+      const type: MemoryType = item?.type === 'anniversary' ? 'anniversary' : 'countdown';
+      const dateVal: number | string | null | undefined = item?.date;
+      let dateMs: number = Date.now();
+      if (typeof dateVal === 'number' && !isNaN(dateVal)) {
+        dateMs = dateVal;
+      } else if (typeof dateVal === 'string' && dateVal.length > 0) {
+        const parsed = Date.parse(dateVal);
+        if (!isNaN(parsed)) { dateMs = parsed; }
+      }
+      const vb: relationalStore.ValuesBucket = makeValuesBucket(title, type === 'anniversary' ? 1 : 0, dateMs);
+      try {
+        await MemoryDBUtil.insertMemory('memories', vb);
+        count++;
+      } catch (e) { console.error('import insert failed', e); }
+    }
+    await this.loadEvents();
+    this.toast(`导入完成，成功 ${count} 条`);
   }
 
-  private async onEdit(item: MemoryItem): Promise<void> {
-    // 编辑传递当前 id / edit with current id
-    AppStorage.setOrCreate('selectedId', item.id);
-    router.push({ uri: 'pages/EditMemory', params: { editId: item.id } });
+  // 跳转到编辑页
+  private onEdit(item: MemoryItem): void {
+    AppStorage.Set<number>('selectedId', item.id);
+    try { router.push({ uri: 'pages/EditMemory', params: { editId: item.id } }); } catch (_) {}
   }
 
-  private async onDelete(id: number): Promise<void> {
-    // show confirmation UI before deleting
+  // 标记待删除项
+  private onDelete(id: number): void {
     this.deleteTargetId = id;
   }
 
-  private async performDelete(): Promise<void> {
-    if (!this.deleteTargetId) {
-      return;
-    }
-    try {
-      // 真删除并刷新 / delete then refresh
-      await MemoryDBUtil.deleteMemoryById('memories', this.deleteTargetId);
-      this.deleteTargetId = undefined;
-      await this.loadEvents();
-      this.triggerVibration();
-    } catch (err) {
-      console.error('删除失败', err);
-    }
-  }
-
+  // 取消删除
   private cancelDelete(): void {
     this.deleteTargetId = undefined;
   }
 
-  // Debug helper: write a test row and query DB using MemDBUtils directly
-  private async testWrite(): Promise<void> {
-    // 调试写入一条明日数据 / debug insert row for tomorrow
-    const title = `Test ${Date.now()}`;
+  // 确认删除
+  private async performDelete(): Promise<void> {
+    if (!this.deleteTargetId) { return; }
     try {
-      // For quick verification create a test row with target_date set to tomorrow at 00:00
-      const t = new Date(); t.setDate(t.getDate() + 1); t.setHours(0, 0, 0, 0);
-      const tomorrowMs: number = t.getTime();
-      const vb: relationalStore.ValuesBucket = makeValuesBucket(title, 0, tomorrowMs);
-      const rowId: number = await MemoryDBUtil.insertMemory('memories', vb);
-      console.log('testWrite: inserted rowId', rowId);
+      await MemoryDBUtil.deleteMemoryById('memories', this.deleteTargetId);
+      this.toast('已删除');
     } catch (e) {
-      console.error('testWrite: DB insert failed', e);
-      return;
+      console.error('performDelete failed', e);
+      this.toast('删除失败');
+    } finally {
+      this.deleteTargetId = undefined;
+      await this.loadEvents();
     }
+  }
 
+  // 从数据库读取列表
+  private async loadEvents(): Promise<void> {
     try {
-      // small delay to let DB operation complete
-      await new Promise<void>((resolve) => setTimeout(resolve, 500));
-      const cols: string[] = ['id', 'task_name', 'finished', 'target_date'];
+      const cols: string[] = ['id', 'task_name', 'finished', 'target_date', 'content'];
       const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
-      console.log('testWrite: query rows:', rows);
-      this.events = (rows || []).map((r: Memory) => {
+      this.events = (rows || []).map((r: Memory): MemoryItem => {
         const id: number = r.id ?? 0;
-        const t: string = r.title ?? '';
-        const date: number | Date | null = (typeof r.targetDate === 'number' && !isNaN(r.targetDate) && r.targetDate > 0)
+        const title: string = r.title ?? '';
+        const date: Date | number | null = (typeof r.targetDate === 'number' && !isNaN(r.targetDate) && r.targetDate > 0)
           ? r.targetDate
           : null;
         const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
-        return { id, title: t, date, type } as MemoryItem;
+        const note: string | undefined = r.content ?? undefined;
+        return { id, title, date, type, note } as MemoryItem;
       });
+    } catch (err) {
+      console.log(`加载记忆列表失败: ${err}`);
+      this.events = [];
+    }
+  }
+
+  // Debug helper: write a test row and query DB using MemDBUtils directly
+  private async testWrite(): Promise<void> {
+    const title = `Test ${Date.now()}`;
+    const t = new Date(); t.setDate(t.getDate() + 1); t.setHours(0, 0, 0, 0);
+    const vb: relationalStore.ValuesBucket = makeValuesBucket(title, 0, t.getTime());
+    try {
+      await MemoryDBUtil.insertMemory('memories', vb);
+      await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      await this.loadEvents();
     } catch (e) {
-      console.error('testWrite: query failed', e);
+      console.error('testWrite failed', e);
     }
   }
 }

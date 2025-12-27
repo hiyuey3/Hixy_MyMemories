@@ -1,4 +1,12 @@
 // 数据库工具：RDB 读写与模型映射 / DB helper for RDB operations and mapping
+  // 主要职责：
+// - 提供数据库初始化（initMemoryDB）以确保表结构存在
+// - 提供 CRUD 接口（insert/query/update/delete）并返回 Promise
+// - 提供订阅机制（subscribe/notifyChange）以便页面在数据变更时刷新
+// 注意事项：
+// - 对平台差异（如 orderByDesc 不支持）做了兼容性容错处理
+// - insert/query 等均会等待 readyPromise（表创建完成或 RDB 准备好）
+
 import { relationalStore } from '@kit.ArkData'
 import { BusinessError } from '@kit.BasicServicesKit'
 
@@ -34,7 +42,6 @@ export class MemoryDBUtils {
   // Promise resolved when rdbStore becomes available
   private readyPromise: Promise<void> = Promise.resolve()
   private readyResolve?: () => void
-  // (no unused fields)
   // Lightweight change listeners so pages can react to DB changes
   private listeners: Array<() => void> = []
   private notifyChange(): void {

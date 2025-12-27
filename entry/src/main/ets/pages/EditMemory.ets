@@ -1,4 +1,6 @@
 // 编辑/新增页面：表单与持久化 / Edit & Add form with persistence
+// 主要职责：加载指定事件、表单编辑、保存到数据库
+// 详细注释见各函数实现与类型定义
 import { MemoryType } from '../types/MemoryTypes';
 import router from '@system.router';
 import { MemoryDBUtil, Memory, makeValuesBucket } from '../utils/MemDBUtils';

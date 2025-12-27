@@ -1,4 +1,14 @@
-// 首页内容组件：头图、统计、列表和操作按钮 / Home content component: header, stats, list, actions
+// HomePage 组件：主页内容区域（头图、统计、事件列表、操作）
+// 主要职责：
+// - 接收外部传入的事件数组并提供统计与排序显示
+// - 提供“新增”/“管理”等操作回调
+// - 将事件规范化（保证 date 可用）以便于 dateUtils 使用
+// 输入/输出：
+// - props: events (MemoryItem[]), imageSource (string|Resource)
+// - callbacks: onAdd(), onManage()
+// 错误与边界：
+// - 对传入 events 做空和类型容错，返回空数组以保证 UI 不崩溃
+
 import { MemoryItem } from '../types/MemoryTypes';
 import * as dateUtils from '../utils/dateUtils';
 import { EventCard } from '../components/EventCard';
@@ -8,17 +18,16 @@ import { EventCard } from '../components/EventCard';
 export struct HomePage {
   @Prop events: MemoryItem[] = [];
   @Prop imageSource: string | Resource;
-  onAdd: () => void = () => {}; //
-  onManage: () => void = () => {};
+  onAdd: () => void = () => {}; // 回调：点击新增
+  onManage: () => void = () => {}; // 回调：进入管理页
 
-  // Ensure events all carry a date for dateUtils
+  // 工具：确保事件拥有有效日期，避免 dateUtils 抛错
   private normalizeEvents(events: MemoryItem[]): MemoryItem[] {
     const list: MemoryItem[] = [];
     if (!events) {
       return list;
     }
     for (const e of events) {
-      // dateUtils 需要日期；为空则用今天 / ensure date present for dateUtils
       const normalized: MemoryItem = {
         id: e.id,
         title: e.title,
@@ -31,24 +40,28 @@ export struct HomePage {
     return list;
   }
 
+  // 获取按天数排序的事件（由 dateUtils 提供）
   private getEventsSortedByDaysUntil(): MemoryItem[] {
     const safeEvents: MemoryItem[] = this.normalizeEvents(this.events);
     return dateUtils.getEventsSortedByDaysUntil(safeEvents, undefined, (e: MemoryItem) => e.type === 'anniversary');
   }
 
+  // 统计即将到来的事件数量
   private getUpcoming(): number {
     const safeEvents: MemoryItem[] = this.normalizeEvents(this.events);
     return dateUtils.countUpcoming(safeEvents, undefined, (e: MemoryItem) => e.type === 'anniversary');
   }
 
+  // 统计已过的纪念事件数量
   private getMemories(): number {
     const safeEvents: MemoryItem[] = this.normalizeEvents(this.events);
     return dateUtils.countMemories(safeEvents, undefined, (e: MemoryItem) => e.type === 'anniversary');
   }
 
   build() {
+    // 构建 UI，结构清晰，错误容忍
     Column({ space: 12 }) {
-      // 头图 / header image
+      // 头图
       Column() {
         Image(this.imageSource)
           .id('headerImage')
@@ -62,10 +75,10 @@ export struct HomePage {
       .width('100%')
       .padding({ top: 16 });
 
+      // 统计卡片与事件列表
       Column({ space: 8 }) {
         Text('倒数日 | 纪念日').fontSize(22).fontWeight(FontWeight.Bold).fontColor('#1F1F1F');
         Row({ space: 12 }) {
-
           Column() {
             Text(`${this.getUpcoming()}`).fontSize(24).fontWeight(FontWeight.Bold)
               .fontColor('#1677FF');
@@ -96,6 +109,7 @@ export struct HomePage {
       }
       .padding({ left: 16, right: 16, top: 16, bottom: 12 });
 
+      // 列表区
       List({ space: 10 }) {
         ForEach(this.getEventsSortedByDaysUntil(), (item: MemoryItem) => {
           ListItem() {
@@ -104,8 +118,6 @@ export struct HomePage {
         })
       }
       .edgeEffect(EdgeEffect.None)
-      .width('100%')
-      .height('100%')
       .layoutWeight(1)
       .padding({ left: 16, right: 16, bottom: 10 });
 
@@ -127,7 +139,6 @@ export struct HomePage {
 
     }
     .width('100%')
-    .height('100%')
-    .backgroundColor('#F7F8FA');
+    .height('100%');
   }
 }

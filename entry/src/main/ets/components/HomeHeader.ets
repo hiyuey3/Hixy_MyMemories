@@ -1,7 +1,10 @@
-/**
- * HomeHeader 组件：首页顶部图片和标题区域
- * 职责：展示头部图片和"倒数日 | 纪念日"标题
- */
+// HomeHeader 组件：页面顶部卡片，展示头图与统计数字
+// 主要职责：接收 headerImagePath 与 events，提供两个统计值（即将到来 / 纪念回顾）
+// 输入/输出：
+// - @Prop headerImagePath: string
+// - @Prop events: MemoryItem[]
+// - 内部方法：getUpcoming(), getMemories() 使用 dateUtils 进行统计
+
 import { MemoryItem } from '../types/MemoryTypes';
 import * as dateUtils from '../utils/dateUtils';
 
@@ -100,4 +103,3 @@ export struct HomeHeader {
     }
   }
 }
-

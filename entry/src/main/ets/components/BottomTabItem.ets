@@ -1,3 +1,7 @@
+// BottomTabItem: 底部 Tab 按钮渲染器
+// 主要职责：
+// - 根据 currentIndex 与 targetIndex 渲染选中/未选中样式
+// - 触发父组件 onSelect 回调
 
 export interface BottomTabItemProps {
   title: string;
@@ -26,4 +30,3 @@ export function BottomTabItem(props: BottomTabItemProps) {
   .justifyContent(FlexAlign.Center)
   .onClick(() => props.onSelect(props.targetIndex));
 }
-

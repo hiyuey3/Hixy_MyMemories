@@ -1,3 +1,9 @@
+// IndexTabs 组件：顶层标签页容器
+// 主要职责：将 HomePage、MemoriesPage、About 三个 Tab 组织为 Tabs
+// - 转发 events、sortedEvents 到子组件
+// - 处理 tab 选择事件并提供回调 onReloadHome/onAdd
+// 注意：保持无副作用，路由由父组件或子组件负责
+
 import router from '@system.router';
 import { MemoryItem } from '../types/MemoryTypes';
 import { HomePage } from '../pages/HomePage';
@@ -17,6 +23,7 @@ export interface IndexTabsProps {
 
 @Builder
 export function IndexTabs(props: IndexTabsProps) {
+  // Tabs 控制器由上层管理，组件仅负责渲染与事件回调
   Tabs({ barPosition: BarPosition.End, controller: new TabsController(), index: props.currentIndex }) {
     // Home tab
     TabContent() {
@@ -35,7 +42,6 @@ export function IndexTabs(props: IndexTabsProps) {
       selectedImg: $r('app.media.tab_home_active'),
       onSelect: (idx: number) => {
         props.onTabChange(idx);
-        // changeIndex handled by Tabs controller ref in props if needed
         if (idx === 0) {
           props.onReloadHome();
         }
@@ -54,7 +60,6 @@ export function IndexTabs(props: IndexTabsProps) {
       selectedImg: $r('app.media.tab_memories_active'),
       onSelect: (idx: number) => {
         props.onTabChange(idx);
-        // changeIndex handled by Tabs controller ref in props if needed
       }
     }));
 
@@ -70,7 +75,6 @@ export function IndexTabs(props: IndexTabsProps) {
       selectedImg: $r('app.media.tab_about_active'),
       onSelect: (idx: number) => {
         props.onTabChange(idx);
-        // changeIndex handled by Tabs controller ref in props if needed
       }
     }));
   }
