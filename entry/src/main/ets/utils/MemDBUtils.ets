@@ -13,13 +13,16 @@ export class Memory {
   finished: boolean
   content?: string
   createdAt?: number
+  // user-selected date in ms since epoch
+  targetDate?: number
 
-  constructor(id: number, title: string, finished: boolean, content?: string, createdAt?: number) {
+  constructor(id: number, title: string, finished: boolean, content?: string, createdAt?: number, targetDate?: number) {
     this.id = id
     this.title = title
     this.finished = finished
     this.content = content
     this.createdAt = createdAt
+    this.targetDate = targetDate
   }
 
 }
@@ -30,7 +33,7 @@ class MemoryDBUtils {
   // Promise resolved when rdbStore becomes available
   private readyPromise: Promise<void> = Promise.resolve()
   private readyResolve?: () => void
-  private lastInitTable?: string
+  // (no unused fields)
   // Lightweight change listeners so pages can react to DB changes
   private listeners: Array<() => void> = []
   private notifyChange(): void {
@@ -53,7 +56,6 @@ class MemoryDBUtils {
   initMemoryDB(context: Context, tableName: string) {
     // create a readiness promise that callers can await
     this.readyPromise = new Promise<void>((resolve) => { this.readyResolve = resolve })
-    this.lastInitTable = tableName
     // (1) 初始化数据库配置
     const STORE_CONFIG: relationalStore.StoreConfig = {
       name: 'hixy.db', // 数据库文件名
@@ -64,7 +66,8 @@ class MemoryDBUtils {
     const SQL_CREATE_TABLE = `create table if not exists ${tableName} (
       id integer primary key autoincrement,
       task_name text not null,
-      finished boolean
+      finished boolean,
+      target_date integer
     )`
 
     // (3) 初始化数据库
@@ -90,6 +93,19 @@ class MemoryDBUtils {
           if (this.readyResolve) { this.readyResolve() }
         }
       })
+      // Attempt to add target_date column if it doesn't exist yet; ignore errors
+      try {
+        const SQL_ADD_COLUMN = `alter table ${tableName} add column target_date integer`;
+        this.rdbStore.executeSql(SQL_ADD_COLUMN, (colErr) => {
+          if (!colErr) {
+            console.log(`确保 ${tableName}.target_date 列存在: 添加成功`)
+          } else {
+            console.log(`尝试添加 target_date 列返回: ${colErr.message}`)
+          }
+        })
+      } catch (alterErr) {
+        console.log('尝试添加 target_date 列时抛出异常，忽略:', alterErr)
+      }
     })
   }
 
@@ -160,12 +176,15 @@ class MemoryDBUtils {
             const nameIndex = resultSet.getColumnIndex('task_name')
             const finishedIndex = resultSet.getColumnIndex('finished')
 
+            const targetDateIndex = resultSet.getColumnIndex('target_date')
+
             const memoryId = idIndex >= 0 ? resultSet.getLong(idIndex) : 0
             const title = nameIndex >= 0 ? resultSet.getString(nameIndex) : ''
             const finishedVal = finishedIndex >= 0 ? resultSet.getLong(finishedIndex) : 0
+            const targetDateVal = targetDateIndex >= 0 ? resultSet.getLong(targetDateIndex) : undefined
 
-            // 将数据库列映射到 Memory 对象：task_name -> title
-            memories.push(new Memory(memoryId, title, !!finishedVal))
+            // 将数据库列映射到 Memory 对象：task_name -> title, target_date -> targetDate
+            memories.push(new Memory(memoryId, title, !!finishedVal, undefined, undefined, targetDateVal))
           } catch (parseErr) {
             // 读取当前行时出现异常，记录并继续下一行
             console.log(`读取resultSet行数据失败: ${parseErr}`)
@@ -251,6 +270,19 @@ class MemoryDBUtils {
     })
   }
 
+  // Instance method wrapper for compatibility
+  public makeValuesBucket(taskName: string, finished: number, targetDate?: number): relationalStore.ValuesBucket {
+    return makeValuesBucket(taskName, finished, targetDate);
+  }
+
+}
+
+// Export standalone helper for other modules to import without relying on class instance shape
+export function makeValuesBucket(taskName: string, finished: number, targetDate?: number): relationalStore.ValuesBucket {
+  if (typeof targetDate === 'number') {
+    return { task_name: taskName, finished: finished, target_date: targetDate } as relationalStore.ValuesBucket;
+  }
+  return { task_name: taskName, finished: finished } as relationalStore.ValuesBucket;
 }
 
 // 导出单例供其他模块使用

@@ -1,6 +1,6 @@
 // import { Settings } from './Settings';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
-import { formatDate as formatDateUtil, daysTextFor as daysTextForUtil, daysColorFor as daysColorForUtil, getEventsSortedByDaysUntil as sortByDaysUntilUtil, countUpcoming as countUpcomingUtil, countMemories as countMemoriesUtil } from '../utils/dateUtils';
+import * as dateUtils from '../utils/dateUtils';
 import router from '@system.router';
 import { About } from './About';
 import { MemoryItem, MemoryType } from '../types/MemoryTypes';
@@ -237,13 +237,15 @@ struct Index {
   // Load events from DB and map to MemoryItem[]
   private async loadEvents(): Promise<void> {
     try {
-      const cols = ['id', 'task_name', 'finished'];
+      // include 'target_date' so we can use the user-selected date from DB
+      const cols = ['id', 'task_name', 'finished', 'target_date'];
       const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
       if (rows && rows.length > 0) {
-        this.events = rows.map(r => {
+        this.events = rows.map((r: Memory) => {
           const id: number = r.id ?? 0;
           const title: string = r.title ?? '';
-          const date = new Date();
+          // Prefer stored targetDate (ms since epoch) when available
+          const date: Date = (typeof r.targetDate === 'number') ? new Date(r.targetDate) : new Date();
           const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
           return { id, title, date, type } as MemoryItem;
         });
@@ -267,7 +269,7 @@ struct Index {
 
   // Return events sorted by days until (ascending)
   private getEventsSortedByDaysUntil(): MemoryItem[] {
-    return sortByDaysUntilUtil(this.events);
+    return dateUtils.getEventsSortedByDaysUntil(this.events, undefined, (e) => e.type === 'anniversary');
   }
 
   // Public alias for sorted events (keeps call sites stable)
@@ -277,27 +279,27 @@ struct Index {
 
   // Count of upcoming (daysDiff >= 0)
   private getUpcoming(): number {
-    return countUpcomingUtil(this.events);
+    return dateUtils.countUpcoming(this.events, undefined, (e) => e.type === 'anniversary');
   }
 
   // Count of past memories (daysDiff < 0)
   private getMemories(): number {
-    return countMemoriesUtil(this.events);
+    return dateUtils.countMemories(this.events, undefined, (e) => e.type === 'anniversary');
   }
 
   // Helper: formatted days text for an item
   private daysTextFor(item: MemoryItem): string {
-    return daysTextForUtil(item.date);
+    return dateUtils.daysTextFor(item.date, undefined, item.type === 'anniversary');
   }
 
   // Helper: color for the days text (upcoming vs past)
   private daysColorFor(item: MemoryItem): string {
-    return daysColorForUtil(item.date);
+    return dateUtils.daysColorFor(item.date, undefined, item.type === 'anniversary');
   }
 
   // Helper: date formatting wrapper
   private formatDate(d: Date): string {
-    return formatDateUtil(d);
+    return dateUtils.formatDate(d);
   }
 
   @Builder

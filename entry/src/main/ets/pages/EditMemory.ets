@@ -39,7 +39,7 @@ export default struct EditMemory {
   private async load(id: number): Promise<void> {
     try {
       console.log('EditMemory.load: requested id=', id);
-      const cols: string[] = ['id', 'task_name', 'finished'];
+      const cols: string[] = ['id', 'task_name', 'finished', 'target_date'];
       const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
       console.log('EditMemory.load: query returned rows count=', rows ? rows.length : 0);
       const row = (rows || []).find(r => (r.id ?? 0) === id);
@@ -52,8 +52,12 @@ export default struct EditMemory {
       if (!row) return;
       this.memoryId = row.id ?? id;
       this.title = row.title ?? '';
-      // NOTE: original code set date to new Date() — if DB has date field, map it here when available
-      this.date = new Date();
+      // Use stored target_date if present (ms timestamp), otherwise keep today's default
+      if (typeof row.targetDate === 'number' && !isNaN(row.targetDate) && row.targetDate > 0) {
+        this.date = new Date(Number(row.targetDate));
+      } else {
+        this.date = new Date();
+      }
       this.type = row.finished ? 'anniversary' : 'countdown';
       try { promptAction.showToast({ message: `加载：${this.title}` }); } catch (e) {}
     } catch (e) {
@@ -77,7 +81,9 @@ export default struct EditMemory {
     const newTitle = (this.title || '').trim();
     if (!newTitle) { try { promptAction.showToast({ message: '标题不能为空' }); } catch (_) {}; return; }
 
-    const vb: relationalStore.ValuesBucket = { task_name: newTitle, finished: this.type === 'anniversary' ? 1 : 0 } as relationalStore.ValuesBucket;
+    // Persist the user-selected date as milliseconds since epoch in 'target_date'
+    const targetDateMs: number = this.date ? Number(this.date.getTime()) : Date.now();
+    const vb: relationalStore.ValuesBucket = MemoryDBUtil.makeValuesBucket(newTitle, this.type === 'anniversary' ? 1 : 0, targetDateMs);
     const cols: string[] = ['id', 'task_name', 'finished'];
 
     try {

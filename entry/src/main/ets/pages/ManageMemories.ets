@@ -1,13 +1,12 @@
 import router from '@system.router';
 import { MemoryItem, MemoryType } from '../types/MemoryTypes';
 import promptAction from '@ohos.promptAction';
-import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
-import { formatDate as formatDateUtil } from '../utils/dateUtils';
+import { MemoryDBUtil, Memory, makeValuesBucket } from '../utils/MemDBUtils';
 import { relationalStore } from '@kit.ArkData';
+import { formatDate as formatDateUtil } from '../utils/dateUtils';
 import vibrator from '@ohos.vibrator';
 
 @Entry
-// Removed @Entry — Index is the single app entry. Keep component available for routing.
 @Component
 export struct ManageMemories {
   @State events: MemoryItem[] = [];
@@ -121,26 +120,26 @@ export struct ManageMemories {
     // .backgroundColor('#F7F8FA');
   }
 
-  // private isVibrated: boolean = false;
-  private triggerVibration() {
+  private triggerVibration(): void {
     try {
       // 震动50毫秒
       vibrator.vibrate(50);
       promptAction.showToast({ message: '删除触发震动提示' });
     } catch (err) {
-      console.error(`震动失败: ${JSON.stringify(err)}`);
-      promptAction.showToast({ message: '震动功能调用失败' });
+      console.error('震动失败', err);
+      try { promptAction.showToast({ message: '震动功能调用失败' }); } catch (_) {}
     }
   }
 
   private async loadEvents(): Promise<void> {
     try {
-      const cols: string[] = ['id', 'task_name', 'finished'];
+      const cols: string[] = ['id', 'task_name', 'finished', 'target_date'];
       const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
       this.events = (rows || []).map((r: Memory) => {
         const id: number = r.id ?? 0;
         const title: string = r.title ?? '';
-        const date: Date = new Date();
+        // Prefer stored targetDate (milliseconds since epoch) when available and valid (>0)
+        const date: Date = (typeof r.targetDate === 'number' && !isNaN(r.targetDate) && r.targetDate > 0) ? new Date(r.targetDate) : new Date();
         const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
         return {
           id,
@@ -200,9 +199,9 @@ export struct ManageMemories {
       await this.loadEvents();
       try {
         promptAction.showToast({ message: '已删除' });
-      } catch (e) {
-
-      }
+      } catch (e) {}
+      // Give short vibration feedback to user on delete
+      try { this.triggerVibration(); } catch (vErr) { console.warn('triggerVibration failed', vErr); }
     } catch (err) {
       console.error('删除失败', err);
       try { promptAction.showToast({ message: '删除失败' }); } catch (e) {}
@@ -217,7 +216,10 @@ export struct ManageMemories {
   private async testWrite(): Promise<void> {
     const title = `Test ${Date.now()}`;
     try {
-      const vb: relationalStore.ValuesBucket = { task_name: title, finished: 0 } as relationalStore.ValuesBucket;
+      // For quick verification create a test row with target_date set to tomorrow at 00:00
+      const t = new Date(); t.setDate(t.getDate() + 1); t.setHours(0, 0, 0, 0);
+      const tomorrowMs: number = t.getTime();
+      const vb: relationalStore.ValuesBucket = makeValuesBucket(title, 0, tomorrowMs);
       const rowId: number = await MemoryDBUtil.insertMemory('memories', vb);
       if (rowId && rowId > 0) {
         try {
@@ -237,7 +239,7 @@ export struct ManageMemories {
     try {
       // small delay to let DB operation complete
       await new Promise<void>((resolve) => setTimeout(resolve, 500));
-      const cols: string[] = ['id', 'task_name', 'finished'];
+      const cols: string[] = ['id', 'task_name', 'finished', 'target_date'];
       const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
       const cnt = rows ? rows.length : 0;
       try {
@@ -249,7 +251,7 @@ export struct ManageMemories {
       this.events = (rows || []).map((r: Memory) => {
         const id: number = r.id ?? 0;
         const t: string = r.title ?? '';
-        const date: Date = new Date();
+        const date: Date = (typeof r.targetDate === 'number' && !isNaN(r.targetDate) && r.targetDate > 0) ? new Date(r.targetDate) : new Date();
         const type: MemoryType = r.finished ? 'anniversary' : 'countdown';
         return {
           id,
@@ -281,11 +283,11 @@ struct EventCard {
     return formatDateUtil(d);
   }
 
-  private triggerVibration() {
+  private triggerVibration(): void {
     try {
       vibrator.vibrate(50);
     } catch (err) {
-      console.error(`震动失败: ${JSON.stringify(err)}`);
+      console.error('震动失败', err);
     }
   }
 
@@ -349,6 +351,6 @@ struct EventCard {
     }
     .padding(12)
     .backgroundColor(this.deleteTargetId === this.item.id ? '#FFF2F0' : Color.White)
-    .borderRadius(10)
+    .borderRadius(10);
   }
 }

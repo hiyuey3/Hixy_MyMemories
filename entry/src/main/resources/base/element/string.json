@@ -15,6 +15,10 @@
     {
       "name": "perm_read_media",
       "value": "用于选择并显示相册图片的权限说明"
+    },
+    {
+      "name": "perm_vibrate",
+      "value": "用于在删除操作时提供震动反馈的权限说明"
     }
   ]
 }

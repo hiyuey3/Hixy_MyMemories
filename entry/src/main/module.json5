@@ -40,6 +40,14 @@
           "when": "inuse",
           "abilities": ["EntryAbility"]
         }
+      },
+      {
+        "name": "ohos.permission.VIBRATE",
+        "reason": "$string:perm_vibrate",
+        "usedScene": {
+          "when": "inuse",
+          "abilities": ["EntryAbility"]
+        }
       }
     ],
     "extensionAbilities": [
