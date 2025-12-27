@@ -1,7 +1,7 @@
 // 编辑/新增页面：表单与持久化 / Edit & Add form with persistence
 import { MemoryType } from '../types/MemoryTypes';
 import router from '@system.router';
-import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
+import { MemoryDBUtil, Memory, makeValuesBucket } from '../utils/MemDBUtils';
 import { relationalStore } from '@kit.ArkData';
 
 @Entry
@@ -12,6 +12,7 @@ export default struct EditMemory {
   @State title: string = '';
   @State date: Date = new Date();
   @State type: MemoryType = 'countdown';
+  @State content: string = '';
 
   aboutToAppear(): void {
     let id = this.selectedId;
@@ -39,7 +40,7 @@ export default struct EditMemory {
   private async load(id: number): Promise<void> {
     console.log('EditMemory.load: requested id=', id);
     // 读取并填充表单 / hydrate form from DB row
-    const cols: string[] = ['id', 'task_name', 'finished', 'target_date'];
+    const cols: string[] = ['id', 'task_name', 'finished', 'target_date', 'content'];
     const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
     const row = (rows || []).find(r => (r.id ?? 0) === id);
     if (!row) {
@@ -54,6 +55,7 @@ export default struct EditMemory {
       this.date = new Date();
     }
     this.type = row.finished ? 'anniversary' : 'countdown';
+    this.content = row.content ?? '';
   }
 
   private async save(): Promise<void> {
@@ -67,7 +69,7 @@ export default struct EditMemory {
 
     // 序列化日期为毫秒时间戳 / persist date as ms
     const targetDateMs: number = this.date ? Number(this.date.getTime()) : Date.now();
-    const vb: relationalStore.ValuesBucket = MemoryDBUtil.makeValuesBucket(newTitle, this.type === 'anniversary' ? 1 : 0, targetDateMs);
+    const vb: relationalStore.ValuesBucket = makeValuesBucket(newTitle, this.type === 'anniversary' ? 1 : 0, targetDateMs, this.content);
     const cols: string[] = ['id', 'task_name', 'finished'];
 
     if (!this.memoryId) {
@@ -129,6 +131,24 @@ export default struct EditMemory {
       Text(this.memoryId ? '编辑' : '新增事件').fontSize(20).fontWeight(FontWeight.Bold).align(Alignment.Center).margin({ top: 20 });
       TextInput({ placeholder: '标题', text: this.title }).onChange((v: string) => this.title = v);
 
+
+      // Move note above date picker
+      Column({ space: 6 }) {
+        Text('备注').fontSize(14).fontColor('#666');
+        TextArea({ placeholder: '填写备注...', text: this.content })
+          .onChange((v: string) => this.content = v)
+          .height(120)
+          .borderColor('#DDD')
+          .borderWidth(1)
+          .borderRadius(6);
+      }
+
+      Column({ space: 6 }) {
+        Text('日期').fontSize(14).fontColor('#666');
+        DatePicker({ start: new Date('2000-01-01'), end: new Date('2100-12-31'), selected: this.date })
+          .onDateChange((d: Date) => this.date = d);
+      }
+
       Row({ space: 10 }) {
         Text('类型').fontSize(14).fontColor('#666');
         Row({ space: 8 }) {
@@ -143,12 +163,6 @@ export default struct EditMemory {
             .fontColor(this.type === 'anniversary' ? '#fff' : '#333')
             .onClick(() => this.type = 'anniversary');
         }
-      }
-
-      Column({ space: 6 }) {
-        Text('日期').fontSize(14).fontColor('#666');
-        DatePicker({ start: new Date('2000-01-01'), end: new Date('2100-12-31'), selected: this.date })
-          .onDateChange((d: Date) => this.date = d);
       }
 
       Row({ space: 12 }) {

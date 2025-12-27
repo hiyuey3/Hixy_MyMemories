@@ -68,7 +68,8 @@ export class MemoryDBUtils {
       id integer primary key autoincrement,
       task_name text not null,
       finished boolean,
-      target_date integer
+      target_date number,
+      content text
     )`
 
     // (3) 初始化数据库
@@ -97,16 +98,24 @@ export class MemoryDBUtils {
       })
       // Attempt to add target_date column if it doesn't exist yet; ignore errors
       try {
-        const SQL_ADD_COLUMN = `alter table ${tableName} add column target_date integer`;
-        this.rdbStore.executeSql(SQL_ADD_COLUMN, (colErr) => {
+        const SQL_ADD_COLUMN_TARGET = `alter table ${tableName} add column target_date integer`;
+        this.rdbStore.executeSql(SQL_ADD_COLUMN_TARGET, (colErr) => {
           if (!colErr) {
             console.log(`确保 ${tableName}.target_date 列存在: 添加成功`)
           } else {
             console.log(`尝试添加 target_date 列返回: ${colErr.message}`)
           }
         })
+        const SQL_ADD_COLUMN_CONTENT = `alter table ${tableName} add column content text`;
+        this.rdbStore.executeSql(SQL_ADD_COLUMN_CONTENT, (colErr2) => {
+          if (!colErr2) {
+            console.log(`确保 ${tableName}.content 列存在: 添加成功`)
+          } else {
+            console.log(`尝试添加 content 列返回: ${colErr2.message}`)
+          }
+        })
       } catch (alterErr) {
-        console.log('尝试添加 target_date 列时抛出异常，忽略:', alterErr)
+        console.log('尝试添加列时抛出异常，忽略:', alterErr)
       }
     })
   }
@@ -179,14 +188,16 @@ export class MemoryDBUtils {
             const finishedIndex = resultSet.getColumnIndex('finished')
 
             const targetDateIndex = resultSet.getColumnIndex('target_date')
+            const contentIndex = resultSet.getColumnIndex('content')
 
             const memoryId = idIndex >= 0 ? resultSet.getLong(idIndex) : 0
             const title = nameIndex >= 0 ? resultSet.getString(nameIndex) : ''
             const finishedVal = finishedIndex >= 0 ? resultSet.getLong(finishedIndex) : 0
             const targetDateVal = targetDateIndex >= 0 ? resultSet.getLong(targetDateIndex) : undefined
+            const contentVal = contentIndex >= 0 ? resultSet.getString(contentIndex) : undefined
 
-            // 将数据库列映射到 Memory 对象：task_name -> title, target_date -> targetDate
-            memories.push(new Memory(memoryId, title, !!finishedVal, undefined, undefined, targetDateVal))
+            // 将数据库列映射到 Memory 对象：task_name -> title, target_date -> targetDate, content -> content
+            memories.push(new Memory(memoryId, title, !!finishedVal, contentVal, undefined, targetDateVal))
           } catch (parseErr) {
             // 读取当前行时出现异常，记录并继续下一行
             console.log(`读取resultSet行数据失败: ${parseErr}`)
@@ -273,18 +284,23 @@ export class MemoryDBUtils {
   }
 
   // Instance method wrapper for compatibility
-  public makeValuesBucket(taskName: string, finished: number, targetDate?: number): relationalStore.ValuesBucket {
-    return makeValuesBucket(taskName, finished, targetDate);
+  public makeValuesBucket(taskName: string, finished: number, targetDate?: number, content?: string): relationalStore.ValuesBucket {
+    return makeValuesBucket(taskName, finished, targetDate, content);
   }
 
 }
 
 // Export standalone helper for other modules to import without relying on class instance shape
-export function makeValuesBucket(taskName: string, finished: number, targetDate?: number): relationalStore.ValuesBucket {
+interface ValuesBucketMap { task_name?: string; finished?: number; target_date?: number; content?: string }
+export function makeValuesBucket(taskName: string, finished: number, targetDate?: number, content?: string): relationalStore.ValuesBucket {
+  const vb: ValuesBucketMap = { task_name: taskName, finished: finished };
   if (typeof targetDate === 'number') {
-    return { task_name: taskName, finished: finished, target_date: targetDate } as relationalStore.ValuesBucket;
+    vb.target_date = targetDate;
   }
-  return { task_name: taskName, finished: finished } as relationalStore.ValuesBucket;
+  if (typeof content === 'string') {
+    vb.content = content;
+  }
+  return vb as relationalStore.ValuesBucket;
 }
 
 // 导出单例供其他模块使用

@@ -33,23 +33,22 @@ export struct EventDetail {
 
   private async loadItem(id: number): Promise<void> {
     try {
-      const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', ['id', 'task_name', 'finished', 'target_date']);
+      const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', ['id', 'task_name', 'finished', 'target_date', 'content']);
       const row = rows.find(r => r.id === id);
       if (row) {
         const item: MemoryItem = {
           id: row.id ?? 0,
           title: row.title ?? '',
           date: (typeof row.targetDate === 'number' && !isNaN(row.targetDate)) ? row.targetDate : undefined,
-          type: row.finished ? 'anniversary' : 'countdown'
+          type: row.finished ? 'anniversary' : 'countdown',
+          note: row.content ?? ''
         };
         this.item = item;
       } else {
-        // not found: show placeholder to avoid infinite loading
         this.item = { id, title: '未找到记录', date: undefined, type: 'countdown' } as MemoryItem;
       }
     } catch (e) {
       console.log('加载详情失败: ' + e);
-      // show placeholder on error
       this.item = { id, title: '加载失败', date: undefined, type: 'countdown' } as MemoryItem;
     }
   }
@@ -82,6 +81,14 @@ export struct EventDetail {
       } else {
         Column({ space: 8 }) {
           Text(this.item.title).fontSize(22).fontWeight(FontWeight.Bold).fontColor('#111');
+          if (this.item && this.item.note && this.item.note.length > 0) {
+            Text(`备注：${this.item.note}`)
+              .fontSize(16)
+              .fontColor('#333')
+              .textAlign(TextAlign.Start)
+              .maxLines(20)
+              .margin({ top: 10 });
+          }
           Row({ space: 10 }) {
             Text(this.item.type === 'countdown' ? '倒数' : '纪念')
               .fontSize(12)
@@ -120,7 +127,23 @@ export struct EventDetail {
             });
         }
         .justifyContent(FlexAlign.Center)
-        .padding({ bottom: 20 });
+        .padding({ left: 18, right: 18 });
+
+        Row() {
+          Button('返回首页')
+            .type(ButtonType.Capsule)
+            .fontColor('#1677FF')
+            .backgroundColor('#FFFFFF')
+            .borderColor('#1677FF')
+            .borderWidth(1)
+            .width('70%')
+            .height(48)
+            .onClick(() => {
+              try { router.push({ uri: 'pages/Index' }); } catch (e) { console.log(e); }
+            });
+        }
+        .justifyContent(FlexAlign.Center)
+        .padding({ bottom: 24 });
       }
     }
     .width('100%')
