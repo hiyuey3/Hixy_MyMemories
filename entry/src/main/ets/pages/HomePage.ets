@@ -1,6 +1,7 @@
 // 首页内容组件：头图、统计、列表和操作按钮 / Home content component: header, stats, list, actions
-import { MemoryItem, DateLike } from '../types/MemoryTypes';
+import { MemoryItem } from '../types/MemoryTypes';
 import * as dateUtils from '../utils/dateUtils';
+import { EventCard } from '../components/EventCard';
 
 @Preview
 @Component
@@ -43,38 +44,6 @@ export struct HomePage {
   private getMemories(): number {
     const safeEvents: MemoryItem[] = this.normalizeEvents(this.events);
     return dateUtils.countMemories(safeEvents, undefined, (e: MemoryItem) => e.type === 'anniversary');
-  }
-
-  private daysTextFor(item: MemoryItem): string {
-    return dateUtils.daysTextFor(item.date, undefined, item.type === 'anniversary');
-  }
-
-  private daysColorFor(item: MemoryItem): string {
-    return dateUtils.daysColorFor(item.date, undefined, item.type === 'anniversary');
-  }
-
-  private formatDate(d: DateLike): string {
-    return dateUtils.formatDate(d);
-  }
-
-  // Countdown helper: status line text
-  private countdownStatusText(item: MemoryItem): string {
-    const diff = dateUtils.daysDiff(item.date, undefined, false);
-    if (isNaN(diff)) return '';
-    return diff >= 0 ? '倒计时中' : '已过期';
-  }
-
-  // Anniversary helpers
-  private anniversarySinceText(item: MemoryItem): string {
-    const stats = dateUtils.anniversaryStats(item.date, undefined);
-    if (isNaN(stats.daysSince)) return '';
-    return `已过 ${stats.daysSince} 天`;
-  }
-
-  private anniversaryUntilText(item: MemoryItem): string {
-    const stats = dateUtils.anniversaryStats(item.date, undefined);
-    if (isNaN(stats.daysUntil)) return '';
-    return `距下次 ${stats.daysUntil} 天`;
   }
 
   build() {
@@ -128,7 +97,7 @@ export struct HomePage {
       List({ space: 10 }) {
         ForEach(this.getEventsSortedByDaysUntil(), (item: MemoryItem) => {
           ListItem() {
-            this.EventCard(item);
+            EventCard({ item: item });
           }
         })
       }
@@ -171,76 +140,5 @@ export struct HomePage {
     .width('100%')
     .height('100%')
     .backgroundColor('#F7F8FA');
-  }
-
-  @Builder
-  private EventCard(item: MemoryItem): void {
-    // 单条卡片 / single event card with left accent
-    Row({ space: 10}) {
-      // Left vertical accent bar
-      Blank()
-        .width(4)
-        .height('20%')
-        .backgroundColor(item.type === 'countdown' ? '#1677FF' : '#FF7A45')
-        .borderRadius(2)
-      .padding({right:0})
-
-      // Main content
-      Row({ space: 1}) {
-        Column({ space: 1 }) {
-          Row() {
-            Column() {
-              Text(item.title)
-                .fontSize(18)
-                .fontWeight(FontWeight.Medium)
-                .textAlign(TextAlign.Start)
-                .fontColor('#111')
-                .maxLines(1);
-
-              Text(this.formatDate(item.date))
-                .fontSize(13)
-                .fontColor('#666')
-                .textAlign(TextAlign.Start);
-            }
-            .alignItems(HorizontalAlign.Start);
-          }
-        }
-
-        Column(){
-          Text(item.type === 'countdown' ? '倒数' : '纪念')
-            .fontSize(12)
-            .fontColor('#fff')
-            .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-            .backgroundColor(item.type === 'countdown' ? '#1677FF' : '#FF7A45')
-            .borderRadius(12);
-          if (item.type === 'anniversary') {
-            Text(this.anniversaryUntilText(item))
-              .fontSize(14)
-              .margin({ top: 6, bottom: 2 })
-              .fontColor('#1677FF');
-            Text(this.anniversarySinceText(item))
-              .fontSize(12)
-              .fontColor('#FF7A45');
-          } else {
-            Text(this.daysTextFor(item))
-              .fontSize(14)
-              .margin({ top: 6, bottom: 2 })
-              .fontColor(this.daysColorFor(item));
-            Text(this.countdownStatusText(item))
-              .fontSize(12)
-              .fontColor('#666');
-          }
-        }
-        .width(120)
-        .alignItems(HorizontalAlign.End)
-      }
-      .justifyContent(FlexAlign.SpaceBetween)
-      .padding(14)
-      .backgroundColor($r('app.color.start_window_background'))
-      .borderRadius(14)
-      .width('95%')
-      .shadow({ radius: 8, color: '#1A000000', offsetX: 0, offsetY: 4 });
-    }
-    .width('99%');
   }
 }

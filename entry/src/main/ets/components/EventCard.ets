@@ -41,10 +41,11 @@ export struct EventCard {
   build() {
     // 标题 + 日期 / title and date with left accent bar (aligned to HomePage)
     Row({ space: 10 }) {
-      // Left vertical accent bar
+      // Left vertical accent bar (shorter, vertically centered)
       Blank()
-        .width(1)
-        .height('20%')
+        .width(4)
+        .height(40)
+        .alignSelf(ItemAlign.Center)
         .backgroundColor(this.item.type === 'countdown' ? '#1677FF' : '#FF7A45')
         .borderRadius(2);
 
