@@ -14,35 +14,49 @@ export struct About {
 
   // 主渲染函数：页面结构清晰，顶部为标题与 Logo，中部为信息卡片，底部为版权信息
   build() {
-    Column({ space: 12 }) {
-      // Top card with logo and title
+    Column({ space: 16 }) {
+      // 顶部品牌卡片，突出产品与版本信息
       Column({ space: 8 }) {
-        Blank()
-          .height(16)
-        Column() {
+        Column({ space: 10 }) {
           Image($r('app.media.hixy_logo_old'))
-            .width(88)
-            .height(88)
-            .borderRadius(44)
+            .width(108)
+            .height(108)
+            .borderRadius(54)
             .objectFit(ImageFit.Cover)
-            .margin({ top: 18 });
-          Text('MyMemories')
-            .fontSize(20)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#111')
-            .margin({ top: 8 });
-          Text(this.version)
-            .fontSize(12)
-            .fontColor('#888')
-            .margin({ top: 2, bottom: 12 });
-          // Logo copyright line
-          Text('Logo © IGE')
+            .margin({ bottom: 4 });
+          Text('Logo 由 IGE 设计')
             .fontSize(11)
-            .fontColor('#9AA0A6')
-            .margin({ bottom: 6 });
+            .fontColor('#7E8589')
+            .textAlign(TextAlign.Center);
+          Text('MyMemories')
+            .fontSize(22)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#0F172A');
+          Row({ space: 6 }) {
+            Text('版本')
+              .fontSize(12)
+              .fontColor('#4B5563');
+            Text(this.version)
+              .fontSize(12)
+              .fontColor('#111827')
+              .backgroundColor('#FFFFFF')
+              .padding({ left: 10, right: 10, top: 4, bottom: 4 })
+              .borderRadius(12);
+          }
+          .alignItems(VerticalAlign.Center);
+          Text('专注倒数日与纪念日，记录每一个重要时刻。')
+            .fontSize(13)
+            .fontColor('#4B5563')
+            .textAlign(TextAlign.Center)
+            .margin({ top: 6 });
         }
-        .alignItems(HorizontalAlign.Center);
+        .alignItems(HorizontalAlign.Center)
+        .padding({ top: 18, bottom: 12 });
       }
+      .width('100%')
+      .padding({ left: 16, right: 16 })
+      .backgroundColor('#EEF2FF')
+      .borderRadius(18);
 
       // 信息卡片（开发者信息）
       this.InfoCard();
