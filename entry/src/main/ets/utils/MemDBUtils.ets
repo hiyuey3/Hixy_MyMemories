@@ -1,3 +1,4 @@
+// 数据库工具：RDB 读写与模型映射 / DB helper for RDB operations and mapping
 import { relationalStore } from '@kit.ArkData'
 import { BusinessError } from '@kit.BasicServicesKit'
 
@@ -72,6 +73,7 @@ export class MemoryDBUtils {
 
     // (3) 初始化数据库
     relationalStore.getRdbStore(context, STORE_CONFIG, (err, store) => {
+      // 获取/创建 RDB / open RDB
       if (err) {
         console.log(`获取taskdb失败, code: ${err.code}, message: ${err.message}`)
         // resolve readiness to avoid deadlocks; operations will still fail due to null rdbStore

@@ -1,3 +1,4 @@
+// 管理页：列表、编辑、删除入口 / Management page for list/edit/delete
 import router from '@system.router';
 import { MemoryItem, MemoryType, DateLike } from '../types/MemoryTypes';
 import { MemoryDBUtil, Memory, makeValuesBucket } from '../utils/MemDBUtils';
@@ -121,7 +122,7 @@ export struct ManageMemories {
 
   private triggerVibration(): void {
     try {
-      // 震动50毫秒
+      // 震动提示 / haptic feedback
       vibrator.vibrate(50);
     } catch (err) {
       console.error('震动失败', err);
@@ -130,6 +131,7 @@ export struct ManageMemories {
 
   private async loadEvents(): Promise<void> {
     try {
+      // 读取 DB 并转换为 UI 模型 / fetch from DB and map to UI model
       const cols: string[] = ['id', 'task_name', 'finished', 'target_date'];
       const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
       this.events = (rows || []).map((r: Memory) => {
@@ -149,11 +151,13 @@ export struct ManageMemories {
   }
 
   private async onAdd(): Promise<void> {
+    // 新增模式清空选中 / reset selected for add mode
     AppStorage.Set<number>('selectedId', 0);
     router.push({ uri: 'pages/EditMemory' });
   }
 
   private async onEdit(item: MemoryItem): Promise<void> {
+    // 编辑传递当前 id / edit with current id
     AppStorage.setOrCreate('selectedId', item.id);
     router.push({ uri: 'pages/EditMemory', params: { editId: item.id } });
   }
@@ -168,6 +172,7 @@ export struct ManageMemories {
       return;
     }
     try {
+      // 真删除并刷新 / delete then refresh
       await MemoryDBUtil.deleteMemoryById('memories', this.deleteTargetId);
       this.deleteTargetId = undefined;
       await this.loadEvents();
@@ -183,6 +188,7 @@ export struct ManageMemories {
 
   // Debug helper: write a test row and query DB using MemDBUtils directly
   private async testWrite(): Promise<void> {
+    // 调试写入一条明日数据 / debug insert row for tomorrow
     const title = `Test ${Date.now()}`;
     try {
       // For quick verification create a test row with target_date set to tomorrow at 00:00

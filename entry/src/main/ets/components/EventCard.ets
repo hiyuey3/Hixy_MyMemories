@@ -1,3 +1,4 @@
+// 公共卡片组件：展示标题、日期、类型和天数 / Shared event card component
 /**
  * EventCard 组件：事件卡片
  * 职责：展示单个事件的标题、日期、类型和剩余天数
@@ -26,6 +27,7 @@ export struct EventCard {
   }
 
   build() {
+    // 标题 + 日期 / title and date
     Row({ space: 1 }) {
       Column({ space: 1 }) {
         Row() {
@@ -47,6 +49,7 @@ export struct EventCard {
       }
 
       Column() {
+        // 类型标签与天数字 / type badge and days text
         Text(this.item.type === 'countdown' ? '倒数' : '纪念')
           .fontSize(12)
           .fontColor('#fff')
@@ -78,4 +81,3 @@ export struct EventCard {
     });
   }
 }
-

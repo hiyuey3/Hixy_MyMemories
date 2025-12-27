@@ -1,3 +1,4 @@
+// 首页内容组件：头图、统计、列表和操作按钮 / Home content component: header, stats, list, actions
 import { MemoryItem, DateLike } from '../types/MemoryTypes';
 import * as dateUtils from '../utils/dateUtils';
 
@@ -15,6 +16,7 @@ export struct HomePage {
       return list;
     }
     for (const e of events) {
+      // dateUtils 需要日期；为空则用今天 / ensure date present for dateUtils
       const normalized: MemoryItem = {
         id: e.id,
         title: e.title,
@@ -56,6 +58,7 @@ export struct HomePage {
 
   build() {
     Column({ space: 12 }) {
+      // 头图 / header image
       Column() {
         Image(this.imageSource)
           .id('headerImage')
@@ -151,6 +154,7 @@ export struct HomePage {
 
   @Builder
   private EventCard(item: MemoryItem): void {
+    // 单条卡片 / single event card
     Row({ space: 1}) {
       Column({ space: 1 }) {
         Row() {

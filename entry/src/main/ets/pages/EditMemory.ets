@@ -1,3 +1,4 @@
+// 编辑/新增页面：表单与持久化 / Edit & Add form with persistence
 import { MemoryType } from '../types/MemoryTypes';
 import router from '@system.router';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
@@ -26,6 +27,7 @@ export default struct EditMemory {
     if (id) {
       this.load(id);
     } else {
+      // 重置为新增模式 / reset for add mode
       this.memoryId = undefined;
       this.title = '';
       this.date = new Date();
@@ -36,6 +38,7 @@ export default struct EditMemory {
 
   private async load(id: number): Promise<void> {
     console.log('EditMemory.load: requested id=', id);
+    // 读取并填充表单 / hydrate form from DB row
     const cols: string[] = ['id', 'task_name', 'finished', 'target_date'];
     const rows: Memory[] = await MemoryDBUtil.queryMemories('memories', cols);
     const row = (rows || []).find(r => (r.id ?? 0) === id);
@@ -54,6 +57,7 @@ export default struct EditMemory {
   }
 
   private async save(): Promise<void> {
+    // 简单返回助手 / back helper
     const navigateBack = (): void => {
       setTimeout(() => { router.back(); }, 120);
     }
@@ -61,11 +65,13 @@ export default struct EditMemory {
     const newTitle = (this.title || '').trim();
     if (!newTitle) { return; }
 
+    // 序列化日期为毫秒时间戳 / persist date as ms
     const targetDateMs: number = this.date ? Number(this.date.getTime()) : Date.now();
     const vb: relationalStore.ValuesBucket = MemoryDBUtil.makeValuesBucket(newTitle, this.type === 'anniversary' ? 1 : 0, targetDateMs);
     const cols: string[] = ['id', 'task_name', 'finished'];
 
     if (!this.memoryId) {
+      // 插入新增 / insert new
       const newRowId: number = await MemoryDBUtil.insertMemory('memories', vb);
       if (newRowId && newRowId > 0) {
         this.memoryId = newRowId;
@@ -93,6 +99,7 @@ export default struct EditMemory {
     } else {
       const rowsAffected: number = await MemoryDBUtil.updateMemoryById('memories', numericId, vb);
       if (typeof rowsAffected === 'number' && rowsAffected > 0) {
+        // 更新成功后返回管理页 / on success navigate back to manage list
         this.title = newTitle;
         await this.load(numericId);
         AppStorage.Set<number>('selectedId', 0);
