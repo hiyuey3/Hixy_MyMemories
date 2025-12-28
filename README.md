@@ -132,15 +132,8 @@ graph TD
 | <img src="Screenshoot/关于页面.png" width="150" /> | <img src="Screenshoot/开发者模式-导出测试.png" width="150" /> | <img src="Screenshoot/开发者模式-导入测试.png" width="150" /> |
 
 # 五、遇到关键问题与解决方案
-1. 问题：ArkTS 中 Stack 与 Column 的布局层级问题
-   - 描述：在首页 Banner 上叠加文字时，直接使用 SVG 内部文字在部分设备无法显示。
-   - 解决方案：采用 `Stack` 布局，将 SVG 图片作为底层背景，上层叠加 `Column` 包裹的 `Text` 组件，并添加半透明背景遮罩，确保文字在任何背景下都清晰可见。
 
-2. 问题：底部按钮在长页面中的定位
-   - 描述：在编辑页和详情页，当内容较少时按钮在中间，内容多时需滚动。
-   - 解决方案：使用 `Flex` 布局或 `Column` + `Blank().layoutWeight(1)` 占位符，将操作按钮区域强制推至页面最底部，保证交互体验一致性。
-
-3. 问题：数据库异步操作与 UI 刷新
+1. 问题：数据库异步操作与 UI 刷新
    - 描述：数据修改后返回首页，列表未及时更新。
    - 解决方案：利用 `AppStorage` 设置全局标记 `needsReload`，在页面 `onShow` 或 `aboutToAppear` 生命周期中检查该标记并重新加载数据。
 
