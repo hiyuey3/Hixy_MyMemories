@@ -2,7 +2,7 @@
 
 零、前言
 
-MyMemories ｜ 我的记忆点 
+MyMemories ｜ 我记得
 
 这是XMUTKKC SIST 的`HarmonyOS(鸿蒙)开发入门` 课程设计
 
