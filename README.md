@@ -1,4 +1,4 @@
-# MyMemories ｜ 我记得
+# 我记得（MyMemories）
 
 零、前言
 
