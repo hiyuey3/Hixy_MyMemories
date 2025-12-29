@@ -1,5 +1,8 @@
 # 我记得（MyMemories）
 
+Github仓库：https://github.com/hiyuey3/Hixy_MyMemories
+Gitee仓库同步：https://gitee.com/hiyuey33/Hixy_MyMemories
+
 零、前言
 
 MyMemories ｜ 我记得
@@ -18,7 +21,6 @@ BUG反馈：
 
 ISSUES：https://github.com/hiyuey3/Hixy_MyMemories/MyMemories/issues
 
-中国大陆Gitee仓库：https://gitee.com/hiyuey33/Hixy_MyMemories
 
 通过国际计算机学会（ACM）提供的邮箱联系我： titusyu@acm.org
 
