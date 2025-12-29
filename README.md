@@ -18,6 +18,8 @@ BUG反馈：
 
 ISSUES：https://github.com/hiyuey3/Hixy_MyMemories/MyMemories/issues
 
+中国大陆Gitee仓库：https://gitee.com/hiyuey33/Hixy_MyMemories
+
 通过国际计算机学会（ACM）提供的邮箱联系我： titusyu@acm.org
 
 通过我的邮件服务器联系我 hi@xyw.cx / cnyue@5i03.cn
