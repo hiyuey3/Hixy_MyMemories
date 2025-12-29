@@ -62,7 +62,7 @@ export struct ManageMemories {
       // Action buttons row
       Row({ space: 10 }) {
         Button('➕ 新增测试数据')
-          .type(ButtonType.Capsule)
+          .type(ButtonType.Normal)
           .backgroundColor('#1677FF')
           .fontColor('#FFFFFF')
           .onClick(() => this.testWrite())
@@ -70,7 +70,7 @@ export struct ManageMemories {
           .height(40);
 
         Button('🧹 清理全部数据')
-          .type(ButtonType.Capsule)
+          .type(ButtonType.Normal)
           .backgroundColor('#FF4D4F')
           .fontColor('#FFFFFF')
           .onClick(() => this.clearAll())
@@ -81,7 +81,7 @@ export struct ManageMemories {
 
       Row({ space: 10 }) {
         Button('📤 导出日志')
-          .type(ButtonType.Capsule)
+          .type(ButtonType.Normal)
           .backgroundColor('#00AA66')
           .fontColor('#FFFFFF')
           .onClick(() => this.exportLogs())
@@ -89,7 +89,7 @@ export struct ManageMemories {
           .height(40);
 
         Button('🏠 返回首页')
-          .type(ButtonType.Capsule)
+          .type(ButtonType.Normal)
           .backgroundColor('#FFA940')
           .fontColor('#FFFFFF')
           .onClick(() => router.push({ uri: 'pages/Index' }))
@@ -115,12 +115,7 @@ export struct ManageMemories {
             .height(32)
             .onClick(() => { this.isExportMode = false; });
           // 清空
-          Button('清空')
-            .type(ButtonType.Capsule)
-            .backgroundColor('#F2F2F2')
-            .fontColor('#333333')
-            .height(32)
-            .onClick(() => { this.ioText = ''; });
+
         }
 
         TextArea({ placeholder: this.isExportMode ? '导出数据 JSON（只读）' : '粘贴 JSON 数据（可编辑）', text: this.ioText })
@@ -133,6 +128,12 @@ export struct ManageMemories {
 
         Row({ space: 8 }) {
           if (this.isExportMode) {
+            Button('清空')
+              .type(ButtonType.Capsule)
+              .backgroundColor('#F2F2F2')
+              .fontColor('#333333')
+              .height(32)
+              .onClick(() => { this.ioText = ''; });
             Button('生成导出')
               .type(ButtonType.Capsule)
               .backgroundColor('#1677FF')

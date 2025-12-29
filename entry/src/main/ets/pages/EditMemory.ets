@@ -48,6 +48,7 @@ export default struct EditMemory {
       Row({ space: 10 }) {
         Column(){
           Text('类型').fontSize(14).fontColor('#666').margin({bottom:5});
+
           Row({ space: 8 }) {
             Button('倒数日')
               .type(ButtonType.Normal)
@@ -64,6 +65,7 @@ export default struct EditMemory {
           }
         }
       }
+      Text('标题').fontSize(14).fontColor('#666').margin({bottom:5});
       TextInput({ placeholder: '标题', text: this.title }).onChange((v: string) => this.title = v);
 
 

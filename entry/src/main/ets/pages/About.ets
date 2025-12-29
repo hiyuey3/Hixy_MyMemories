@@ -1,5 +1,6 @@
 import promptAction from '@ohos.promptAction';
 import router from '@system.router';
+
 @Component
 export struct About {
   // 基本信息（可根据发布流程从包信息自动注入）
@@ -8,9 +9,11 @@ export struct About {
   @State ICPnumber: string = "闽ICP备2021006383号";
   @State developer: string = "小影团队";
   @State email: string = "hi@xyw.cx";
-  private toast(msg: string): void {
-    try { promptAction.showToast({ message: msg }); } catch (_) {}
-  }
+  @State isLogoClicked: boolean = false;
+  @State DevNowClickCount: number = 0;
+  @State DevNeedClickTimes: number = 3;
+  // @State logoClickTimer: number = 0;
+
 
   // 主渲染函数：页面结构清晰，顶部为标题与 Logo，中部为信息卡片，底部为版权信息
   build() {
@@ -20,12 +23,45 @@ export struct About {
         Column({ space: 10 }) {
           Blank()
             .margin({ top: 9 });
-          Image($r('app.media.hixy_logo_old'))
-            .width(108)
-            .height(108)
-            .borderRadius(54)
-            .objectFit(ImageFit.Cover)
-            .margin({ bottom: 4 });
+          // 如果点击hixy_logo_old变为hixy_logo_new，可以作为彩蛋功能
+          // Image($r('app.media.hixy_logo_new'))
+          //   .width(108)
+          //   .height(108)
+          //   .borderRadius(54)
+          //   .objectFit(ImageFit.Cover)
+          //   .margin({ bottom: 4 })
+          //   .onClick(() => {
+          //     this.toast('你发现了彩蛋！');
+          //   });
+          Row() {
+            // if (this.isLogoClicked === false) {
+            Image($r('app.media.hixy_logo_old'))
+              .width(108)
+              .height(108)
+              .borderRadius(54)
+              .objectFit(ImageFit.Cover)
+              .margin({ bottom: 4 })
+            // .onClick(() => {
+            //   this.isLogoClicked = true;
+            //   promptAction.showToast({ message: '你发现了彩蛋！' });
+            // })
+            // }else {
+
+            Blank()
+
+            Image($r('app.media.hixy_logo_new'))
+              .width(108)
+              .height(108)
+              .borderRadius(54)
+              .objectFit(ImageFit.Cover)
+              .margin({ bottom: 4 })
+            // .onClick(() => {
+            //   this.isLogoClicked = false;
+            //   promptAction.showToast({ message: '你发现了彩蛋！' });
+            // })
+          }
+
+          // }
           Text('©Logo 由 @IGE 设计')
             .fontSize(11)
             .fontColor('#7E8589')
@@ -42,10 +78,16 @@ export struct About {
               .fontSize(12)
               .fontColor('#111827')
               .backgroundColor('#FFFFFF')
-              .padding({ left: 10, right: 10, top: 4, bottom: 4 })
+              .padding({
+                left: 10,
+                right: 10,
+                top: 4,
+                bottom: 4
+              })
               .borderRadius(12);
           }
           .alignItems(VerticalAlign.Center);
+
           Text('做简单的，让时光点有迹可循，让记忆点温暖如初。')
             .fontSize(13)
             .fontColor('#4B5563')
@@ -69,7 +111,22 @@ export struct About {
           .fontSize(12)
           .fontColor('#9AA0A6')
           .onClick(() => {
-            try { router.push({ uri: 'pages/DeveloperMode' }); } catch (e) { this.toast('跳转失败'); }
+            try {
+              let remainingClicks:number = this.DevNeedClickTimes - this.DevNowClickCount-1;
+              this.toast(`${remainingClicks+1}次后进调试模式`);
+              this.DevNowClickCount++;
+              //如果5秒后没有点击则重置点击次数
+              setTimeout(() => {
+                // this.toast('调试模式入口次数已重置');
+                this.DevNowClickCount = 0;
+              }, 3000);
+              if (this.DevNowClickCount >= 3) {
+                router.push({ uri: 'pages/DeveloperMode' });
+                this.DevNowClickCount = 0;
+              }
+            } catch (e) {
+              this.toast('跳转失败');
+            }
           });
         Text(this.ICPnumber)
           .fontSize(12)
@@ -108,20 +165,34 @@ export struct About {
 
       this.InfoRow('开发团队', this.developer);
       Divider().height(1).backgroundColor('#F0F2F4');
-      this.InfoRow('联系邮箱', this.email, '#0A59F7', () => { this.toast(this.email); });
+      this.InfoRow('联系邮箱', this.email, '#0A59F7', () => {
+        this.toast(this.email);
+      });
       Divider().height(1).backgroundColor('#F0F2F4');
-      this.InfoRow('GitHub', 'github.com/hiyuey3', '#0A59F7', () => { this.toast('打开 github.com/hiyuey3'); });
+      this.InfoRow('GitHub', 'github.com/hiyuey3', '#0A59F7', () => {
+        this.toast('打开 github.com/hiyuey3');
+      });
       Divider().height(1).backgroundColor('#F0F2F4');
-      this.InfoRow('官方网站', 'xyw.cx', '#0A59F7', () => { this.toast('打开 xyw.cx'); });
+      this.InfoRow('官方网站', 'xyw.cx', '#0A59F7', () => {
+        this.toast('打开 xyw.cx');
+      });
       Divider().height(1).backgroundColor('#F0F2F4');
       // 官方文档
-      this.InfoRow('官方文档', 'doc.5i03.cn', '#0A59F7', () => { this.toast('打开 doc.5i03.cn'); });
+      this.InfoRow('官方文档', 'doc.5i03.cn', '#0A59F7', () => {
+        this.toast('打开 doc.5i03.cn');
+      });
       Divider().height(1).backgroundColor('#F0F2F4');
-      this.InfoRow('酷安', '@晚饭没有跺椒鱼头', '#0A59F7', () => { this.toast('@晚饭没有跺椒鱼头'); });
+      this.InfoRow('酷安', '@晚饭没有跺椒鱼头', '#0A59F7', () => {
+        this.toast('@晚饭没有跺椒鱼头');
+      });
       Divider().height(1).backgroundColor('#F0F2F4');
-      this.InfoRow('QQ/微信', '1417322772', '#0A59F7', () => { this.toast('QQ/微信：1417322772'); });
+      this.InfoRow('QQ/微信', '1417322772', '#0A59F7', () => {
+        this.toast('QQ/微信：1417322772');
+      });
       Divider().height(1).backgroundColor('#F0F2F4');
-      this.InfoRow('小红书', '睡觉专家', '#0A59F7', () => { this.toast('打开 小红书：睡觉专家'); });
+      this.InfoRow('小红书', '睡觉专家', '#0A59F7', () => {
+        this.toast('打开 小红书：睡觉专家');
+      });
     }
     .width('100%')
     .padding(18)
@@ -130,11 +201,27 @@ export struct About {
     .margin({ top: 8 });
   }
 
+  private toast(msg: string): void {
+    try {
+      promptAction.showToast({ message: msg });
+    } catch (_) {
+    }
+  }
+
   @Builder
   private InfoRow(label: string, value: string, valueColor: string = '#333', onClick?: () => void) {
     Row({ space: 8 }) {
-      Text(label).fontSize(13).fontColor('#7E8589');
-      Text(value).fontSize(13).fontColor(valueColor).onClick(() => { if (onClick) onClick(); });
+      Text(label)
+        .fontSize(13)
+        .fontColor('#7E8589');
+      Text(value)
+        .fontSize(13)
+        .fontColor(valueColor)
+        .onClick(() => {
+        if (onClick) {
+          onClick();
+        }
+      });
     }
     .width('100%')
     .justifyContent(FlexAlign.SpaceBetween)
