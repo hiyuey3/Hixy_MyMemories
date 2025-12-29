@@ -13,7 +13,7 @@ export class Memory {
   finished: boolean
   content?: string
   createdAt?: number
-  // user-selected date in ms since epoch
+  // 用户选择的日期，unix时间戳格式（毫秒）
   targetDate?: number
 
   constructor(id: number, title: string, finished: boolean, content?: string, createdAt?: number, targetDate?: number) {
@@ -30,10 +30,10 @@ export class Memory {
 export class MemoryDBUtils {
   // 定义数据库变量
   private rdbStore: relationalStore.RdbStore | null = null
-  // Promise resolved when rdbStore becomes available
+  // 当 rdbStore 可用时解析的 Promise
   private readyPromise: Promise<void> = Promise.resolve()
   private readyResolve?: () => void
-  // Lightweight change listeners so pages can react to DB changes
+  // 轻量级更改监听器，使页面可以响应数据库更改
   private listeners: Array<() => void> = []
   private notifyChange(): void {
     for (const cb of this.listeners) {
@@ -51,9 +51,9 @@ export class MemoryDBUtils {
   // 初始化数据库
   // 包括两个参数:
   //   context: 上下文对象
-  //   tabelName: 数据库名称
+  //   tableName: 数据库名称
   initMemoryDB(context: Context, tableName: string) {
-    // create a readiness promise that callers can await
+    // 创建一个调用者可以等待的准备就绪承诺
     this.readyPromise = new Promise<void>((resolve) => { this.readyResolve = resolve })
     // (1) 初始化数据库配置
     const STORE_CONFIG: relationalStore.StoreConfig = {
@@ -72,29 +72,29 @@ export class MemoryDBUtils {
 
     // (3) 初始化数据库
     relationalStore.getRdbStore(context, STORE_CONFIG, (err, store) => {
-      // 获取/创建 RDB / open RDB
+      // 获取/创建 RDB / 打开 RDB
       if (err) {
         console.log(`获取taskdb失败, code: ${err.code}, message: ${err.message}`)
-        // resolve readiness to avoid deadlocks; operations will still fail due to null rdbStore
+        // 解析准备状态以避免死锁；由于 rdbStore 为空，操作仍会失败
         if (this.readyResolve) { this.readyResolve() }
         return
       }
 
-      console.log('创建按rdbStore成功')
+      console.log('创建rdbStore成功')
       this.rdbStore = store
-      // create table then resolve readiness (avoid racing before table exists)
+      // 创建表然后解析准备状态（避免在表存在之前进行竞争）
       this.rdbStore.executeSql(SQL_CREATE_TABLE, (err) => {
         if (!err) {
           console.log(`创建${tableName}成功`)
-          // signal ready only after table creation
+          // 仅在表创建后发出就绪信号
           if (this.readyResolve) { this.readyResolve() }
         } else {
           console.log(`创建${tableName}失败`)
-          // still resolve to avoid deadlock; subsequent ops will log rdbStore present but table errors
+          // 仍解析以避免死锁；后续操作将记录 rdbStore 存在但表错误
           if (this.readyResolve) { this.readyResolve() }
         }
       })
-      // Attempt to add target_date column if it doesn't exist yet; ignore errors
+      // 尝试添加 target_date 列（如果尚不存在）；忽略错误
       try {
         const SQL_ADD_COLUMN_TARGET = `alter table ${tableName} add column target_date integer`;
         this.rdbStore.executeSql(SQL_ADD_COLUMN_TARGET, (colErr) => {
@@ -138,7 +138,7 @@ export class MemoryDBUtils {
             return
           }
           console.log(`${tableName}表数据添加成功, rowId: ${rowId}`)
-          // notify listeners that DB content changed
+          // 通知监听器数据库内容已更改
           try { this.notifyChange() } catch (_) {}
           resolve(rowId)
         })
@@ -157,10 +157,10 @@ export class MemoryDBUtils {
     }
 
     try {
-      let p1 = new relationalStore.RdbPredicates(tableName)
-      // Return newest first so UI shows recent additions on top
-      try { p1.orderByDesc('id') } catch (e) { /* some SDKs may not support orderByDesc */ }
-      const resultSet = await (this.rdbStore as relationalStore.RdbStore).query(p1, column)
+      let queryPredicates = new relationalStore.RdbPredicates(tableName)
+      // 首先返回最新的，以便 UI 在顶部显示最近的添加
+      try { queryPredicates.orderByDesc('id') } catch (e) { /* 某些 SDK 可能不支持 orderByDesc */ }
+      const resultSet = await (this.rdbStore as relationalStore.RdbStore).query(queryPredicates, column)
       let memories: Memory[] = []
 
       try {
@@ -187,6 +187,10 @@ export class MemoryDBUtils {
 
             const targetDateIndex = resultSet.getColumnIndex('target_date')
             const contentIndex = resultSet.getColumnIndex('content')
+
+            // 如果存在 id 列则读取其 long 值作为 memoryId；避免旧表不存在该列，
+            // 此处使用 0 作为安全默认值以保证构造 Memory 对象时不会出现 undefined。
+            // （注意：数据库中的字段名为小写 'id'，因此使用 getColumnIndex('id')）
 
             const memoryId = idIndex >= 0 ? resultSet.getLong(idIndex) : 0
             const title = nameIndex >= 0 ? resultSet.getString(nameIndex) : ''
@@ -224,16 +228,16 @@ export class MemoryDBUtils {
     await this.readyPromise
     console.log('deleteMemoryById: ready, rdbStore is', this.rdbStore ? 'present' : 'null', 'id=', memoryId)
     return new Promise<number>((resolve, reject) => {
-      const p1 = new relationalStore.RdbPredicates(tableName)
-      // 使用表中真实列名 'id'
-      p1.equalTo('id', memoryId)
+      const queryPredicates = new relationalStore.RdbPredicates(tableName)
+
+      queryPredicates.equalTo('id', memoryId)
       if (!this.rdbStore) {
-        console.log('deleteMemoryById: rdbStore is null')
+        console.log('deleteMemoryById: rdbStore 为空')
         reject(new Error('rdbStore is null'))
         return
       }
       try {
-        this.rdbStore.delete(p1, (err: BusinessError, rows: number) => {
+        this.rdbStore.delete(queryPredicates, (err: BusinessError, rows: number) => {
           if (err) {
             console.log(`删除记忆失败${err.message}`)
             reject(err)
@@ -244,7 +248,7 @@ export class MemoryDBUtils {
           resolve(rows)
         })
       } catch (callErr) {
-        console.log('deleteMemoryById: delete call threw', callErr)
+        console.log('deleteMemoryById: delete 调用抛出异常', callErr)
         reject(callErr)
       }
     })
@@ -255,16 +259,16 @@ export class MemoryDBUtils {
     await this.readyPromise
     console.log('updateMemoryById: ready, rdbStore is', this.rdbStore ? 'present' : 'null', 'id=', memoryId, 'value=', JSON.stringify(value))
     return new Promise<number>((resolve, reject) => {
-      const p1 = new relationalStore.RdbPredicates(tableName)
+      const queryPredicates = new relationalStore.RdbPredicates(tableName)
       // 使用表中真实列名 'id'
-      p1.equalTo('id', memoryId)
+      queryPredicates.equalTo('id', memoryId)
       if (!this.rdbStore) {
-        console.log('updateMemoryById: rdbStore is null')
+        console.log('updateMemoryById: rdbStore 为空')
         reject(new Error('rdbStore is null'))
         return
       }
       try {
-        this.rdbStore.update(value, p1, (err: BusinessError, rows: number) => {
+        this.rdbStore.update(value, queryPredicates, (err: BusinessError, rows: number) => {
           if (err) {
             console.log(`更新记忆失败${err.message}`)
             reject(err)
@@ -275,20 +279,20 @@ export class MemoryDBUtils {
           resolve(rows)
         })
       } catch (callErr) {
-        console.log('updateMemoryById: update call threw', callErr)
+        console.log('updateMemoryById: update 调用抛出异常', callErr)
         reject(callErr)
       }
     })
   }
 
-  // Instance method wrapper for compatibility
+  // 兼容性实例方法包装器
   public makeValuesBucket(taskName: string, finished: number, targetDate?: number, content?: string): relationalStore.ValuesBucket {
     return makeValuesBucket(taskName, finished, targetDate, content);
   }
 
 }
 
-// Export standalone helper for other modules to import without relying on class instance shape
+// 导出独立帮助器，供其他模块导入，而不依赖类实例形状
 interface ValuesBucketMap { task_name?: string; finished?: number; target_date?: number; content?: string }
 export function makeValuesBucket(taskName: string, finished: number, targetDate?: number, content?: string): relationalStore.ValuesBucket {
   if (typeof targetDate === 'number') {

@@ -1,6 +1,5 @@
-// 事件详情页：展示详情并提供编辑与删除 / Event detail page with edit & delete
+// 事件详情页：展示详情并提供编辑与删除
 // 主要职责：加载指定事件详情、支持编辑与删除操作
-// 详细注释见各函数实现与类型定义
 import router from '@system.router';
 import { MemoryDBUtil, Memory } from '../utils/MemDBUtils';
 import * as dateUtils from '../utils/dateUtils';

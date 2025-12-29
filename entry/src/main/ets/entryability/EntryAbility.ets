@@ -20,39 +20,39 @@ export default class EntryAbility extends UIAbility {
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
-    // Main window is created, set main page for this ability
+    // 主窗口已创建，设置此能力的主页面
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
-    // Initialize memory DB with valid Context so pages can use MemoryDBUtil
+    // 使用有效的 Context 初始化内存数据库，以便页面可以使用 MemoryDBUtil
     try {
       MemoryDBUtil.initMemoryDB(this.context, 'memories');
-      hilog.info(DOMAIN, 'testTag', 'MemoryDB initialized');
+      hilog.info(DOMAIN, 'testTag', 'MemoryDB 初始化完成');
     } catch (dbErr) {
-      hilog.error(DOMAIN, 'testTag', 'MemoryDB init failed: %{public}s', JSON.stringify(dbErr));
+      hilog.error(DOMAIN, 'testTag', 'MemoryDB 初始化失败: %{public}s', JSON.stringify(dbErr));
     }
 
 
     windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {
-        hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
+        hilog.error(DOMAIN, 'testTag', '加载内容失败。原因: %{public}s', JSON.stringify(err));
         return;
       }
-      hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
+      hilog.info(DOMAIN, 'testTag', '成功加载内容。');
     });
   }
 
   onWindowStageDestroy(): void {
-    // Main window is destroyed, release UI related resources
+    // 主窗口被销毁，释放与 UI 相关的资源
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageDestroy');
   }
 
   onForeground(): void {
-    // Ability has brought to foreground
+    // Ability 已被带到前台
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onForeground');
   }
 
   onBackground(): void {
-    // Ability has back to background
+    // Ability 已返回后台
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onBackground');
   }
 }

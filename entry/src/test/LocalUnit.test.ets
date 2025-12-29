@@ -2,30 +2,30 @@ import { describe, beforeAll, beforeEach, afterEach, afterAll, it, expect } from
 
 export default function localUnitTest() {
   describe('localUnitTest', () => {
-    // Defines a test suite. Two parameters are supported: test suite name and test suite function.
+    // 定义一个测试套件。支持两个参数：测试套件名称和测试套件函数。
     beforeAll(() => {
-      // Presets an action, which is performed only once before all test cases of the test suite start.
-      // This API supports only one parameter: preset action function.
+      // 预设一个操作，在测试套件的所有测试用例开始前仅执行一次。
+      // 此API仅支持一个参数：预设操作函数。
     });
     beforeEach(() => {
-      // Presets an action, which is performed before each unit test case starts.
-      // The number of execution times is the same as the number of test cases defined by **it**.
-      // This API supports only one parameter: preset action function.
+      // 预设一个操作，在每个单元测试用例开始前执行。
+      // 执行次数与由**it**定义的测试用例数量相同。
+      // 此API仅支持一个参数：预设操作函数。
     });
     afterEach(() => {
-      // Presets a clear action, which is performed after each unit test case ends.
-      // The number of execution times is the same as the number of test cases defined by **it**.
-      // This API supports only one parameter: clear action function.
+      // 预设一个清理操作，在每个单元测试用例结束后执行。
+      // 执行次数与由**it**定义的测试用例数量相同。
+      // 此API仅支持一个参数：清理操作函数。
     });
     afterAll(() => {
-      // Presets a clear action, which is performed after all test cases of the test suite end.
-      // This API supports only one parameter: clear action function.
+      // 预设一个清理操作，在测试套件的所有测试用例结束后执行。
+      // 此API仅支持一个参数：清理操作函数。
     });
     it('assertContain', 0, () => {
-      // Defines a test case. This API supports three parameters: test case name, filter parameter, and test case function.
+      // 定义一个测试用例。此API支持三个参数：测试用例名称、过滤参数和测试用例函数。
       let a = 'abc';
       let b = 'b';
-      // Defines a variety of assertion methods, which are used to declare expected boolean conditions.
+      // 定义多种断言方法，用于声明预期的布尔条件。
       expect(a).assertContain(b);
       expect(a).assertEqual(a);
     });

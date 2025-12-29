@@ -1,4 +1,4 @@
-// 管理页：列表、编辑、删除入口 / Management page for list/edit/delete
+// 管理页：列表、编辑、删除入口
 import router from '@system.router';
 import promptAction from '@ohos.promptAction';
 import { MemoryItem, MemoryType, DateLike } from '../types/MemoryTypes';
@@ -36,9 +36,9 @@ export struct ManageMemories {
     this.loadEvents();
   }
 
-  // Called when this page is about to appear (safer than relying on back navigation)
+  // 当此页面即将显示时调用（比依赖返回导航更安全）
   aboutToAppear(): void {
-    // refresh twice: immediately and after a short delay to catch recent DB commits
+    // 刷新两次：立即刷新，然后短暂延迟后再次刷新，以捕获最近的数据库提交
     this.loadEvents();
     setTimeout(() => this.loadEvents(), 300);
   }
@@ -47,7 +47,7 @@ export struct ManageMemories {
     Column({ space: 16 }) {
       // Header
       Column() {
-        Text('管理模式')
+        Text('调试模式')
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .fontColor('#111')
@@ -186,7 +186,7 @@ export struct ManageMemories {
 
   private triggerVibration(): void {
     try {
-      // 震动提示 / haptic feedback
+      // 震动提示 / 触觉反馈
       vibrator.vibrate(50);
     } catch (err) {
       console.error('震动失败', err);

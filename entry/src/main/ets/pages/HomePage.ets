@@ -1,11 +1,11 @@
 // HomePage 组件：主页内容区域（头图、统计、事件列表、操作）
 // 主要职责：
 // - 接收外部传入的事件数组并提供统计与排序显示
-// - 提供“新增”/“管理”等操作回调
+// - 提供“新增”操作回调
 // - 将事件规范化（保证 date 可用）以便于 dateUtils 使用
 // 输入/输出：
 // - props: events (MemoryItem[]), imageSource (string|Resource)
-// - callbacks: onAdd(), onManage()
+// - callbacks: onAdd()
 // 错误与边界：
 // - 对传入 events 做空和类型容错，返回空数组以保证 UI 不崩溃
 

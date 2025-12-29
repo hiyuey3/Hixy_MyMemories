@@ -4,7 +4,7 @@ import * as dateUtils from '../main/ets/utils/dateUtils';
 export default function dateUtilsTest() {
   describe('dateUtilsTest', () => {
 
-    // Test daysDiff for regular countdown dates
+    // 测试 daysDiff 的常规倒计时日期
     it('daysDiff should calculate regular countdown dates correctly', 0, () => {
       const now = new Date(2025, 11, 27); // 2025-12-27
 
@@ -24,7 +24,7 @@ export default function dateUtilsTest() {
       expect(daysDiff3).assertEqual(0); // Today is 0 days away
     });
 
-    // Test daysDiff for anniversary dates
+    // 测试 daysDiff 的周年纪念日日期
     it('daysDiff should calculate anniversary dates correctly', 0, () => {
       const now = new Date(2025, 11, 27); // 2025-12-27
 
@@ -49,7 +49,7 @@ export default function dateUtilsTest() {
       expect(daysDiff4).assertEqual(365); // 365 days until next Dec 27
     });
 
-    // Test anniversaryStats
+    // 测试 anniversaryStats
     it('anniversaryStats should calculate days since and until correctly', 0, () => {
       const now = new Date(2025, 11, 27); // 2025-12-27
 
@@ -66,7 +66,7 @@ export default function dateUtilsTest() {
       expect(stats2.daysSince).assertEqual(0); // Days since this Dec 27 (today)
     });
 
-    // Test daysTextFor for anniversaries
+    // 测试 anniversaries 的 daysTextFor
     it('daysTextFor should format anniversary text correctly', 0, () => {
       const now = new Date(2025, 11, 27); // 2025-12-27
 

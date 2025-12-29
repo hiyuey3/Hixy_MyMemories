@@ -1,8 +1,8 @@
-// 日期工具：格式化与天数计算 / Date utilities: formatting & day diffs
+// 日期工具：格式化与天数计算
 // 主要职责：日期格式化、天数差值、纪念日统计等
 // 详细注释见各函数实现
 
-// 类型定义：支持多种日期输入类型，便于兼容 ArkTS/JS/字符串等
+// 类型定义：支持多种日期输入类型
 export type DateLike = Date | number | string | null | undefined;
 export interface EventWithDate {
   date: DateLike;

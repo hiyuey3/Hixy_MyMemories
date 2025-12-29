@@ -23,6 +23,7 @@ export interface IndexTabsProps {
 
 @Builder
 export function IndexTabs(props: IndexTabsProps) {
+
   // Tabs 控制器由上层管理，组件仅负责渲染与事件回调
   Tabs({ barPosition: BarPosition.End, controller: new TabsController(), index: props.currentIndex }) {
     // Home tab
