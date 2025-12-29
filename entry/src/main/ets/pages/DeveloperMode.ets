@@ -7,9 +7,12 @@ import { relationalStore } from '@kit.ArkData';
 import { formatDate as formatDateUtil } from '../utils/dateUtils';
 import vibrator from '@ohos.vibrator';
 import pasteboard from '@ohos.pasteboard';
+import { notificationManager } from '@kit.NotificationKit';
 
 interface MemoryExportItem { title: string; date: number | string | null; type: MemoryType; }
 interface MemoryImportItem { title?: string; date?: number | string | null; type?: string; }
+// Narrowing type for possible publish() errors
+interface BusinessErrorLike { code?: number | string; message?: string }
 
 @Entry
 @Component
@@ -97,6 +100,19 @@ export struct ManageMemories {
           .height(40);
       }
       .padding({ left: 16, right: 16 });
+
+      // Big test push service button - full width
+      Row() {
+        Button('🔔 测试推送服务')
+          .type(ButtonType.Normal)
+          .backgroundColor('#0B74DE')
+          .fontColor('#FFFFFF')
+          .height(56)
+          .layoutWeight(1)
+          .borderRadius(8)
+          .onClick(() => this.testPushService());
+      }
+      .padding({ left: 16, right: 16, top: 8, bottom: 8 });
 
       // 导入 / 导出（复用一个输入框）
       Column({ space: 10 }) {
@@ -220,8 +236,39 @@ export struct ManageMemories {
   }
 
   // Export logs stub (developer can replace with real export)
-  private exportLogs(): void {
+  private async exportLogs(): Promise<void> {
+    // keep the original toast behavior for export
     this.toast('导出日志：已生成到应用沙箱（示例）');
+
+    // Try publishing a simple test notification (developer convenience)
+    try {
+      const notificationRequest: notificationManager.NotificationRequest = {
+        id: (Date.now() % 100000) + 1, // small unique-ish id
+        content: {
+          notificationContentType: notificationManager.ContentType.NOTIFICATION_CONTENT_BASIC_TEXT,
+          normal: {
+            title: 'Hixy 测试通知',
+            text: '这是来自开发者模式的测试通知',
+            additionalText: '更多信息可在日志查看'
+          }
+        }
+      };
+
+      await notificationManager.publish(notificationRequest);
+      console.info('Succeeded in publishing notification.');
+      this.toast('测试通知已发送');
+    } catch (err) {
+      // explicit runtime narrowing using the declared interface
+      if (err && typeof err === 'object') {
+        const e = err as BusinessErrorLike;
+        const code: number | string = (typeof e.code === 'number' || typeof e.code === 'string') ? e.code : 'unknown';
+        const message: string = typeof e.message === 'string' ? e.message : String(e);
+        console.error(`Failed to publish notification. Code is ${code}, message is ${message}`);
+      } else {
+        console.error('Failed to publish notification.', err);
+      }
+      this.toast('发送通知失败（查看日志）');
+    }
   }
 
   // Export current events to JSON (developer convenience)
@@ -363,6 +410,38 @@ export struct ManageMemories {
       await this.loadEvents();
     } catch (e) {
       console.error('testWrite failed', e);
+    }
+  }
+
+  // 测试推送服务（发布通知）
+  private async testPushService(): Promise<void> {
+    try {
+      const notificationRequest: notificationManager.NotificationRequest = {
+        id: (Date.now() % 100000) + 1, // small unique-ish id
+        content: {
+          notificationContentType: notificationManager.ContentType.NOTIFICATION_CONTENT_BASIC_TEXT,
+          normal: {
+            title: '推送服务测试',
+            text: '这是一个来自推送服务的测试通知',
+            additionalText: '如能收到通知，则推送服务正常'
+          }
+        }
+      };
+
+      await notificationManager.publish(notificationRequest);
+      console.info('推送通知发布成功');
+      this.toast('推送通知已发送');
+    } catch (err) {
+      // explicit runtime narrowing using the declared interface
+      if (err && typeof err === 'object') {
+        const e = err as BusinessErrorLike;
+        const code: number | string = (typeof e.code === 'number' || typeof e.code === 'string') ? e.code : 'unknown';
+        const message: string = typeof e.message === 'string' ? e.message : String(e);
+        console.error(`推送通知发布失败. Code: ${code}, Message: ${message}`);
+      } else {
+        console.error('推送通知发布失败', err);
+      }
+      this.toast('发送推送通知失败（查看日志）');
     }
   }
 }

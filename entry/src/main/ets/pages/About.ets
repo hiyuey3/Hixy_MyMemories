@@ -12,147 +12,149 @@ export struct About {
   @State isLogoClicked: boolean = false;
   @State DevNowClickCount: number = 0;
   @State DevNeedClickTimes: number = 3;
-  private ClickResetTimeout: number = 3000;
+  @State ClickResetTimeout: number = 3000;
 
   // @State logoClickTimer: number = 0;
 
 
   // 主渲染函数：页面结构清晰，顶部为标题与 Logo，中部为信息卡片，底部为版权信息
   build() {
-    Column({ space: 16 }) {
-      // 顶部品牌卡片，突出产品与版本信息
-      Column({ space: 8 }) {
-        Column({ space: 10 }) {
-          Blank()
-            .margin({ top: 9 });
-          // 如果点击hixy_logo_old变为hixy_logo_new，可以作为彩蛋功能
-          // Image($r('app.media.hixy_logo_new'))
-          //   .width(108)
-          //   .height(108)
-          //   .borderRadius(54)
-          //   .objectFit(ImageFit.Cover)
-          //   .margin({ bottom: 4 })
-          //   .onClick(() => {
-          //     this.toast('你发现了彩蛋！');
-          //   });
-          Row() {
-            // if (this.isLogoClicked === false) {
-            Image($r('app.media.hixy_logo_old'))
-              .width(108)
-              .height(108)
-              .borderRadius(54)
-              .objectFit(ImageFit.Cover)
-              .margin({ bottom: 4 })
-            // .onClick(() => {
-            //   this.isLogoClicked = true;
-            //   promptAction.showToast({ message: '你发现了彩蛋！' });
-            // })
-            // }else {
-
+    Scroll() {
+      Column({ space: 16 }) {
+        // 顶部品牌卡片，突出产品与版本信息
+        Column({ space: 8 }) {
+          Column({ space: 10 }) {
             Blank()
+              .margin({ top: 9 });
+            // 如果点击hixy_logo_old变为hixy_logo_new，可以作为彩蛋功能
+            // Image($r('app.media.hixy_logo_new'))
+            //   .width(108)
+            //   .height(108)
+            //   .borderRadius(54)
+            //   .objectFit(ImageFit.Cover)
+            //   .margin({ bottom: 4 })
+            //   .onClick(() => {
+            //     this.toast('你发现了彩蛋！');
+            //   });
+            Row() {
+              // if (this.isLogoClicked === false) {
+              Image($r('app.media.hixy_logo_old'))
+                .width(108)
+                .height(108)
+                .borderRadius(54)
+                .objectFit(ImageFit.Cover)
+                .margin({ bottom: 4 })
+              // .onClick(() => {
+              //   this.isLogoClicked = true;
+              //   promptAction.showToast({ message: '你发现了彩蛋！' });
+              // })
+              // }else {
+              Blank()
+                .padding({ left: 15, right: 15 })
+                // .height('60%')
+                .color(Color.Pink)
+              // .layoutWeight(1)
 
-            Image($r('app.media.hixy_logo_new'))
-              .width(108)
-              .height(108)
-              .borderRadius(54)
-              .objectFit(ImageFit.Cover)
-              .margin({ bottom: 4 })
-            // .onClick(() => {
-            //   this.isLogoClicked = false;
-            //   promptAction.showToast({ message: '你发现了彩蛋！' });
-            // })
+              Image($r('app.media.hixy_logo_new'))
+                .backgroundColor(Color.White)
+                .width(108)
+                .height(108)
+                .borderRadius(54)
+                .objectFit(ImageFit.Cover)
+                .margin({ bottom: 4 })
+            }
+
+            // }
+            Text('©Logo 由 @IGE 设计')
+              .fontSize(11)
+              .fontColor('#7E8589')
+              .textAlign(TextAlign.Center);
+            Text('MyMemories')
+              .fontSize(22)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#0F172A');
+            Row({ space: 6 }) {
+              Text('版本')
+                .fontSize(12)
+                .fontColor('#4B5563');
+              Text(this.version)
+                .fontSize(12)
+                .fontColor('#111827')
+                .backgroundColor('#FFFFFF')
+                .padding({
+                  left: 10,
+                  right: 10,
+                  top: 4,
+                  bottom: 4
+                })
+                .borderRadius(12);
+            }
+            .alignItems(VerticalAlign.Center);
+
+            Text('做简单的，让时光点有迹可循，让记忆点温暖如初。')
+              .fontSize(13)
+              .fontColor('#4B5563')
+              .textAlign(TextAlign.Center)
+              .margin({ top: 6 });
           }
-
-          // }
-          Text('©Logo 由 @IGE 设计')
-            .fontSize(11)
-            .fontColor('#7E8589')
-            .textAlign(TextAlign.Center);
-          Text('MyMemories')
-            .fontSize(22)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#0F172A');
-          Row({ space: 6 }) {
-            Text('版本')
-              .fontSize(12)
-              .fontColor('#4B5563');
-            Text(this.version)
-              .fontSize(12)
-              .fontColor('#111827')
-              .backgroundColor('#FFFFFF')
-              .padding({
-                left: 10,
-                right: 10,
-                top: 4,
-                bottom: 4
-              })
-              .borderRadius(12);
-          }
-          .alignItems(VerticalAlign.Center);
-
-          Text('做简单的，让时光点有迹可循，让记忆点温暖如初。')
-            .fontSize(13)
-            .fontColor('#4B5563')
-            .textAlign(TextAlign.Center)
-            .margin({ top: 6 });
+          .alignItems(HorizontalAlign.Center)
+          .padding({ top: 18, bottom: 12 });
         }
-        .alignItems(HorizontalAlign.Center)
-        .padding({ top: 18, bottom: 12 });
+        .width('100%')
+        .padding({ left: 16, right: 16 })
+        .backgroundColor('#EEF2FF')
+        .borderRadius(18);
+
+        // 信息卡片（开发者信息）
+        this.InfoCard();
+
+        // 版权与备案（淡化）
+        Column() {
+          Text(this.copyright)
+            .fontSize(12)
+            .fontColor('#9AA0A6')
+            .onClick(() => {
+              try {
+                let remainingClicks: number = this.DevNeedClickTimes - this.DevNowClickCount - 1;
+                this.toast(`${remainingClicks + 1}次后进调试模式`);
+                this.DevNowClickCount++;
+                //如果秒后没有点击则重置点击次数
+                setTimeout(() => {
+                  // this.toast('调试模式入口次数已重置');
+                  this.DevNowClickCount = 0;
+                }, this.ClickResetTimeout);
+                if (this.DevNowClickCount >= 3) {
+                  router.push({ uri: 'pages/DeveloperMode' });
+                  this.DevNowClickCount = 0;
+                }
+              } catch (e) {
+                this.toast('跳转失败');
+              }
+            });
+          Text(this.ICPnumber)
+            .fontSize(12)
+            .fontColor('#9AA0A6')
+            .margin({ top: 4 });
+        }
+        .alignItems(HorizontalAlign.Center);
+
+        // 开发人员模式入口
+        // Column() {
+        //   Text('管理模式')
+        //     .fontSize(11)
+        //     .fontColor('#B0B6BB')
+        //     .margin({ top: 16, bottom: 20 })
+        //     .onClick(() => {
+        //       try { router.push({ uri: 'pages/DeveloperMode' }); } catch (e) { this.toast('跳转失败'); }
+        //     });
+        // }
+        // .alignItems(HorizontalAlign.Center);
       }
       .width('100%')
+      .height('100%')
       .padding({ left: 16, right: 16 })
-      .backgroundColor('#EEF2FF')
-      .borderRadius(18);
-
-      // 信息卡片（开发者信息）
-      this.InfoCard();
-
-      // 版权与备案（淡化）
-      Column() {
-        Text(this.copyright)
-          .fontSize(12)
-          .fontColor('#9AA0A6')
-          .onClick(() => {
-            try {
-              let remainingClicks: number = this.DevNeedClickTimes - this.DevNowClickCount - 1;
-              this.toast(`${remainingClicks + 1}次后进调试模式`);
-              this.DevNowClickCount++;
-              //如果秒后没有点击则重置点击次数
-              setTimeout(() => {
-                // this.toast('调试模式入口次数已重置');
-                this.DevNowClickCount = 0;
-              }, this.ClickResetTimeout);
-              if (this.DevNowClickCount >= 3) {
-                router.push({ uri: 'pages/DeveloperMode' });
-                this.DevNowClickCount = 0;
-              }
-            } catch (e) {
-              this.toast('跳转失败');
-            }
-          });
-        Text(this.ICPnumber)
-          .fontSize(12)
-          .fontColor('#9AA0A6')
-          .margin({ top: 4 });
-      }
-      .alignItems(HorizontalAlign.Center);
-
-      // 开发人员模式入口
-      // Column() {
-      //   Text('管理模式')
-      //     .fontSize(11)
-      //     .fontColor('#B0B6BB')
-      //     .margin({ top: 16, bottom: 20 })
-      //     .onClick(() => {
-      //       try { router.push({ uri: 'pages/DeveloperMode' }); } catch (e) { this.toast('跳转失败'); }
-      //     });
-      // }
-      // .alignItems(HorizontalAlign.Center);
+      .backgroundColor('#F7F8FA');
     }
-    .width('100%')
-    .height('100%')
-    .padding({ left: 16, right: 16 })
-    .backgroundColor('#F7F8FA');
   }
 
   // 信息卡片：使用 Row 两端对齐展示标签和值，清晰可读

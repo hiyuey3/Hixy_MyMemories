@@ -19,6 +19,14 @@
     {
       "name": "perm_vibrate",
       "value": "用于在删除操作时提供震动反馈的权限说明"
+    },
+    {
+      "name": "perm_notification_controller",
+        "value": "用于接收和显示提醒通知的权限说明"
+    },
+    {
+      "name": "perm_publish_agent_reminder",
+      "value": "后台推送服务"
     }
   ]
 }

@@ -34,6 +34,13 @@
     ],
     "requestPermissions": [
       {
+        "name": "ohos.permission.NOTIFICATION_CONTROLLER",
+        "reason": "$string:perm_notification_controller",
+      },{
+        "name": "ohos.permission.PUBLISH_AGENT_REMINDER",
+        "reason": "$string:perm_publish_agent_reminder",
+      },
+      {
         "name": "ohos.permission.READ_MEDIA",
         "reason": "$string:perm_read_media",
         "usedScene": {

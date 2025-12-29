@@ -293,7 +293,7 @@ export class MemoryDBUtils {
 }
 
 // 导出独立帮助器，供其他模块导入，而不依赖类实例形状
-interface ValuesBucketMap { task_name?: string; finished?: number; target_date?: number; content?: string }
+// interface ValuesBucketMap { task_name?: string; finished?: number; target_date?: number; content?: string }
 export function makeValuesBucket(taskName: string, finished: number, targetDate?: number, content?: string): relationalStore.ValuesBucket {
   if (typeof targetDate === 'number') {
     if (typeof content === 'string') {
