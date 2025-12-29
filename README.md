@@ -4,7 +4,7 @@
 
 MyMemories ｜ 我记得
 
-这是XMUTKKC SIST 的`HarmonyOS(鸿蒙)开发入门` 课程设计
+这是我的 XMUTKKC SIST 的`HarmonyOS(鸿蒙)开发入门` 课程设计
 
 由本作者书写的代码部分使用 AGPLv3 许可证授权
 
@@ -39,9 +39,9 @@ MyMemories 是一款专注于“倒数日”与“纪念日”管理的 HarmonyO
 系统的总体功能结构如图1所示（示意图）：
 ```mermaid
 graph TD
-    A[MyMemories App] --> B[首页 Index]
-    A --> C[记忆 Memories]
-    A --> D[关于 About]
+    A[我记得 App] --> B[首页]
+    A --> C[记忆]
+    A --> D[关于]
     B --> B1[统计卡片]
     B --> B2[事件列表]
     B --> B3[新增事件]
@@ -50,7 +50,7 @@ graph TD
     C --> C1[月历视图]
     C --> C2[日期筛选]
     D --> D1[版本信息]
-    D --> D2[开发者模式]
+    D --> D2[调试模式]
 ```
 
 2.2 功能详细设计
