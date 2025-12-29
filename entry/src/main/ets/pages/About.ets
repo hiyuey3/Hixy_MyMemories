@@ -12,6 +12,8 @@ export struct About {
   @State isLogoClicked: boolean = false;
   @State DevNowClickCount: number = 0;
   @State DevNeedClickTimes: number = 3;
+  private ClickResetTimeout: number = 3000;
+
   // @State logoClickTimer: number = 0;
 
 
@@ -112,14 +114,14 @@ export struct About {
           .fontColor('#9AA0A6')
           .onClick(() => {
             try {
-              let remainingClicks:number = this.DevNeedClickTimes - this.DevNowClickCount-1;
-              this.toast(`${remainingClicks+1}次后进调试模式`);
+              let remainingClicks: number = this.DevNeedClickTimes - this.DevNowClickCount - 1;
+              this.toast(`${remainingClicks + 1}次后进调试模式`);
               this.DevNowClickCount++;
-              //如果5秒后没有点击则重置点击次数
+              //如果秒后没有点击则重置点击次数
               setTimeout(() => {
                 // this.toast('调试模式入口次数已重置');
                 this.DevNowClickCount = 0;
-              }, 3000);
+              }, this.ClickResetTimeout);
               if (this.DevNowClickCount >= 3) {
                 router.push({ uri: 'pages/DeveloperMode' });
                 this.DevNowClickCount = 0;
@@ -218,10 +220,10 @@ export struct About {
         .fontSize(13)
         .fontColor(valueColor)
         .onClick(() => {
-        if (onClick) {
-          onClick();
-        }
-      });
+          if (onClick) {
+            onClick();
+          }
+        });
     }
     .width('100%')
     .justifyContent(FlexAlign.SpaceBetween)
