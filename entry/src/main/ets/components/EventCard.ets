@@ -50,7 +50,7 @@ export struct EventCard {
   private anniversaryUntilText(item: MemoryItem): string {
     const stats = dateUtils.anniversaryStats(item.date, undefined);
     if (isNaN(stats.daysUntil)) return '';
-    return `距下次 ${stats.daysUntil} 天`;
+    return `还有 ${stats.daysUntil} 天`;
   }
 
   build() {
