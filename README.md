@@ -1,7 +1,8 @@
 # 我记得（MyMemories）
 
-Github仓库：https://github.com/hiyuey3/Hixy_MyMemories
-Gitee仓库同步：https://gitee.com/hiyuey33/Hixy_MyMemories
+主仓库Github：https://github.com/hiyuey3/Hixy_MyMemories
+
+同步仓库Gitee：https://gitee.com/hiyuey33/Hixy_MyMemories
 
 零、前言
 
