@@ -88,7 +88,7 @@ struct Index {
         },
         onAdd: () => this.openAddMemory(),
         onReloadHome: () => {
-          // 用户手动触发的刷新：立即刷新并在 300ms 后再做一次短延迟刷新（与 aboutToAppear 相同的防护性策略）
+          // 用户手动触发的刷新：立即刷新并在 300ms 后再做一次短延迟刷新
           this.loadEvents();
           setTimeout(() => this.loadEvents(), 300);
         }

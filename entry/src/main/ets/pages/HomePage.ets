@@ -9,7 +9,7 @@
 // 错误与边界：
 // - 对传入 events 做空和类型容错，返回空数组以保证 UI 不崩溃
 
-import { MemoryItem } from '../types/MemoryTypes';
+import  { MemoryItem } from '../types/MemoryTypes';
 import * as dateUtils from '../utils/dateUtils';
 import { EventCard } from '../components/EventCard';
 
@@ -150,9 +150,10 @@ export struct HomePage {
           .fontColor('#FFFFFF')
           .width('85%')
           .height(40)
-           .onClick(() => this.onAdd());
+           .onClick(
+             () => this.onAdd()
+           );
 
-        // 管理入口已迁移到「关于」页面底部，仅保留新增按钮在首页
 
        }
        .justifyContent(FlexAlign.Center)
